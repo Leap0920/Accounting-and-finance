@@ -13,13 +13,121 @@ $filter_status = $_GET['status'] ?? '';
 $filter_account = $_GET['account'] ?? '';
 $apply_filters = isset($_GET['apply_filters']);
 
-// Sample data structure - will be replaced with actual database queries
+// Fetch transactions from database
 $transactions = [];
 $hasFilters = false;
 
 if ($apply_filters) {
     $hasFilters = !empty($filter_date_from) || !empty($filter_date_to) || 
                   !empty($filter_type) || !empty($filter_status) || !empty($filter_account);
+}
+
+// Build query to fetch transactions
+$sql = "SELECT 
+            je.id,
+            je.journal_no,
+            je.entry_date,
+            jt.code as type_code,
+            jt.name as type_name,
+            je.description,
+            je.reference_no,
+            je.total_debit,
+            je.total_credit,
+            je.status,
+            u.username as created_by,
+            u.full_name as created_by_name,
+            je.created_at,
+            je.posted_at,
+            fp.period_name as fiscal_period
+        FROM journal_entries je
+        INNER JOIN journal_types jt ON je.journal_type_id = jt.id
+        INNER JOIN users u ON je.created_by = u.id
+        LEFT JOIN fiscal_periods fp ON je.fiscal_period_id = fp.id
+        WHERE 1=1";
+
+$params = [];
+$types = '';
+
+// Apply filters
+if (!empty($filter_date_from)) {
+    $sql .= " AND je.entry_date >= ?";
+    $params[] = $filter_date_from;
+    $types .= 's';
+}
+
+if (!empty($filter_date_to)) {
+    $sql .= " AND je.entry_date <= ?";
+    $params[] = $filter_date_to;
+    $types .= 's';
+}
+
+if (!empty($filter_type)) {
+    $sql .= " AND jt.code = ?";
+    $params[] = $filter_type;
+    $types .= 's';
+}
+
+if (!empty($filter_status)) {
+    $sql .= " AND je.status = ?";
+    $params[] = $filter_status;
+    $types .= 's';
+}
+
+if (!empty($filter_account)) {
+    $sql .= " AND EXISTS (
+        SELECT 1 FROM journal_lines jl
+        INNER JOIN accounts a ON jl.account_id = a.id
+        WHERE jl.journal_entry_id = je.id AND a.code LIKE ?
+    )";
+    $params[] = "%{$filter_account}%";
+    $types .= 's';
+}
+
+$sql .= " ORDER BY je.entry_date DESC, je.journal_no DESC";
+
+// Execute query
+try {
+    $stmt = $conn->prepare($sql);
+    
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        $transactions[] = $row;
+    }
+    
+    $stmt->close();
+} catch (Exception $e) {
+    // If database error, transactions will remain empty array
+    error_log("Transaction query error: " . $e->getMessage());
+}
+
+// Get statistics
+$stats = [
+    'total_transactions' => 0,
+    'posted_count' => 0,
+    'draft_count' => 0,
+    'today_count' => 0
+];
+
+try {
+    $stats_sql = "SELECT 
+                    COUNT(*) as total_transactions,
+                    SUM(CASE WHEN status = 'posted' THEN 1 ELSE 0 END) as posted_count,
+                    SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft_count,
+                    SUM(CASE WHEN DATE(entry_date) = CURDATE() THEN 1 ELSE 0 END) as today_count
+                  FROM journal_entries";
+    
+    $result = $conn->query($stats_sql);
+    if ($result) {
+        $stats = $result->fetch_assoc();
+    }
+} catch (Exception $e) {
+    error_log("Statistics query error: " . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -45,12 +153,12 @@ if ($apply_filters) {
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid px-4">
             <div class="logo-section">
-                <div class="logo-circle">E</div>
-                <div class="logo-text">
-                    <h1>EVERGREEN</h1>
-                    <p>Secure. Invest. Achieve</p>
-                </div>
+            <div class="logo-circle">E</div>
+            <div class="logo-text">
+                <h1>EVERGREEN</h1>
+                <p>Secure. Invest. Achieve</p>
             </div>
+        </div>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -226,13 +334,65 @@ if ($apply_filters) {
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Data will be populated by DataTables or database -->
+                            <?php if (empty($transactions)): ?>
+                            <tr>
+                                <td colspan="10" class="text-center text-muted">
+                                    <div class="py-5">
+                                        <i class="fas fa-database fa-3x mb-3 d-block text-secondary"></i>
+                                        <p class="mb-0">No transaction data available yet.</p>
+                                        <small>Add sample data using the SQL queries provided in the documentation.</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php else: ?>
+                                <?php 
+                                $total_debit = 0;
+                                $total_credit = 0;
+                                foreach ($transactions as $trans): 
+                                    $total_debit += $trans['total_debit'];
+                                    $total_credit += $trans['total_credit'];
+                                ?>
+                                <tr>
+                                    <td><strong><?php echo htmlspecialchars($trans['journal_no']); ?></strong></td>
+                                    <td><?php echo date('M d, Y', strtotime($trans['entry_date'])); ?></td>
+                                    <td>
+                                        <span class="badge bg-secondary"><?php echo htmlspecialchars($trans['type_code']); ?></span>
+                                        <?php echo htmlspecialchars($trans['type_name']); ?>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($trans['description'] ?? '-'); ?></td>
+                                    <td><?php echo htmlspecialchars($trans['reference_no'] ?? '-'); ?></td>
+                                    <td class="amount-debit text-end"><?php echo number_format($trans['total_debit'], 2); ?></td>
+                                    <td class="amount-credit text-end"><?php echo number_format($trans['total_credit'], 2); ?></td>
+                                    <td>
+                                        <?php
+                                        $status_class = [
+                                            'draft' => 'status-draft',
+                                            'posted' => 'status-posted',
+                                            'reversed' => 'status-reversed',
+                                            'voided' => 'status-voided'
+                                        ];
+                                        $class = $status_class[$trans['status']] ?? 'badge-secondary';
+                                        ?>
+                                        <span class="badge <?php echo $class; ?>"><?php echo ucfirst($trans['status']); ?></span>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($trans['created_by_name']); ?></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info btn-action" onclick="viewTransactionDetails(<?php echo $trans['id']; ?>)" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-primary btn-action" onclick="viewAuditTrail(<?php echo $trans['id']; ?>)" title="Audit Trail">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                         <tfoot class="table-light">
                             <tr>
                                 <th colspan="5" class="text-end">Total:</th>
-                                <th>0.00</th>
-                                <th>0.00</th>
+                                <th class="text-end"><?php echo number_format($total_debit ?? 0, 2); ?></th>
+                                <th class="text-end"><?php echo number_format($total_credit ?? 0, 2); ?></th>
                                 <th colspan="3"></th>
                             </tr>
                         </tfoot>
@@ -249,7 +409,7 @@ if ($apply_filters) {
                         <i class="fas fa-list"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 id="totalTransactions">0</h3>
+                        <h3 id="totalTransactions"><?php echo number_format($stats['total_transactions'] ?? 0); ?></h3>
                         <p>Total Transactions</p>
                     </div>
                 </div>
@@ -260,7 +420,7 @@ if ($apply_filters) {
                         <i class="fas fa-check-circle"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 id="postedTransactions">0</h3>
+                        <h3 id="postedTransactions"><?php echo number_format($stats['posted_count'] ?? 0); ?></h3>
                         <p>Posted</p>
                     </div>
                 </div>
@@ -271,7 +431,7 @@ if ($apply_filters) {
                         <i class="fas fa-file-alt"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 id="draftTransactions">0</h3>
+                        <h3 id="draftTransactions"><?php echo number_format($stats['draft_count'] ?? 0); ?></h3>
                         <p>Draft</p>
                     </div>
                 </div>
@@ -282,7 +442,7 @@ if ($apply_filters) {
                         <i class="fas fa-calendar-day"></i>
                     </div>
                     <div class="stat-content">
-                        <h3 id="todayTransactions">0</h3>
+                        <h3 id="todayTransactions"><?php echo number_format($stats['today_count'] ?? 0); ?></h3>
                         <p>Today's Transactions</p>
                     </div>
                 </div>

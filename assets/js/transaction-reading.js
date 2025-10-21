@@ -13,14 +13,21 @@
      * Initialize when DOM is ready
      */
     document.addEventListener('DOMContentLoaded', function() {
-        initDataTable();
+        // Check if table has data (PHP rendered)
+        const hasData = document.querySelector('#transactionTable tbody tr:not([colspan])') !== null;
+        
+        if (hasData) {
+            // Initialize DataTables with existing data
+            initDataTable();
+        }
+        
         initEventHandlers();
         checkUrlFilters();
-        loadTransactionData(); // Try to load data from database
     });
 
     /**
      * Initialize DataTable with enhanced features
+     * Only initialized if table has data rows
      */
     function initDataTable() {
         if (typeof $.fn.dataTable === 'undefined') {
@@ -35,52 +42,19 @@
                 pageLength: 25,
                 order: [[1, 'desc']], // Order by date descending
                 language: {
-                    emptyTable: '<div class="text-center text-muted py-5"><i class="fas fa-database fa-3x mb-3 d-block text-secondary"></i><p class="mb-0">No transaction data available yet.</p><small>Transaction records will appear here when data is added to the database.</small></div>',
                     info: "Showing _START_ to _END_ of _TOTAL_ transactions",
                     infoEmpty: "Showing 0 to 0 of 0 transactions",
                     infoFiltered: "(filtered from _MAX_ total transactions)",
                     lengthMenu: "Show _MENU_ transactions per page",
                     search: "Search transactions:",
-                    zeroRecords: "No matching transactions found"
+                    zeroRecords: "No matching transactions found",
+                    emptyTable: "No transaction data available"
                 },
                 columnDefs: [
-                    { orderable: false, targets: [9] } // Actions column not sortable
+                    { orderable: false, targets: [9] }, // Actions column not sortable
+                    { type: 'date', targets: [1] } // Date column
                 ],
-                // Add empty data array to prevent column count error
-                data: [],
-                columns: [
-                    { data: 'journal_no', defaultContent: '' },
-                    { data: 'entry_date', defaultContent: '' },
-                    { data: 'type_name', defaultContent: '' },
-                    { data: 'description', defaultContent: '' },
-                    { data: 'reference_no', defaultContent: '' },
-                    { 
-                        data: 'total_debit', 
-                        defaultContent: '0.00',
-                        className: 'amount-debit text-end'
-                    },
-                    { 
-                        data: 'total_credit', 
-                        defaultContent: '0.00',
-                        className: 'amount-credit text-end'
-                    },
-                    { 
-                        data: 'status', 
-                        defaultContent: '',
-                        render: function(data) {
-                            return data; // Already formatted as HTML
-                        }
-                    },
-                    { data: 'created_by_name', defaultContent: '' },
-                    { 
-                        data: 'actions', 
-                        defaultContent: '',
-                        orderable: false,
-                        render: function(data) {
-                            return data; // Already formatted as HTML
-                        }
-                    }
-                ]
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip'
             });
         }
     }
@@ -342,105 +316,8 @@
         }, 5000);
     }
 
-    /**
-     * Load transaction data from database
-     */
-    function loadTransactionData() {
-        // Build query string from current filters
-        const queryString = getCurrentFilters();
-        
-        // Attempt to fetch data from API
-        fetch('../modules/api/transaction-data.php?action=get_transactions&' + queryString)
-            .then(response => response.json())
-            .then(result => {
-                if (result.success && result.data.length > 0) {
-                    // Clear existing data and add new data
-                    dataTable.clear();
-                    
-                    // Format and add data
-                    result.data.forEach(transaction => {
-                        dataTable.row.add({
-                            journal_no: transaction.journal_no,
-                            entry_date: transaction.entry_date,
-                            type_name: transaction.type_name,
-                            description: transaction.description || '-',
-                            reference_no: transaction.reference_no || '-',
-                            total_debit: formatCurrency(transaction.total_debit),
-                            total_credit: formatCurrency(transaction.total_credit),
-                            status: formatStatus(transaction.status),
-                            created_by_name: transaction.created_by_name,
-                            actions: createActionButtons(transaction.id)
-                        });
-                    });
-                    
-                    dataTable.draw();
-                    
-                    // Update statistics
-                    loadStatistics();
-                }
-            })
-            .catch(error => {
-                // Silently fail if API is not available yet
-                console.log('Transaction data API not yet available:', error.message);
-            });
-    }
-
-    /**
-     * Load statistics for dashboard cards
-     */
-    function loadStatistics() {
-        fetch('../modules/api/transaction-data.php?action=get_statistics')
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    const stats = result.data;
-                    document.getElementById('totalTransactions').textContent = stats.total_transactions || 0;
-                    document.getElementById('postedTransactions').textContent = stats.posted_count || 0;
-                    document.getElementById('draftTransactions').textContent = stats.draft_count || 0;
-                    document.getElementById('todayTransactions').textContent = stats.today_count || 0;
-                }
-            })
-            .catch(error => {
-                console.log('Statistics API not yet available:', error.message);
-            });
-    }
-
-    /**
-     * Format currency value
-     */
-    function formatCurrency(value) {
-        return parseFloat(value).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-    }
-
-    /**
-     * Format status badge
-     */
-    function formatStatus(status) {
-        const badges = {
-            'draft': '<span class="badge status-draft">Draft</span>',
-            'posted': '<span class="badge status-posted">Posted</span>',
-            'reversed': '<span class="badge status-reversed">Reversed</span>',
-            'voided': '<span class="badge status-voided">Voided</span>'
-        };
-        return badges[status] || status;
-    }
-
-    /**
-     * Create action buttons for each row
-     */
-    function createActionButtons(transactionId) {
-        return `
-            <button class="btn btn-sm btn-info btn-action" onclick="viewTransactionDetails(${transactionId})" title="View Details">
-                <i class="fas fa-eye"></i>
-            </button>
-            <button class="btn btn-sm btn-primary btn-action" onclick="viewAuditTrail(${transactionId})" title="Audit Trail">
-                <i class="fas fa-history"></i>
-            </button>
-        `;
-    }
+    // Note: Transaction data is now loaded via PHP server-side rendering
+    // No need for AJAX data loading
 
     /**
      * Sample function to populate transaction data (for demo)
