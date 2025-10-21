@@ -1,0 +1,448 @@
+/* ========================================
+   GLOBAL STYLES
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #F5F1E8;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* ========================================
+   LOGIN PAGE STYLES
+   ======================================== */
+
+.login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0A3D3D 0%, #165A5A 100%);
+}
+
+.login-container {
+    width: 100%;
+    max-width: 450px;
+    padding: 20px;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    color: #FFF;
+}
+
+.logo-circle {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #C17817 0%, #E89B2E 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #FFF;
+}
+
+.logo-text h1 {
+    font-size: 24px;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+.logo-text p {
+    font-size: 12px;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.login-box {
+    background: #FFF;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.login-box h2 {
+    text-align: center;
+    color: #0A3D3D;
+    font-size: 20px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+.login-box h3 {
+    text-align: center;
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 30px;
+    font-weight: normal;
+}
+
+/* Alert Messages */
+.alert {
+    padding: 12px 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.alert-error {
+    background-color: #FFE6E6;
+    color: #D8000C;
+    border: 1px solid #D8000C;
+}
+
+.alert-success {
+    background-color: #E6FFED;
+    color: #0A5D0A;
+    border: 1px solid #0A5D0A;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #DDD;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #0A3D3D;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #0A3D3D 0%, #165A5A 100%);
+    color: #FFF;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(10, 61, 61, 0.3);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+.login-footer {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+}
+
+/* ========================================
+   DASHBOARD STYLES
+   ======================================== */
+
+/* Header */
+.main-header {
+    background-color: #FFF;
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-left .logo-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+}
+
+.header-left .logo-text h1 {
+    font-size: 18px;
+    color: #0A3D3D;
+}
+
+.header-left .logo-text p {
+    font-size: 10px;
+    color: #666;
+}
+
+/* Navigation */
+.main-nav {
+    display: flex;
+    gap: 40px;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 0;
+    transition: color 0.3s;
+    letter-spacing: 1px;
+}
+
+.nav-link:hover {
+    color: #C17817;
+}
+
+.nav-link.active {
+    color: #C17817;
+    border-bottom: 2px solid #C17817;
+}
+
+/* Header Right */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-name {
+    font-size: 14px;
+    color: #333;
+}
+
+.btn-logout {
+    padding: 8px 20px;
+    background-color: #D8000C;
+    color: #FFF;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.btn-logout:hover {
+    background-color: #A50009;
+}
+
+/* Page Title */
+.page-title {
+    background-color: #FFF;
+    padding: 20px 40px;
+    margin: 0;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.page-title h2 {
+    color: #0A3D3D;
+    font-size: 24px;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+/* Main Dashboard */
+.dashboard-main {
+    padding: 60px 40px;
+    min-height: calc(100vh - 200px);
+}
+
+/* Modules Container */
+.modules-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #0A3D3D 0%, #165A5A 100%);
+    padding: 60px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+/* Module Cards */
+.module-card {
+    background: #FFF;
+    border-radius: 12px;
+    padding: 30px 25px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.module-icon {
+    margin-bottom: 20px;
+    height: 60px;
+}
+
+.module-card h3 {
+    color: #0A3D3D;
+    font-size: 18px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.module-card p {
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.module-link {
+    display: inline-block;
+    padding: 10px 25px;
+    background-color: #0A3D3D;
+    color: #FFF;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+    margin-top: auto;
+}
+
+.module-link:hover {
+    background-color: #165A5A;
+}
+
+/* Footer */
+.main-footer {
+    background-color: #0A3D3D;
+    color: #FFF;
+    text-align: center;
+    padding: 20px;
+    font-size: 13px;
+}
+
+/* ========================================
+   MODULE CONTENT PAGES
+   ======================================== */
+
+.module-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.content-box {
+    background: #FFF;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.content-box h3 {
+    color: #0A3D3D;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.content-box p {
+    color: #666;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.btn-back {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 12px 30px;
+    background-color: #0A3D3D;
+    color: #FFF;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.btn-back:hover {
+    background-color: #165A5A;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+@media (max-width: 1024px) {
+    .modules-container {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+    }
+    
+    .main-nav {
+        gap: 20px;
+    }
+    
+    .modules-container {
+        grid-template-columns: 1fr;
+        padding: 30px;
+    }
+    
+    .dashboard-main {
+        padding: 30px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-box {
+        padding: 30px 20px;
+    }
+    
+    .nav-link {
+        font-size: 12px;
+    }
+    
+    .page-title h2 {
+        font-size: 18px;
+    }
+}
+
