@@ -13,135 +13,150 @@ $current_user = getCurrentUser();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Accounting and Finance System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="main-header">
-        <div class="header-left">
-            <div class="logo-circle">E</div>
-            <div class="logo-text">
-                <h1>EVERGREEN</h1>
-                <p>Secure. Invest. Achieve</p>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid px-4">
+            <div class="logo-section">
+                <div class="logo-circle">E</div>
+                <div class="logo-text">
+                    <h1>EVERGREEN</h1>
+                    <p>Secure. Invest. Achieve</p>
+                </div>
+            </div>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="dashboard.php">HOME</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.php">DASHBOARD</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#modules">MODULES</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <span class="user-info d-none d-lg-inline">
+                    <i class="fas fa-user-circle me-2"></i><?php echo htmlspecialchars($current_user['full_name']); ?>
+                </span>
+                <a href="logout.php" class="btn btn-logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
             </div>
         </div>
-        
-        <nav class="main-nav">
-            <a href="dashboard.php" class="nav-link active">HOME</a>
-            <a href="dashboard.php" class="nav-link">DASHBOARD</a>
-            <a href="#" class="nav-link">MODULES</a>
-        </nav>
-        
-        <div class="header-right">
-            <span class="user-name">Welcome, <?php echo htmlspecialchars($current_user['full_name']); ?></span>
-            <a href="logout.php" class="btn-logout">Logout</a>
-        </div>
-    </header>
+    </nav>
     
-    <!-- Page Title -->
-    <div class="page-title">
-        <h2>ACCOUNTING AND FINANCE</h2>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h2>ACCOUNTING AND FINANCE</h2>
+        </div>
     </div>
     
     <!-- Main Content -->
-    <main class="dashboard-main">
-        <div class="modules-container">
-            <!-- General Ledger Module -->
-            <div class="module-card">
-                <div class="module-icon">
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                        <rect x="15" y="10" width="30" height="40" rx="2" fill="#0A3D3D" stroke="#FFF" stroke-width="2"/>
-                        <line x1="20" y1="20" x2="40" y2="20" stroke="#FFF" stroke-width="2"/>
-                        <line x1="20" y1="28" x2="40" y2="28" stroke="#FFF" stroke-width="2"/>
-                        <line x1="20" y1="36" x2="40" y2="36" stroke="#FFF" stroke-width="2"/>
-                    </svg>
+    <main class="container py-4" id="modules">
+        <div class="row g-4">
+            <!-- General Ledger -->
+            <div class="col-lg-4 col-md-6">
+                <div class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3>General Ledger</h3>
+                    <p>Manage your accounts and financial records with precision</p>
+                    <a href="../modules/general-ledger.php" class="module-link">Access Module</a>
                 </div>
-                <h3>General Ledger</h3>
-                <p>Manage your accounts and financial records</p>
-                <a href="../modules/general-ledger.php" class="module-link">Access Module</a>
             </div>
             
-            <!-- Financial Reporting Module -->
-            <div class="module-card">
-                <div class="module-icon">
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                        <rect x="15" y="35" width="8" height="15" fill="#0A3D3D"/>
-                        <rect x="26" y="25" width="8" height="25" fill="#0A3D3D"/>
-                        <rect x="37" y="15" width="8" height="35" fill="#0A3D3D"/>
-                        <polyline points="19,35 30,25 41,15" stroke="#C17817" stroke-width="2" fill="none"/>
-                    </svg>
+            <!-- Financial Reporting -->
+            <div class="col-lg-4 col-md-6">
+                <div class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Financial Reporting</h3>
+                    <p>Generate and view comprehensive financial reports</p>
+                    <a href="../modules/financial-reporting.php" class="module-link">Access Module</a>
                 </div>
-                <h3>Financial Reporting</h3>
-                <p>Generate and view financial reports</p>
-                <a href="../modules/financial-reporting.php" class="module-link">Access Module</a>
             </div>
             
-            <!-- Loan Accounting Module -->
-            <div class="module-card">
-                <div class="module-icon">
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                        <rect x="12" y="20" width="36" height="25" rx="2" fill="#0A3D3D" stroke="#FFF" stroke-width="2"/>
-                        <rect x="12" y="18" width="36" height="4" fill="#0A3D3D"/>
-                        <circle cx="30" cy="32" r="6" fill="#FFF"/>
-                        <text x="30" y="36" text-anchor="middle" fill="#0A3D3D" font-size="10" font-weight="bold">$</text>
-                    </svg>
+            <!-- Loan Accounting -->
+            <div class="col-lg-4 col-md-6">
+                <div class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <h3>Loan Accounting</h3>
+                    <p>Track loans and manage lending efficiently</p>
+                    <a href="../modules/loan-accounting.php" class="module-link">Access Module</a>
                 </div>
-                <h3>Loan Accounting</h3>
-                <p>Track loans and manage lending</p>
-                <a href="../modules/loan-accounting.php" class="module-link">Access Module</a>
             </div>
             
-            <!-- Transaction Reading Module -->
-            <div class="module-card">
-                <div class="module-icon">
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                        <path d="M40 25 L50 30 L40 35" fill="#0A3D3D" stroke="#FFF" stroke-width="2"/>
-                        <path d="M20 35 L10 30 L20 25" fill="#0A3D3D" stroke="#FFF" stroke-width="2"/>
-                        <line x1="48" y1="30" x2="12" y2="30" stroke="#0A3D3D" stroke-width="3"/>
-                    </svg>
+            <!-- Transaction Reading -->
+            <div class="col-lg-4 col-md-6">
+                <div class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <h3>Transaction Reading</h3>
+                    <p>Record and track all financial transactions</p>
+                    <a href="../modules/transaction-reading.php" class="module-link">Access Module</a>
                 </div>
-                <h3>Transaction Reading</h3>
-                <p>Record and track financial transactions</p>
-                <a href="../modules/transaction-reading.php" class="module-link">Access Module</a>
             </div>
             
-            <!-- Expense Tracking Module -->
-            <div class="module-card">
-                <div class="module-icon">
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                        <rect x="15" y="15" width="30" height="35" rx="2" fill="#0A3D3D" stroke="#FFF" stroke-width="2"/>
-                        <rect x="15" y="15" width="30" height="8" fill="#0A3D3D"/>
-                        <line x1="20" y1="30" x2="40" y2="30" stroke="#FFF" stroke-width="2"/>
-                        <line x1="20" y1="37" x2="35" y2="37" stroke="#FFF" stroke-width="2"/>
-                        <line x1="20" y1="44" x2="32" y2="44" stroke="#FFF" stroke-width="2"/>
-                    </svg>
+            <!-- Expense Tracking -->
+            <div class="col-lg-4 col-md-6">
+                <div class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h3>Expense Tracking</h3>
+                    <p>Monitor and manage business expenses effectively</p>
+                    <a href="../modules/expense-tracking.php" class="module-link">Access Module</a>
                 </div>
-                <h3>Expense Tracking</h3>
-                <p>Monitor and manage expenses</p>
-                <a href="../modules/expense-tracking.php" class="module-link">Access Module</a>
             </div>
             
-            <!-- Payroll Management Module -->
-            <div class="module-card">
-                <div class="module-icon">
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                        <circle cx="30" cy="22" r="7" fill="#0A3D3D"/>
-                        <circle cx="20" cy="22" r="5" fill="#0A3D3D" opacity="0.7"/>
-                        <circle cx="40" cy="22" r="5" fill="#0A3D3D" opacity="0.7"/>
-                        <path d="M15 45 Q15 35 20 35 Q25 35 25 35 Q30 35 30 35 Q35 35 35 35 Q40 35 40 35 Q45 35 45 45 Z" fill="#0A3D3D"/>
-                    </svg>
+            <!-- Payroll Management -->
+            <div class="col-lg-4 col-md-6">
+                <div class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Payroll Management</h3>
+                    <p>Handle employee payroll and compensation</p>
+                    <a href="../modules/payroll-management.php" class="module-link">Access Module</a>
                 </div>
-                <h3>Payroll Management</h3>
-                <p>Handle employee payroll and compensation</p>
-                <a href="../modules/payroll-management.php" class="module-link">Access Module</a>
             </div>
         </div>
     </main>
     
     <!-- Footer -->
-    <footer class="main-footer">
-        <p>&copy; <?php echo date('Y'); ?> Evergreen Accounting & Finance. All rights reserved.</p>
+    <footer>
+        <div class="container">
+            <p class="mb-0">&copy; <?php echo date('Y'); ?> Evergreen Accounting & Finance. All rights reserved.</p>
+        </div>
     </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Dashboard JS -->
+    <script src="../assets/js/dashboard.js"></script>
 </body>
 </html>
-
