@@ -6,21 +6,25 @@ A comprehensive PHP-based accounting and finance management system designed for 
 
 ### Core Modules
 - **User Authentication & Role Management** - Admin role with full system access
+- **Transaction Reading & Management** - Complete financial transaction viewing and filtering
+- **General Ledger** - Double-entry bookkeeping system with journal entries
 - **Payroll Management** - Automated payroll processing with HRIS integration
-- **General Ledger** - Double-entry bookkeeping system
-- **Transaction Recording** - Complete financial transaction management
 - **Expense Tracking** - Business expense claims and reimbursements
 - **Financial Reporting** - Income Statement, Balance Sheet, Cash Flow Statement
+- **Loan Accounting** - Loan management and tracking system
 - **Chart of Accounts** - Comprehensive account management
 
 ### Key Capabilities
 - ✅ Modern, responsive UI with Bootstrap 5
-- ✅ Role-based access control
-- ✅ Real-time financial calculations
+- ✅ Role-based access control with session management
+- ✅ Real-time financial calculations and reporting
 - ✅ Automated journal entry generation
-- ✅ Comprehensive audit trails
-- ✅ Export functionality for reports
-- ✅ Mobile-friendly design
+- ✅ Comprehensive transaction filtering and search
+- ✅ Advanced audit trails and logging
+- ✅ Export functionality for reports and data
+- ✅ Mobile-friendly responsive design
+- ✅ API endpoints for data integration
+- ✅ Database connection testing utilities
 
 ## 📋 Requirements
 
@@ -41,10 +45,15 @@ C:\xampp\htdocs\Accounting and finance\
 1. Start XAMPP and ensure MySQL is running
 2. Open phpMyAdmin (http://localhost/phpmyadmin)
 3. Create a new database named `accounting_finance`
-4. Run the database initialization script:
-   ```
-   http://localhost/Accounting and finance/database/init.php
-   ```
+4. Import the database schema:
+   - Click on the `accounting_finance` database
+   - Go to the **Import** tab
+   - Choose the file `database/schema.sql`
+   - Click **Go** to execute
+5. Insert the admin user and sample data:
+   - Go to the **SQL** tab
+   - Copy and paste the contents of `database/insert_admin.sql`
+   - Click **Go** to execute
 
 ### 3. Configuration
 The database configuration is already set up in `config/database.php` for XAMPP default settings:
@@ -56,8 +65,13 @@ The database configuration is already set up in `config/database.php` for XAMPP 
 ### 4. Access the System
 Open your browser and navigate to:
 ```
+http://localhost/Accounting and finance/core/login.php
+```
+Or simply:
+```
 http://localhost/Accounting and finance/
 ```
+(The root index.php will redirect you to the login page)
 
 ## 👥 Demo Accounts
 
@@ -72,80 +86,136 @@ http://localhost/Accounting and finance/
 Accounting and finance/
 ├── assets/
 │   ├── css/
-│   │   ├── main.css          # Main application styles
-│   │   └── login.css         # Login page styles
-│   ├── js/
-│   │   ├── main.js           # Main application JavaScript
-│   │   └── login.js          # Login page JavaScript
-│   └── images/               # Image assets
+│   │   ├── dashboard.css         # Dashboard-specific styles
+│   │   ├── style.css             # Main application styles
+│   │   └── transaction-reading.css # Transaction module styles
+│   └── js/
+│       ├── dashboard.js          # Dashboard functionality
+│       └── transaction-reading.js # Transaction module JavaScript
 ├── config/
-│   └── database.php          # Database configuration
+│   └── database.php              # Database configuration
+├── core/
+│   ├── dashboard.php             # Main dashboard
+│   ├── index.php                 # Core index redirect
+│   ├── login.php                 # Login page
+│   └── logout.php                # Logout handler
 ├── database/
-│   ├── schema.sql            # Database schema
-│   └── init.php              # Database initialization
+│   ├── generate_hash.php         # Password hash generator utility
+│   ├── insert_admin.sql          # Admin user creation script
+│   ├── schema.sql                # Complete database schema
+│   └── Transaction_Data.sql      # Sample transaction data
+├── docs/
+│   ├── ACCOUNTING_FINANCE_SYSTEM_OVERVIEW.md # System overview
+│   ├── INSTALLATION_GUIDE.md     # Detailed installation guide
+│   ├── PATH_REFERENCE.md         # File path reference
+│   ├── README.md                 # This file
+│   └── SETUP.md                  # Quick setup guide
 ├── includes/
-│   └── auth.php              # Authentication system
+│   └── session.php               # Session management
 ├── modules/
-│   ├── payroll/
-│   │   └── payroll.php       # Payroll management
-│   ├── ledger/
-│   │   └── ledger.php        # General ledger
-│   ├── expenses/
-│   │   └── expenses.php      # Expense tracking
-│   └── reports/
-│       └── reports.php       # Financial reports
-├── admin/
-│   └── dashboard.php         # Admin dashboard
-├── accounting/
-│   └── dashboard.php         # Accounting officer dashboard
-├── index.php                 # Login page
-├── logout.php                # Logout handler
-├── unauthorized.php          # Access denied page
-└── README.md                 # This file
+│   ├── api/
+│   │   └── transaction-data.php  # Transaction data API
+│   ├── expense-tracking.php      # Expense tracking module
+│   ├── financial-reporting.php   # Financial reporting module
+│   ├── general-ledger.php        # General ledger module
+│   ├── loan-accounting.php        # Loan accounting module
+│   ├── payroll-management.php    # Payroll management module
+│   └── transaction-reading.php   # Transaction reading module
+├── utils/
+│   ├── fix_admin_password.php    # Admin password utility
+│   └── test_login.php            # Login testing utility
+├── index.php                     # Main entry point (redirects to core)
+├── test_db_connection.php        # Database connection test
+└── README.md                     # This file
 ```
 
 ## 🔧 System Architecture
 
 ### Database Schema
 The system uses a comprehensive MySQL database with the following key tables:
+
+#### User Management
 - `users` - User accounts and authentication
 - `roles` - User roles and permissions
-- `accounts` - Chart of accounts
+- `user_roles` - User-role assignments
+
+#### Employee Reference (HRIS Integration)
+- `employee_refs` - External employee reference data
+- `employee_benefits` - Employee benefit configurations
+- `employee_deductions` - Employee deduction settings
+
+#### Chart of Accounts
+- `account_types` - Account type classifications
+- `accounts` - Chart of accounts structure
+- `account_balances` - Real-time account balances
+
+#### Journal Entries
+- `journal_types` - Journal entry type definitions
 - `journal_entries` - Journal entry headers
 - `journal_lines` - Individual debit/credit lines
+- `fiscal_periods` - Accounting periods
+
+#### Payroll Management
 - `payroll_runs` - Payroll processing runs
 - `payslips` - Individual employee payslips
+- `payroll_items` - Payroll line items
+- `payroll_deductions` - Payroll deduction calculations
+
+#### Expense Management
+- `expense_categories` - Expense category definitions
 - `expense_claims` - Business expense claims
-- `loans` - Loan management
+- `expense_line_items` - Individual expense items
+
+#### Loan Management
+- `loans` - Loan account information
+- `loan_payments` - Loan payment records
+- `loan_schedules` - Payment schedules
+
+#### System Management
 - `audit_logs` - System audit trail
+- `system_settings` - Application configuration
 
 ### Key Features
 
-#### 1. Payroll Management
+#### 1. Transaction Reading & Management
+- Comprehensive transaction viewing interface
+- Advanced filtering by date, type, status, and account
+- Real-time transaction search and display
+- Export capabilities for transaction data
+- Detailed transaction line item viewing
+
+#### 2. Payroll Management
 - Automated payroll calculation
 - Integration with HRIS employee data
 - Government-mandated deductions (SSS, PhilHealth, Pag-IBIG)
 - Digital payslip generation
 - Journal entry automation
 
-#### 2. General Ledger
+#### 3. General Ledger
 - Double-entry bookkeeping system
 - Real-time account balances
 - Trial balance generation
 - Chart of accounts management
+- Journal entry processing
 
-#### 3. Financial Reporting
+#### 4. Financial Reporting
 - Income Statement (Profit & Loss)
 - Balance Sheet
 - Cash Flow Statement
 - Payroll Summary Reports
 - Expense Analysis Reports
 
-#### 4. Expense Tracking
+#### 5. Expense Tracking
 - Employee expense claims
 - Approval workflow
 - Category-based tracking
 - Automatic journal entry creation
+
+#### 6. Loan Accounting
+- Loan account management
+- Payment tracking and scheduling
+- Interest calculations
+- Loan status monitoring
 
 ## 🎨 UI/UX Features
 
@@ -211,6 +281,19 @@ The system is fully responsive and works on:
 - Mobile phones
 - All modern browsers
 
+## 🧪 Testing & Utilities
+
+### Database Testing
+- `test_db_connection.php` - Test database connectivity
+- `utils/test_login.php` - Test login functionality
+
+### System Utilities
+- `utils/fix_admin_password.php` - Reset admin password
+- `database/generate_hash.php` - Generate password hashes
+
+### API Endpoints
+- `modules/api/transaction-data.php` - Transaction data API for external integration
+
 ## 🛠️ Development
 
 ### Adding New Features
@@ -218,11 +301,24 @@ The system is fully responsive and works on:
 2. Follow the existing code structure and patterns
 3. Update the database schema if needed
 4. Add appropriate role-based access controls
+5. Include proper session management with `includes/session.php`
+6. Use the established database connection from `config/database.php`
 
 ### Customization
 - Modify CSS in `assets/css/` for styling changes
 - Update JavaScript in `assets/js/` for functionality
 - Extend modules for additional features
+- Use utility files in `utils/` for system maintenance
+
+## 📚 Documentation
+
+The system includes comprehensive documentation in the `docs/` directory:
+
+- **README.md** - This comprehensive overview
+- **SETUP.md** - Quick 5-minute setup guide
+- **INSTALLATION_GUIDE.md** - Detailed installation instructions
+- **PATH_REFERENCE.md** - File path reference guide
+- **ACCOUNTING_FINANCE_SYSTEM_OVERVIEW.md** - System architecture overview
 
 ## 📞 Support
 
@@ -253,6 +349,6 @@ This project is developed for educational and business purposes. Please ensure c
 
 ---
 
-**System Version:** 1.0.0  
+**System Version:** 1.1.0  
 **Last Updated:** January 2025  
 **Compatible with:** PHP 7.4+, MySQL 5.7+, XAMPP 3.3+
