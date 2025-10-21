@@ -4,7 +4,7 @@
  * This helps diagnose login issues
  */
 
-require_once 'config/database.php';
+require_once '../config/database.php';
 
 echo "<h2>Login Debug Tool</h2>";
 echo "<hr>";
@@ -51,7 +51,7 @@ try {
             echo "<li><strong>Username:</strong> admin</li>";
             echo "<li><strong>Password:</strong> admin123</li>";
             echo "</ul>";
-            echo "<p><a href='login.php' style='display: inline-block; padding: 10px 20px; background: #0A3D3D; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;'>Go to Login Page</a></p>";
+            echo "<p><a href='../core/login.php' style='display: inline-block; padding: 10px 20px; background: #0A3D3D; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;'>Go to Login Page</a></p>";
         } else {
             echo "<p style='color: red; font-size: 18px;'>❌ <strong>Password verification FAILED!</strong></p>";
             echo "<p>The password hash in the database doesn't match 'admin123'</p>";

@@ -23,13 +23,13 @@ $current_user = getCurrentUser();
             </div>
         </div>
         <nav class="main-nav">
-            <a href="../dashboard.php" class="nav-link">HOME</a>
-            <a href="../dashboard.php" class="nav-link">DASHBOARD</a>
+            <a href="../core/dashboard.php" class="nav-link">HOME</a>
+            <a href="../core/dashboard.php" class="nav-link">DASHBOARD</a>
             <a href="#" class="nav-link active">MODULES</a>
         </nav>
         <div class="header-right">
             <span class="user-name">Welcome, <?php echo htmlspecialchars($current_user['full_name']); ?></span>
-            <a href="../logout.php" class="btn-logout">Logout</a>
+            <a href="../core/logout.php" class="btn-logout">Logout</a>
         </div>
     </header>
     
@@ -43,7 +43,7 @@ $current_user = getCurrentUser();
                 <h3>Transaction Reading Module</h3>
                 <p>Record and track all financial transactions.</p>
                 <p style="margin-top: 20px; color: #666;">This module is under development.</p>
-                <a href="../dashboard.php" class="btn-back">Back to Dashboard</a>
+                <a href="../core/dashboard.php" class="btn-back">Back to Dashboard</a>
             </div>
         </div>
     </main>

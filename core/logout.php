@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/session.php';
+require_once '../includes/session.php';
 
 // Destroy session and redirect to login
 destroyUserSession();

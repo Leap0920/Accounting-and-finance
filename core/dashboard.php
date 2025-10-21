@@ -1,6 +1,6 @@
 <?php
-require_once 'config/database.php';
-require_once 'includes/session.php';
+require_once '../config/database.php';
+require_once '../includes/session.php';
 
 // Require login to access this page
 requireLogin();
@@ -13,7 +13,7 @@ $current_user = getCurrentUser();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Accounting and Finance System</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
     <!-- Header -->
@@ -58,7 +58,7 @@ $current_user = getCurrentUser();
                 </div>
                 <h3>General Ledger</h3>
                 <p>Manage your accounts and financial records</p>
-                <a href="modules/general-ledger.php" class="module-link">Access Module</a>
+                <a href="../modules/general-ledger.php" class="module-link">Access Module</a>
             </div>
             
             <!-- Financial Reporting Module -->
@@ -73,7 +73,7 @@ $current_user = getCurrentUser();
                 </div>
                 <h3>Financial Reporting</h3>
                 <p>Generate and view financial reports</p>
-                <a href="modules/financial-reporting.php" class="module-link">Access Module</a>
+                <a href="../modules/financial-reporting.php" class="module-link">Access Module</a>
             </div>
             
             <!-- Loan Accounting Module -->
@@ -88,7 +88,7 @@ $current_user = getCurrentUser();
                 </div>
                 <h3>Loan Accounting</h3>
                 <p>Track loans and manage lending</p>
-                <a href="modules/loan-accounting.php" class="module-link">Access Module</a>
+                <a href="../modules/loan-accounting.php" class="module-link">Access Module</a>
             </div>
             
             <!-- Transaction Reading Module -->
@@ -102,7 +102,7 @@ $current_user = getCurrentUser();
                 </div>
                 <h3>Transaction Reading</h3>
                 <p>Record and track financial transactions</p>
-                <a href="modules/transaction-reading.php" class="module-link">Access Module</a>
+                <a href="../modules/transaction-reading.php" class="module-link">Access Module</a>
             </div>
             
             <!-- Expense Tracking Module -->
@@ -118,7 +118,7 @@ $current_user = getCurrentUser();
                 </div>
                 <h3>Expense Tracking</h3>
                 <p>Monitor and manage expenses</p>
-                <a href="modules/expense-tracking.php" class="module-link">Access Module</a>
+                <a href="../modules/expense-tracking.php" class="module-link">Access Module</a>
             </div>
             
             <!-- Payroll Management Module -->
@@ -133,7 +133,7 @@ $current_user = getCurrentUser();
                 </div>
                 <h3>Payroll Management</h3>
                 <p>Handle employee payroll and compensation</p>
-                <a href="modules/payroll-management.php" class="module-link">Access Module</a>
+                <a href="../modules/payroll-management.php" class="module-link">Access Module</a>
             </div>
         </div>
     </main>

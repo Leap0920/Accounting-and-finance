@@ -24,7 +24,7 @@
 
 ### Step 4: Access the System
 1. Open your web browser
-2. Navigate to: `http://localhost/Accounting%20and%20finance/login.php`
+2. Navigate to: `http://localhost/Accounting%20and%20finance/core/index.php`
 
 ### Step 5: Login with Admin Credentials
 Use the following credentials to login:

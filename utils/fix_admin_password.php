@@ -4,7 +4,7 @@
  * This file will update the admin password in the database
  */
 
-require_once 'config/database.php';
+require_once '../config/database.php';
 
 // Set the new password
 $new_password = 'admin123';
@@ -56,7 +56,7 @@ try {
         echo "<li><strong>Username:</strong> admin</li>";
         echo "<li><strong>Password:</strong> admin123</li>";
         echo "</ul>";
-        echo "<p><a href='login.php' style='display: inline-block; padding: 10px 20px; background: #0A3D3D; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;'>Go to Login Page</a></p>";
+        echo "<p><a href='../core/login.php' style='display: inline-block; padding: 10px 20px; background: #0A3D3D; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px;'>Go to Login Page</a></p>";
         echo "<hr>";
         echo "<p style='color: #666; font-size: 12px;'>⚠️ <strong>Security Note:</strong> Delete this file after fixing the password!</p>";
     } else {
