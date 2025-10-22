@@ -533,8 +533,22 @@ $recent_payslips_result = $recent_payslips_stmt->get_result();
                                     if ($earnings_result && $earnings_result->num_rows > 0): 
                                         $earnings_result->data_seek(0);
                                         while($earning = $earnings_result->fetch_assoc()): 
-                                            // Use payslip data if available, otherwise use component value
-                                            $amount = $payslip_data ? ($payslip_data['gross_pay'] * 0.8) : $earning['value'];
+                                            // Use payslip JSON data if available for accurate Philippine calculations
+                                            $amount = 0;
+                                            if ($payslip_data && $payslip_data['payslip_json']) {
+                                                $payslip_json = json_decode($payslip_data['payslip_json'], true);
+                                                switch($earning['code']) {
+                                                    case 'BASIC': $amount = $payslip_json['basic_salary'] ?? $earning['value']; break;
+                                                    case 'COLA': $amount = $payslip_json['cola'] ?? $earning['value']; break;
+                                                    case 'MEAL': $amount = $payslip_json['meal_allowance'] ?? $earning['value']; break;
+                                                    case 'COMM': $amount = $payslip_json['comm_allowance'] ?? $earning['value']; break;
+                                                    case 'RICE': $amount = $payslip_json['rice_subsidy'] ?? $earning['value']; break;
+                                                    case 'TRANSPORT': $amount = $payslip_json['transport_allowance'] ?? $earning['value']; break;
+                                                    default: $amount = $earning['value']; break;
+                                                }
+                                            } else {
+                                                $amount = $earning['value'];
+                                            }
                                             $current_earnings_total += $amount;
                                     ?>
                                         <tr>
@@ -575,8 +589,22 @@ $recent_payslips_result = $recent_payslips_stmt->get_result();
                                     if ($deductions_result && $deductions_result->num_rows > 0): 
                                         $deductions_result->data_seek(0);
                                         while($deduction = $deductions_result->fetch_assoc()): 
-                                            // Use payslip data if available, otherwise use component value
-                                            $amount = $payslip_data ? ($payslip_data['total_deductions'] * 0.25) : $deduction['value'];
+                                            // Use payslip JSON data if available for accurate Philippine calculations
+                                            $amount = 0;
+                                            if ($payslip_data && $payslip_data['payslip_json']) {
+                                                $payslip_json = json_decode($payslip_data['payslip_json'], true);
+                                                switch($deduction['code']) {
+                                                    case 'SSS_EMP': $amount = $payslip_json['sss_emp'] ?? $deduction['value']; break;
+                                                    case 'PAGIBIG_EMP': $amount = $payslip_json['pagibig_emp'] ?? $deduction['value']; break;
+                                                    case 'PHILHEALTH_EMP': $amount = $payslip_json['philhealth_emp'] ?? $deduction['value']; break;
+                                                    case 'WHT': $amount = $payslip_json['withholding_tax'] ?? $deduction['value']; break;
+                                                    case 'LOAN': $amount = $payslip_json['loan_deduction'] ?? $deduction['value']; break;
+                                                    case 'UNIFORM': $amount = $payslip_json['uniform_deduction'] ?? $deduction['value']; break;
+                                                    default: $amount = $deduction['value']; break;
+                                                }
+                                            } else {
+                                                $amount = $deduction['value'];
+                                            }
                                             $current_deductions_total += $amount;
                                     ?>
                                         <tr>
@@ -676,8 +704,20 @@ $recent_payslips_result = $recent_payslips_stmt->get_result();
                                 if ($tax_result && $tax_result->num_rows > 0): 
                                     $tax_result->data_seek(0);
                                     while($tax = $tax_result->fetch_assoc()): 
-                                        // Calculate actual tax amount based on payslip or component
-                                        $tax_amount = $payslip_data ? ($payslip_data['total_deductions'] * 0.3) : $tax['value'];
+                                        // Use payslip JSON data if available for accurate Philippine calculations
+                                        $tax_amount = 0;
+                                        if ($payslip_data && $payslip_data['payslip_json']) {
+                                            $payslip_json = json_decode($payslip_data['payslip_json'], true);
+                                            switch($tax['code']) {
+                                                case 'SSS_TAX': $tax_amount = $payslip_json['sss_emp'] ?? $tax['value']; break;
+                                                case 'PAGIBIG_TAX': $tax_amount = $payslip_json['pagibig_emp'] ?? $tax['value']; break;
+                                                case 'PHILHEALTH_TAX': $tax_amount = $payslip_json['philhealth_emp'] ?? $tax['value']; break;
+                                                case 'WHT_TAX': $tax_amount = $payslip_json['withholding_tax'] ?? $tax['value']; break;
+                                                default: $tax_amount = $tax['value']; break;
+                                            }
+                                        } else {
+                                            $tax_amount = $tax['value'];
+                                        }
                                         $employee_tax_total += $tax_amount;
                                 ?>
                                     <tr>
@@ -708,8 +748,22 @@ $recent_payslips_result = $recent_payslips_stmt->get_result();
                                 if ($employer_contrib_result && $employer_contrib_result->num_rows > 0): 
                                     $employer_contrib_result->data_seek(0);
                                     while($contrib = $employer_contrib_result->fetch_assoc()): 
-                                        // Calculate actual employer contribution
-                                        $contrib_amount = $payslip_data ? ($payslip_data['gross_pay'] * 0.15) : $contrib['value'];
+                                        // Calculate actual employer contribution based on Philippine rates
+                                        $contrib_amount = 0;
+                                        if ($payslip_data && $payslip_data['payslip_json']) {
+                                            $payslip_json = json_decode($payslip_data['payslip_json'], true);
+                                            $basic_salary = $payslip_json['basic_salary'] ?? 0;
+                                            switch($contrib['code']) {
+                                                case 'SSS_ER': $contrib_amount = $basic_salary * 0.085; break; // 8.5% of basic
+                                                case 'PAGIBIG_ER': $contrib_amount = 100; break; // Fixed ₱100
+                                                case 'PHILHEALTH_ER': $contrib_amount = $basic_salary * 0.03; break; // 3% of basic
+                                                case 'SSS_EC': $contrib_amount = 10; break; // Fixed ₱10
+                                                case '13TH_MONTH_ER': $contrib_amount = $basic_salary * 0.0833; break; // 8.33% of basic
+                                                default: $contrib_amount = $contrib['value']; break;
+                                            }
+                                        } else {
+                                            $contrib_amount = $contrib['value'];
+                                        }
                                         $employer_total += $contrib_amount;
                                 ?>
                                     <tr>
