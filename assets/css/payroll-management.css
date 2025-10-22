@@ -950,6 +950,216 @@ body {
 }
 
 /* ========================================
+   PAYSLIP HEADER
+   ======================================== */
+
+.payslip-header {
+    background: var(--bg-cream);
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid var(--border-color);
+}
+
+.tax-period-info {
+    background: var(--bg-cream);
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid var(--border-color);
+}
+
+/* ========================================
+   SECTION SUBTITLES
+   ======================================== */
+
+.section-subtitle {
+    color: var(--primary-teal);
+    font-weight: 600;
+    font-size: 16px;
+    margin: 25px 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--bg-cream);
+}
+
+/* ========================================
+   TAX SUMMARY
+   ======================================== */
+
+.tax-total-row {
+    background: var(--bg-cream);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.tax-total-row td {
+    padding: 15px 20px !important;
+    border-top: 2px solid var(--primary-teal) !important;
+}
+
+.tax-summary-box {
+    background: linear-gradient(135deg, var(--primary-teal), var(--secondary-teal));
+    color: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 30px;
+}
+
+.tax-summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    font-size: 15px;
+}
+
+.tax-summary-item:last-child {
+    border-bottom: none;
+}
+
+.tax-summary-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+    margin-top: 15px;
+    border-top: 2px solid rgba(255,255,255,0.3);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.tax-summary-item .label,
+.tax-summary-total .label {
+    font-weight: 600;
+}
+
+.tax-summary-item .value,
+.tax-summary-total .value {
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+/* ========================================
+   EXPENSE SUMMARY CARDS
+   ======================================== */
+
+.expense-summary-cards {
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.summary-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-teal), var(--secondary-teal));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.summary-content {
+    flex: 1;
+}
+
+.summary-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.summary-value {
+    font-size: 18px;
+    color: var(--text-dark);
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+/* ========================================
+   CATEGORY BADGES
+   ======================================== */
+
+.category-badge {
+    background: var(--bg-cream);
+    color: var(--text-dark);
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+}
+
+/* ========================================
+   ACTION BUTTONS
+   ======================================== */
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-action {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.btn-view {
+    background: var(--primary-teal);
+    color: white;
+}
+
+.btn-view:hover {
+    background: var(--secondary-teal);
+    transform: scale(1.1);
+}
+
+.btn-edit {
+    background: var(--accent-gold);
+    color: white;
+}
+
+.btn-edit:hover {
+    background: var(--light-gold);
+    transform: scale(1.1);
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+/* ========================================
    UTILITY CLASSES
    ======================================== */
 

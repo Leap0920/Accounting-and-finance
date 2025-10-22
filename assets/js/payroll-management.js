@@ -459,6 +459,42 @@ function printPayslip() {
     window.print();
 }
 
+/**
+ * View expense details
+ */
+function viewExpense(expenseId) {
+    console.log('Viewing expense:', expenseId);
+    // TODO: Implement expense detail modal
+    alert('View expense details for ID: ' + expenseId);
+}
+
+/**
+ * Edit expense
+ */
+function editExpense(expenseId) {
+    console.log('Editing expense:', expenseId);
+    // TODO: Implement expense edit modal
+    alert('Edit expense for ID: ' + expenseId);
+}
+
+/**
+ * View transaction details
+ */
+function viewTransaction(transactionId) {
+    console.log('Viewing transaction:', transactionId);
+    // TODO: Implement transaction detail modal
+    alert('View transaction details for ID: ' + transactionId);
+}
+
+/**
+ * View loan details
+ */
+function viewLoan(loanId) {
+    console.log('Viewing loan:', loanId);
+    // TODO: Implement loan detail modal
+    alert('View loan details for ID: ' + loanId);
+}
+
 // Export functions for global access
 window.filterExpenses = filterExpenses;
 window.filterTransactions = filterTransactions;
@@ -469,4 +505,8 @@ window.exportLoans = exportLoans;
 window.printPayslip = printPayslip;
 window.changeEmployee = changeEmployee;
 window.toggleFilters = toggleFilters;
+window.viewExpense = viewExpense;
+window.editExpense = editExpense;
+window.viewTransaction = viewTransaction;
+window.viewLoan = viewLoan;
 

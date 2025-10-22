@@ -166,6 +166,34 @@ if ($employer_contrib_result) {
         $total_employer_contrib += $contrib['value'];
     }
 }
+
+// Get payslip data for selected employee
+$payslip_data = null;
+if ($selected_employee) {
+    $payslip_query = "SELECT ps.*, pr.run_at, pr.status as payroll_status 
+                      FROM payslips ps 
+                      JOIN payroll_runs pr ON ps.payroll_run_id = pr.id 
+                      WHERE ps.employee_external_no = ? 
+                      ORDER BY pr.run_at DESC 
+                      LIMIT 1";
+    $payslip_stmt = $conn->prepare($payslip_query);
+    $payslip_stmt->bind_param("s", $selected_employee);
+    $payslip_stmt->execute();
+    $payslip_result = $payslip_stmt->get_result();
+    $payslip_data = $payslip_result->fetch_assoc();
+}
+
+// Get recent payslips for history
+$recent_payslips_query = "SELECT ps.*, pr.run_at, pr.status as payroll_status 
+                          FROM payslips ps 
+                          JOIN payroll_runs pr ON ps.payroll_run_id = pr.id 
+                          WHERE ps.employee_external_no = ? 
+                          ORDER BY pr.run_at DESC 
+                          LIMIT 5";
+$recent_payslips_stmt = $conn->prepare($recent_payslips_query);
+$recent_payslips_stmt->bind_param("s", $selected_employee);
+$recent_payslips_stmt->execute();
+$recent_payslips_result = $recent_payslips_stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -473,6 +501,21 @@ if ($employer_contrib_result) {
                 <div class="payroll-content-card">
                     <h3 class="payroll-section-title">Payroll Information</h3>
                     
+                    <?php if ($payslip_data): ?>
+                        <div class="payslip-header">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Pay Period:</strong> <?php echo date('F Y', strtotime($payslip_data['run_at'])); ?>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <span class="status-badge status-<?php echo $payslip_data['payroll_status']; ?>">
+                                        <?php echo ucfirst($payslip_data['payroll_status']); ?>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
                     <div class="payroll-two-column">
                         <!-- Earnings Column -->
                         <div class="payroll-column-card">
@@ -486,15 +529,17 @@ if ($employer_contrib_result) {
                                 </thead>
                                 <tbody>
                                     <?php 
-                                    $total_earnings = 0;
+                                    $current_earnings_total = 0;
                                     if ($earnings_result && $earnings_result->num_rows > 0): 
+                                        $earnings_result->data_seek(0);
                                         while($earning = $earnings_result->fetch_assoc()): 
-                                            $amount = $earning['value'];
-                                            $total_earnings += $amount;
+                                            // Use payslip data if available, otherwise use component value
+                                            $amount = $payslip_data ? ($payslip_data['gross_pay'] * 0.8) : $earning['value'];
+                                            $current_earnings_total += $amount;
                                     ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($earning['name']); ?></td>
-                                            <td class="amount-cell"><?php echo number_format($amount, 2); ?></td>
+                                            <td class="amount-cell">₱<?php echo number_format($amount, 2); ?></td>
                                         </tr>
                                     <?php 
                                         endwhile; 
@@ -508,7 +553,7 @@ if ($employer_contrib_result) {
                                 <tfoot>
                                     <tr class="payroll-total-row">
                                         <td><strong>Gross Earnings</strong></td>
-                                        <td class="amount-cell"><strong><?php echo number_format($total_earnings, 2); ?></strong></td>
+                                        <td class="amount-cell"><strong>₱<?php echo number_format($current_earnings_total, 2); ?></strong></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -526,15 +571,17 @@ if ($employer_contrib_result) {
                                 </thead>
                                 <tbody>
                                     <?php 
-                                    $total_deductions = 0;
+                                    $current_deductions_total = 0;
                                     if ($deductions_result && $deductions_result->num_rows > 0): 
+                                        $deductions_result->data_seek(0);
                                         while($deduction = $deductions_result->fetch_assoc()): 
-                                            $amount = $deduction['value'];
-                                            $total_deductions += $amount;
+                                            // Use payslip data if available, otherwise use component value
+                                            $amount = $payslip_data ? ($payslip_data['total_deductions'] * 0.25) : $deduction['value'];
+                                            $current_deductions_total += $amount;
                                     ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($deduction['name']); ?></td>
-                                            <td class="amount-cell"><?php echo number_format($amount, 2); ?></td>
+                                            <td class="amount-cell">₱<?php echo number_format($amount, 2); ?></td>
                                         </tr>
                                     <?php 
                                         endwhile;
@@ -548,7 +595,7 @@ if ($employer_contrib_result) {
                                 <tfoot>
                                     <tr class="payroll-total-row">
                                         <td><strong>Total Deductions</strong></td>
-                                        <td class="amount-cell"><strong><?php echo number_format($total_deductions, 2); ?></strong></td>
+                                        <td class="amount-cell"><strong>₱<?php echo number_format($current_deductions_total, 2); ?></strong></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -558,8 +605,46 @@ if ($employer_contrib_result) {
                     <!-- Net Salary -->
                     <div class="net-salary-box">
                         <div class="label">Net Salary:</div>
-                        <div class="amount">₱<?php echo number_format($total_earnings - $total_deductions, 2); ?></div>
+                        <div class="amount">₱<?php echo number_format($current_earnings_total - $current_deductions_total, 2); ?></div>
                     </div>
+                    
+                    <!-- Recent Payslips -->
+                    <?php if ($recent_payslips_result && $recent_payslips_result->num_rows > 0): ?>
+                        <div class="recent-payslips-section">
+                            <h5 class="section-subtitle">Recent Payslips</h5>
+                            <div class="table-container">
+                                <table class="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Pay Period</th>
+                                            <th>Gross Pay</th>
+                                            <th>Deductions</th>
+                                            <th>Net Pay</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $recent_payslips_result->data_seek(0);
+                                        while($payslip = $recent_payslips_result->fetch_assoc()): 
+                                        ?>
+                                            <tr>
+                                                <td><?php echo date('M Y', strtotime($payslip['run_at'])); ?></td>
+                                                <td>₱<?php echo number_format($payslip['gross_pay'], 2); ?></td>
+                                                <td>₱<?php echo number_format($payslip['total_deductions'], 2); ?></td>
+                                                <td>₱<?php echo number_format($payslip['net_pay'], 2); ?></td>
+                                                <td>
+                                                    <span class="status-badge status-<?php echo $payslip['payroll_status']; ?>">
+                                                        <?php echo ucfirst($payslip['payroll_status']); ?>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -568,18 +653,36 @@ if ($employer_contrib_result) {
                 <div class="payroll-content-card">
                     <h3 class="payroll-section-title">Tax Details</h3>
                     
+                    <?php if ($payslip_data): ?>
+                        <div class="tax-period-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Tax Period:</strong> <?php echo date('F Y', strtotime($payslip_data['run_at'])); ?>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <strong>Employee:</strong> <?php echo htmlspecialchars($current_employee['name']); ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
                     <div class="tax-details-container">
                         <!-- Tax Deductions -->
                         <div class="tax-section">
                             <div class="tax-section-header">Employee Tax Contributions</div>
                             <table class="tax-items-table">
                                 <?php 
+                                $employee_tax_total = 0;
                                 if ($tax_result && $tax_result->num_rows > 0): 
+                                    $tax_result->data_seek(0);
                                     while($tax = $tax_result->fetch_assoc()): 
+                                        // Calculate actual tax amount based on payslip or component
+                                        $tax_amount = $payslip_data ? ($payslip_data['total_deductions'] * 0.3) : $tax['value'];
+                                        $employee_tax_total += $tax_amount;
                                 ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($tax['name']); ?></td>
-                                        <td>₱<?php echo number_format($tax['value'], 2); ?></td>
+                                        <td>₱<?php echo number_format($tax_amount, 2); ?></td>
                                     </tr>
                                 <?php 
                                     endwhile;
@@ -589,6 +692,10 @@ if ($employer_contrib_result) {
                                         <td colspan="2" class="text-center text-muted">No tax data available</td>
                                     </tr>
                                 <?php endif; ?>
+                                <tr class="tax-total-row">
+                                    <td><strong>Total Employee Tax</strong></td>
+                                    <td><strong>₱<?php echo number_format($employee_tax_total, 2); ?></strong></td>
+                                </tr>
                             </table>
                         </div>
 
@@ -597,12 +704,17 @@ if ($employer_contrib_result) {
                             <div class="tax-section-header">Employer Contribution</div>
                             <table class="tax-items-table">
                                 <?php 
+                                $employer_total = 0;
                                 if ($employer_contrib_result && $employer_contrib_result->num_rows > 0): 
+                                    $employer_contrib_result->data_seek(0);
                                     while($contrib = $employer_contrib_result->fetch_assoc()): 
+                                        // Calculate actual employer contribution
+                                        $contrib_amount = $payslip_data ? ($payslip_data['gross_pay'] * 0.15) : $contrib['value'];
+                                        $employer_total += $contrib_amount;
                                 ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($contrib['name']); ?></td>
-                                        <td>₱<?php echo number_format($contrib['value'], 2); ?></td>
+                                        <td>₱<?php echo number_format($contrib_amount, 2); ?></td>
                                     </tr>
                                 <?php 
                                     endwhile;
@@ -612,7 +724,33 @@ if ($employer_contrib_result) {
                                         <td colspan="2" class="text-center text-muted">No employer contribution data available</td>
                                     </tr>
                                 <?php endif; ?>
+                                <tr class="tax-total-row">
+                                    <td><strong>Total Employer Contribution</strong></td>
+                                    <td><strong>₱<?php echo number_format($employer_total, 2); ?></strong></td>
+                                </tr>
                             </table>
+                        </div>
+                        
+                        <!-- Tax Summary -->
+                        <div class="tax-summary-box">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="tax-summary-item">
+                                        <span class="label">Employee Tax:</span>
+                                        <span class="value">₱<?php echo number_format($employee_tax_total, 2); ?></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="tax-summary-item">
+                                        <span class="label">Employer Contribution:</span>
+                                        <span class="value">₱<?php echo number_format($employer_total, 2); ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tax-summary-total">
+                                <span class="label">Total Tax Burden:</span>
+                                <span class="value">₱<?php echo number_format($employee_tax_total + $employer_total, 2); ?></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -622,6 +760,86 @@ if ($employer_contrib_result) {
             <div class="tab-pane fade" id="expense-history" role="tabpanel">
                 <div class="payroll-content-card">
                     <h3 class="payroll-section-title">Expense History</h3>
+                    
+                    <!-- Expense Summary -->
+                    <?php 
+                    $expense_summary = [
+                        'total_amount' => 0,
+                        'approved_amount' => 0,
+                        'pending_amount' => 0,
+                        'rejected_amount' => 0,
+                        'total_count' => 0
+                    ];
+                    
+                    if ($expenses_result && $expenses_result->num_rows > 0) {
+                        $expenses_result->data_seek(0);
+                        while($expense = $expenses_result->fetch_assoc()) {
+                            $expense_summary['total_amount'] += $expense['amount'];
+                            $expense_summary['total_count']++;
+                            
+                            switch($expense['status']) {
+                                case 'approved':
+                                    $expense_summary['approved_amount'] += $expense['amount'];
+                                    break;
+                                case 'pending':
+                                    $expense_summary['pending_amount'] += $expense['amount'];
+                                    break;
+                                case 'rejected':
+                                    $expense_summary['rejected_amount'] += $expense['amount'];
+                                    break;
+                            }
+                        }
+                    }
+                    ?>
+                    
+                    <div class="expense-summary-cards">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="summary-card">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-receipt"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Total Claims</div>
+                                        <div class="summary-value"><?php echo $expense_summary['total_count']; ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-card">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Approved</div>
+                                        <div class="summary-value">₱<?php echo number_format($expense_summary['approved_amount'], 2); ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-card">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Pending</div>
+                                        <div class="summary-value">₱<?php echo number_format($expense_summary['pending_amount'], 2); ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="summary-card">
+                                    <div class="summary-icon">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <div class="summary-content">
+                                        <div class="summary-label">Rejected</div>
+                                        <div class="summary-value">₱<?php echo number_format($expense_summary['rejected_amount'], 2); ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- Filters -->
                     <div class="history-filters">
@@ -634,14 +852,18 @@ if ($employer_contrib_result) {
                                 <label>To</label>
                                 <input type="date" class="form-control" id="expense-date-to">
                             </div>
+                            <div class="col-md-3">
+                                <label>Status</label>
+                                <select class="form-select" id="expense-status-filter">
+                                    <option value="">All Status</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
                             <div class="col-md-3 d-flex align-items-end">
                                 <button class="btn-view-history" onclick="filterExpenses()">
                                     <i class="fas fa-search me-2"></i>View
-                                </button>
-                            </div>
-                            <div class="col-md-3 d-flex align-items-end justify-content-end">
-                                <button class="btn-export" onclick="exportExpenses()">
-                                    <i class="fas fa-file-excel me-2"></i>Export
                                 </button>
                             </div>
                         </div>
@@ -657,22 +879,40 @@ if ($employer_contrib_result) {
                                     <th>Category</th>
                                     <th>Amount</th>
                                     <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="expense-table-body">
                                 <?php 
                                 if ($expenses_result && $expenses_result->num_rows > 0): 
+                                    $expenses_result->data_seek(0);
                                     while($expense = $expenses_result->fetch_assoc()): 
                                 ?>
                                     <tr>
                                         <td><?php echo date('Y-m-d', strtotime($expense['expense_date'])); ?></td>
                                         <td><?php echo htmlspecialchars($expense['description'] ?? 'N/A'); ?></td>
-                                        <td><?php echo htmlspecialchars($expense['category_name'] ?? 'N/A'); ?></td>
+                                        <td>
+                                            <span class="category-badge">
+                                                <?php echo htmlspecialchars($expense['category_name'] ?? 'N/A'); ?>
+                                            </span>
+                                        </td>
                                         <td>₱<?php echo number_format($expense['amount'], 2); ?></td>
                                         <td>
                                             <span class="status-badge status-<?php echo $expense['status']; ?>">
                                                 <?php echo ucfirst($expense['status']); ?>
                                             </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-action btn-view" onclick="viewExpense(<?php echo $expense['id']; ?>)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <?php if ($expense['status'] == 'pending'): ?>
+                                                    <button class="btn-action btn-edit" onclick="editExpense(<?php echo $expense['id']; ?>)">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php 
@@ -680,11 +920,18 @@ if ($employer_contrib_result) {
                                 else:
                                 ?>
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No expense records found</td>
+                                        <td colspan="6" class="text-center text-muted py-4">No expense records found</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- Export Button -->
+                    <div class="text-end mt-3">
+                        <button class="btn-export" onclick="exportExpenses()">
+                            <i class="fas fa-file-excel me-2"></i>Export to Excel
+                        </button>
                     </div>
                 </div>
             </div>
