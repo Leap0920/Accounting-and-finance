@@ -56,13 +56,13 @@ $current_user = getCurrentUser();
                             <i class="fas fa-th-large me-1"></i>Modules
                         </a>
                         <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="modulesDropdown">
-                            <li><a class="dropdown-item" href="general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
-                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-line me-2"></i>Financial Reporting</a></li>
-                            <li><a class="dropdown-item" href="loan-accounting.php"><i class="fas fa-hand-holding-usd me-2"></i>Loan Accounting</a></li>
+                            <li><a class="dropdown-item" href="../modules/general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
+                            <li><a class="dropdown-item" href="../modules/financial-reporting.php"><i class="fas fa-chart-line me-2"></i>Financial Reporting</a></li>
+                            <li><a class="dropdown-item" href="../modules/loan-accounting.php"><i class="fas fa-hand-holding-usd me-2"></i>Loan Accounting</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="transaction-reading.php"><i class="fas fa-exchange-alt me-2"></i>Transaction Reading</a></li>
-                            <li><a class="dropdown-item" href="expense-tracking.php"><i class="fas fa-receipt me-2"></i>Expense Tracking</a></li>
-                            <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-users me-2"></i>Payroll Management</a></li>
+                            <li><a class="dropdown-item" href="../modules/transaction-reading.php"><i class="fas fa-exchange-alt me-2"></i>Transaction Reading</a></li>
+                            <li><a class="dropdown-item" href="../modules/expense-tracking.php"><i class="fas fa-receipt me-2"></i>Expense Tracking</a></li>
+                            <li><a class="dropdown-item" href="../modules/payroll-management.php"><i class="fas fa-users me-2"></i>Payroll Management</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -70,10 +70,10 @@ $current_user = getCurrentUser();
                             <i class="fas fa-file-alt me-1"></i>Reports
                         </a>
                         <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="reportsDropdown">
-                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-bar me-2"></i>Financial Statements</a></li>
-                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-money-bill-wave me-2"></i>Cash Flow Report</a></li>
-                            <li><a class="dropdown-item" href="expense-tracking.php"><i class="fas fa-clipboard-list me-2"></i>Expense Summary</a></li>
-                            <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
+                            <li><a class="dropdown-item" href="../modules/financial-reporting.php"><i class="fas fa-chart-bar me-2"></i>Financial Statements</a></li>
+                            <li><a class="dropdown-item" href="../modules/financial-reporting.php"><i class="fas fa-money-bill-wave me-2"></i>Cash Flow Report</a></li>
+                            <li><a class="dropdown-item" href="../modules/expense-tracking.php"><i class="fas fa-clipboard-list me-2"></i>Expense Summary</a></li>
+                            <li><a class="dropdown-item" href="../modules/payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -263,22 +263,31 @@ $current_user = getCurrentUser();
          * Load bin data
          */
         function loadBinData() {
-            $.ajax({
-                url: 'api/compliance-reports.php',
-                method: 'GET',
-                data: { action: 'get_all_bin_items' },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        updateBinDisplay(response.data);
-                        updateBinStats(response.data);
-                    } else {
-                        showBinError(response.error || 'Failed to load bin data');
-                    }
-                },
-                error: function(xhr, status, error) {
-                    showBinError('Connection error. Please try again.');
-                }
+            // Load both compliance reports and transactions from bin
+            $.when(
+                $.ajax({
+                    url: 'api/compliance-reports.php',
+                    method: 'GET',
+                    data: { action: 'get_all_bin_items' },
+                    dataType: 'json'
+                }),
+                $.ajax({
+                    url: 'api/transaction-data.php',
+                    method: 'GET',
+                    data: { action: 'get_bin_items' },
+                    dataType: 'json'
+                })
+            ).done(function(complianceResponse, transactionResponse) {
+                const complianceData = complianceResponse[0].success ? complianceResponse[0].data : [];
+                const transactionData = transactionResponse[0].success ? transactionResponse[0].data : [];
+                
+                // Combine all bin items
+                const allItems = [...complianceData, ...transactionData];
+                
+                updateBinDisplay(allItems);
+                updateBinStats(allItems);
+            }).fail(function() {
+                showBinError('Connection error. Please try again.');
             });
         }
 
@@ -592,6 +601,8 @@ $current_user = getCurrentUser();
         function restoreItem(itemType, itemId) {
             if (itemType === 'compliance_report') {
                 restoreReport(itemId);
+            } else if (itemType === 'journal_entry') {
+                restoreTransaction(itemId);
             } else {
                 showNotification('Restore functionality for ' + itemType + ' not yet implemented.', 'info');
             }
@@ -600,6 +611,8 @@ $current_user = getCurrentUser();
         function permanentDeleteItem(itemType, itemId) {
             if (itemType === 'compliance_report') {
                 permanentDeleteReport(itemId);
+            } else if (itemType === 'journal_entry') {
+                permanentDeleteTransaction(itemId);
             } else {
                 showNotification('Permanent delete functionality for ' + itemType + ' not yet implemented.', 'info');
             }
@@ -686,6 +699,66 @@ $current_user = getCurrentUser();
 
         function formatDateTime(dateString) {
             return new Date(dateString).toLocaleString();
+        }
+
+        /**
+         * Restore transaction from bin
+         */
+        function restoreTransaction(transactionId) {
+            if (!confirm('Are you sure you want to restore this transaction? It will be moved back to active transactions.')) {
+                return;
+            }
+
+            $.ajax({
+                url: 'api/transaction-data.php',
+                method: 'POST',
+                data: { 
+                    action: 'restore_transaction',
+                    transaction_id: transactionId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Transaction restored successfully!', 'success');
+                        loadBinData(); // Refresh bin
+                    } else {
+                        showNotification('Restore failed: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Restore failed: ' + error, 'error');
+                }
+            });
+        }
+
+        /**
+         * Permanently delete transaction
+         */
+        function permanentDeleteTransaction(transactionId) {
+            if (!confirm('WARNING: Are you sure you want to permanently delete this transaction? This action cannot be undone.')) {
+                return;
+            }
+
+            $.ajax({
+                url: 'api/transaction-data.php',
+                method: 'POST',
+                data: { 
+                    action: 'permanent_delete_transaction',
+                    transaction_id: transactionId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Transaction permanently deleted!', 'success');
+                        loadBinData(); // Refresh bin
+                    } else {
+                        showNotification('Permanent delete failed: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Permanent delete failed: ' + error, 'error');
+                }
+            });
         }
     </script>
 </body>

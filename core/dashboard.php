@@ -70,10 +70,17 @@ $current_user = getCurrentUser();
                             <li><a class="dropdown-item" href="../modules/payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#modules">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-cog me-1"></i>Settings
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="settingsDropdown">
+                            <li><a class="dropdown-item" href="../modules/bin-station.php"><i class="fas fa-trash-alt me-2"></i>Bin Station</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>General Settings</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>User Management</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-database me-2"></i>Database Settings</a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>

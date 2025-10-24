@@ -43,5 +43,4 @@ function destroyUserSession() {
     session_unset();
     session_destroy();
 }
-?>
 

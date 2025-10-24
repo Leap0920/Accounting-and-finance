@@ -43,7 +43,7 @@ $sql = "SELECT
         INNER JOIN journal_types jt ON je.journal_type_id = jt.id
         INNER JOIN users u ON je.created_by = u.id
         LEFT JOIN fiscal_periods fp ON je.fiscal_period_id = fp.id
-        WHERE 1=1";
+        WHERE je.status != 'deleted'";
 
 $params = [];
 $types = '';
@@ -120,7 +120,8 @@ try {
                     SUM(CASE WHEN status = 'posted' THEN 1 ELSE 0 END) as posted_count,
                     SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft_count,
                     SUM(CASE WHEN DATE(entry_date) = CURDATE() THEN 1 ELSE 0 END) as today_count
-                  FROM journal_entries";
+                  FROM journal_entries 
+                  WHERE status != 'deleted'";
     
     $result = $conn->query($stats_sql);
     if ($result) {
@@ -176,13 +177,13 @@ try {
                             <i class="fas fa-th-large me-1"></i>Modules
                         </a>
                         <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="modulesDropdown">
-                            <li><a class="dropdown-item" href="../modules/general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
-                            <li><a class="dropdown-item" href="../modules/financial-reporting.php"><i class="fas fa-chart-line me-2"></i>Financial Reporting</a></li>
-                            <li><a class="dropdown-item" href="../modules/loan-accounting.php"><i class="fas fa-hand-holding-usd me-2"></i>Loan Accounting</a></li>
+                            <li><a class="dropdown-item" href="general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-line me-2"></i>Financial Reporting</a></li>
+                            <li><a class="dropdown-item" href="loan-accounting.php"><i class="fas fa-hand-holding-usd me-2"></i>Loan Accounting</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item active" href="../modules/transaction-reading.php"><i class="fas fa-exchange-alt me-2"></i>Transaction Reading</a></li>
-                            <li><a class="dropdown-item" href="../modules/expense-tracking.php"><i class="fas fa-receipt me-2"></i>Expense Tracking</a></li>
-                            <li><a class="dropdown-item" href="../modules/payroll-management.php"><i class="fas fa-users me-2"></i>Payroll Management</a></li>
+                            <li><a class="dropdown-item active" href="transaction-reading.php"><i class="fas fa-exchange-alt me-2"></i>Transaction Reading</a></li>
+                            <li><a class="dropdown-item" href="expense-tracking.php"><i class="fas fa-receipt me-2"></i>Expense Tracking</a></li>
+                            <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-users me-2"></i>Payroll Management</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -190,16 +191,23 @@ try {
                             <i class="fas fa-file-alt me-1"></i>Reports
                         </a>
                         <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="reportsDropdown">
-                            <li><a class="dropdown-item" href="../modules/financial-reporting.php"><i class="fas fa-chart-bar me-2"></i>Financial Statements</a></li>
-                            <li><a class="dropdown-item" href="../modules/financial-reporting.php"><i class="fas fa-money-bill-wave me-2"></i>Cash Flow Report</a></li>
-                            <li><a class="dropdown-item" href="../modules/expense-tracking.php"><i class="fas fa-clipboard-list me-2"></i>Expense Summary</a></li>
-                            <li><a class="dropdown-item" href="../modules/payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-bar me-2"></i>Financial Statements</a></li>
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-money-bill-wave me-2"></i>Cash Flow Report</a></li>
+                            <li><a class="dropdown-item" href="expense-tracking.php"><i class="fas fa-clipboard-list me-2"></i>Expense Summary</a></li>
+                            <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#modules">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-cog me-1"></i>Settings
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="settingsDropdown">
+                            <li><a class="dropdown-item" href="bin-station.php"><i class="fas fa-trash-alt me-2"></i>Bin Station</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>General Settings</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>User Management</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-database me-2"></i>Database Settings</a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>
@@ -461,6 +469,9 @@ try {
                                         </button>
                                         <button class="btn btn-sm btn-primary btn-action" onclick="viewAuditTrail(<?php echo $trans['id']; ?>)" title="Audit Trail">
                                             <i class="fas fa-history"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger btn-action" onclick="deleteTransaction(<?php echo $trans['id']; ?>)" title="Delete Transaction">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
                                 </tr>

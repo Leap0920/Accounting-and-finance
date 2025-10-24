@@ -241,6 +241,58 @@
     };
 
     /**
+     * Delete transaction (soft delete - move to bin)
+     */
+    window.deleteTransaction = function(transactionId) {
+        console.log('Delete transaction called with ID:', transactionId);
+        
+        if (!confirm('Are you sure you want to delete this transaction? It will be moved to the bin station where you can restore it later.')) {
+            return;
+        }
+
+        // Show loading
+        showLoading('Moving transaction to bin...');
+
+        // Make AJAX call to delete transaction
+        const url = '../modules/api/transaction-data.php';
+        const data = `action=soft_delete_transaction&transaction_id=${transactionId}`;
+        
+        console.log('Making request to:', url);
+        console.log('With data:', data);
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: data
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            hideLoading();
+            if (data.success) {
+                showNotification('Transaction moved to bin successfully!', 'success');
+                // Reload the page to refresh the table
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showNotification('Delete failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            hideLoading();
+            showNotification('Delete failed: ' + error.message, 'error');
+        });
+    };
+
+    /**
      * Get current filter parameters
      */
     function getCurrentFilters() {
