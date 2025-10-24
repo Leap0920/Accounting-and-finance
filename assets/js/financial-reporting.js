@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load compliance reports
     loadComplianceReports();
+    
+    // Load recent tax reports
+    loadRecentTaxReports();
 });
 
 /**
@@ -460,10 +463,784 @@ function exportReport(format) {
  * Open tax report modal
  */
 function openTaxReportModal(taxType) {
-    alert('Tax Report: ' + taxType + '\n\nThis feature generates specific tax reports for compliance.\n\nComing soon!');
+    // Set default dates based on tax type
+    let defaultStart, defaultEnd, title, description;
+    
+    switch(taxType) {
+        case 'income-tax':
+            title = 'Income Tax Report';
+            description = 'Generate annual income tax return with revenue and expense breakdown';
+            defaultStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]; // Jan 1
+            defaultEnd = new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0]; // Dec 31
+            break;
+        case 'payroll-tax':
+            title = 'Payroll Tax Report';
+            description = 'Generate quarterly payroll tax returns with employee withholdings';
+            defaultStart = new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1).toISOString().split('T')[0]; // 3 months ago
+            defaultEnd = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 0).toISOString().split('T')[0]; // Last month end
+            break;
+        case 'sales-tax':
+            title = 'Sales Tax Report';
+            description = 'Generate monthly sales tax returns with VAT collection details';
+            defaultStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0]; // Last month start
+            defaultEnd = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 0).toISOString().split('T')[0]; // Last month end
+            break;
+        default:
+            alert('Invalid tax report type');
+            return;
+    }
+    
+    // Create modal HTML
+    const modalHtml = `
+        <div class="modal fade" id="taxReportModal" tabindex="-1" aria-labelledby="taxReportModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="taxReportModalLabel">
+                            <i class="fas fa-file-invoice me-2"></i>${title}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <p class="text-muted">${description}</p>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="taxPeriodStart" class="form-label">Period Start</label>
+                                <input type="date" class="form-control" id="taxPeriodStart" value="${defaultStart}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="taxPeriodEnd" class="form-control">Period End</label>
+                                <input type="date" class="form-control" id="taxPeriodEnd" value="${defaultEnd}">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <label for="taxReportFormat" class="form-label">Export Format</label>
+                            <select class="form-select" id="taxReportFormat">
+                                <option value="json">View in Browser</option>
+                                <option value="pdf">PDF Document</option>
+                                <option value="excel">Excel Spreadsheet</option>
+                                <option value="csv">CSV File</option>
+                            </select>
+                        </div>
+                        
+                        <div id="taxReportPreview" class="mt-4" style="display: none;">
+                            <h6>Report Preview</h6>
+                            <div class="border rounded p-3 bg-light" id="taxReportContent">
+                                <!-- Report content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="generateTaxReport('${taxType}')">
+                            <i class="fas fa-file-download me-2"></i>Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('taxReportModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('taxReportModal'));
+    modal.show();
+    
+    // Store tax type for later use
+    window.currentTaxType = taxType;
+    
+    // Add event listener to reset button state when modal is closed
+    const modalElement = document.getElementById('taxReportModal');
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        // Reset any stuck button states
+        const generateBtn = modalElement.querySelector('button[onclick*="generateTaxReport"]');
+        if (generateBtn) {
+            generateBtn.innerHTML = '<i class="fas fa-file-download me-2"></i>Generate Report';
+            generateBtn.disabled = false;
+        }
+    });
     
     // Log to audit trail
-    logAuditAction('Generate Tax Report', taxType);
+    logAuditAction('Open Tax Report Modal', taxType);
+}
+
+/**
+ * Generate tax report
+ */
+function generateTaxReport(taxType) {
+    const periodStart = document.getElementById('taxPeriodStart').value;
+    const periodEnd = document.getElementById('taxPeriodEnd').value;
+    const format = document.getElementById('taxReportFormat').value;
+    
+    if (!periodStart || !periodEnd) {
+        alert('Please select both start and end dates.');
+        return;
+    }
+    
+    if (new Date(periodStart) > new Date(periodEnd)) {
+        alert('Start date cannot be after end date.');
+        return;
+    }
+    
+    // Show loading state
+    const generateBtn = event.target;
+    const originalContent = generateBtn.innerHTML;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+    generateBtn.disabled = true;
+    
+    // Determine API action based on tax type
+    let action;
+    switch(taxType) {
+        case 'income-tax':
+            action = 'generate_income_tax';
+            break;
+        case 'payroll-tax':
+            action = 'generate_payroll_tax';
+            break;
+        case 'sales-tax':
+            action = 'generate_sales_tax';
+            break;
+        default:
+            alert('Invalid tax report type');
+            generateBtn.innerHTML = originalContent;
+            generateBtn.disabled = false;
+            return;
+    }
+    
+    // Make API call
+    $.ajax({
+        url: 'api/tax-reports.php',
+        method: 'POST',
+        data: {
+            action: action,
+            period_start: periodStart,
+            period_end: periodEnd,
+            format: format
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                if (format === 'json') {
+                    // Show report in modal
+                    displayTaxReport(response);
+                } else {
+                    // Download file
+                    downloadTaxReport(response, format);
+                }
+                
+                // Log to audit trail
+                logAuditAction('Generate Tax Report', taxType, {
+                    period: periodStart + ' to ' + periodEnd,
+                    format: format
+                });
+                
+                // Close modal and reset button state
+                const modal = bootstrap.Modal.getInstance(document.getElementById('taxReportModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Ensure button state is reset
+                const generateBtn = document.querySelector('#taxReportModal button[onclick*="generateTaxReport"]');
+                if (generateBtn) {
+                    generateBtn.innerHTML = '<i class="fas fa-file-download me-2"></i>Generate Report';
+                    generateBtn.disabled = false;
+                }
+                
+                // Refresh recent reports table
+                loadRecentTaxReports();
+                
+            } else {
+                alert('Error generating report: ' + response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            alert('Error generating report: ' + error);
+            console.error('Tax report error:', xhr.responseText);
+        },
+        complete: function() {
+            // Reset button state
+            generateBtn.innerHTML = originalContent;
+            generateBtn.disabled = false;
+        }
+    });
+}
+
+/**
+ * Display tax report in modal
+ */
+function displayTaxReport(report) {
+    let reportHtml = `
+        <div class="tax-report-display">
+            <div class="report-header mb-4">
+                <h4 class="text-primary">${report.report_type}</h4>
+                <p class="text-muted mb-0">Period: ${report.period}</p>
+                <p class="text-muted mb-0">Generated: ${new Date(report.generated_at).toLocaleString()}</p>
+            </div>
+    `;
+    
+    // Generate content based on report type
+    if (report.report_type === 'Income Tax Report') {
+        reportHtml += `
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-success">Total Revenue</h5>
+                            <h3 class="text-success">₱${formatNumber(report.total_revenue)}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-danger">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-danger">Total Expenses</h5>
+                            <h3 class="text-danger">₱${formatNumber(report.total_expenses)}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-primary">Taxable Income</h5>
+                            <h3 class="text-primary">₱${formatNumber(report.taxable_income)}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-warning">Estimated Tax (${report.tax_rate}%)</h5>
+                            <h3 class="text-warning">₱${formatNumber(report.estimated_tax)}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-calendar-alt me-2"></i>
+                <strong>Filing Deadline:</strong> ${new Date(report.filing_deadline).toLocaleDateString()}
+            </div>
+        `;
+        
+        if (report.breakdown && report.breakdown.length > 0) {
+            reportHtml += `
+                <h5 class="mt-4">Revenue & Expense Breakdown</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Account Code</th>
+                                <th>Account Name</th>
+                                <th>Category</th>
+                                <th>Revenue</th>
+                                <th>Expense</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            report.breakdown.forEach(item => {
+                reportHtml += `
+                    <tr>
+                        <td>${item.code}</td>
+                        <td>${item.name}</td>
+                        <td><span class="badge bg-${item.category === 'revenue' ? 'success' : 'danger'}">${item.category}</span></td>
+                        <td>${item.revenue_amount > 0 ? '₱' + formatNumber(item.revenue_amount) : '-'}</td>
+                        <td>${item.expense_amount > 0 ? '₱' + formatNumber(item.expense_amount) : '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            reportHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+    } else if (report.report_type === 'Payroll Tax Report') {
+        reportHtml += `
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-primary">Total Gross Pay</h5>
+                            <h3 class="text-primary">₱${formatNumber(report.total_gross_pay)}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-danger">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-danger">Total Deductions</h5>
+                            <h3 class="text-danger">₱${formatNumber(report.total_deductions)}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-success">Total Net Pay</h5>
+                            <h3 class="text-success">₱${formatNumber(report.total_net_pay)}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h5 class="mt-4">Tax Withholdings</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">SSS (11%)</h6>
+                            <h5 class="text-info">₱${formatNumber(report.tax_withholdings.sss_contribution)}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">PhilHealth (3%)</h6>
+                            <h5 class="text-info">₱${formatNumber(report.tax_withholdings.philhealth_contribution)}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Pag-IBIG (2%)</h6>
+                            <h5 class="text-info">₱${formatNumber(report.tax_withholdings.pagibig_contribution)}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Withholding Tax (15%)</h6>
+                            <h5 class="text-warning">₱${formatNumber(report.tax_withholdings.withholding_tax)}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-users me-2"></i>Total Tax Withheld: ₱${formatNumber(report.tax_withholdings.total_withheld)}</h6>
+                <p class="mb-0">From ${report.total_employees} employees</p>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-calendar-alt me-2"></i>
+                <strong>Filing Deadline:</strong> ${new Date(report.filing_deadline).toLocaleDateString()}
+            </div>
+        `;
+        
+    } else if (report.report_type === 'Sales Tax Report') {
+        reportHtml += `
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-primary">Gross Sales</h5>
+                            <h3 class="text-primary">₱${formatNumber(report.total_gross_sales)}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-success">VAT Collected (${report.vat_rate}%)</h5>
+                            <h3 class="text-success">₱${formatNumber(report.total_vat_collected)}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-info">Net Sales</h5>
+                            <h3 class="text-info">₱${formatNumber(report.net_sales)}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-shopping-cart me-2"></i>
+                <strong>Total Transactions:</strong> ${report.total_transactions}
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-calendar-alt me-2"></i>
+                <strong>Filing Deadline:</strong> ${new Date(report.filing_deadline).toLocaleDateString()}
+            </div>
+        `;
+    }
+    
+    reportHtml += `
+        </div>
+    `;
+    
+    // Show report in a new modal
+    const reportModalHtml = `
+        <div class="modal fade" id="taxReportDisplayModal" tabindex="-1" aria-labelledby="taxReportDisplayModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="taxReportDisplayModalLabel">
+                            <i class="fas fa-file-invoice me-2"></i>${report.report_type}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${reportHtml}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="downloadTaxReport(${JSON.stringify(report).replace(/"/g, '&quot;')}, 'pdf')">
+                            <i class="fas fa-download me-2"></i>Download PDF
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="downloadTaxReport(${JSON.stringify(report).replace(/"/g, '&quot;')}, 'excel')">
+                            <i class="fas fa-file-excel me-2"></i>Download Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('taxReportDisplayModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', reportModalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('taxReportDisplayModal'));
+    modal.show();
+}
+
+/**
+ * Download tax report
+ */
+function downloadTaxReport(report, format) {
+    // For now, create a simple text download
+    // In a real implementation, you would call the API with format parameter
+    let content = `${report.report_type}\n`;
+    content += `Period: ${report.period}\n`;
+    content += `Generated: ${report.generated_at}\n\n`;
+    
+    if (report.report_type === 'Income Tax Report') {
+        content += `Total Revenue: ₱${formatNumber(report.total_revenue)}\n`;
+        content += `Total Expenses: ₱${formatNumber(report.total_expenses)}\n`;
+        content += `Taxable Income: ₱${formatNumber(report.taxable_income)}\n`;
+        content += `Estimated Tax: ₱${formatNumber(report.estimated_tax)}\n`;
+        content += `Filing Deadline: ${report.filing_deadline}\n`;
+    } else if (report.report_type === 'Payroll Tax Report') {
+        content += `Total Gross Pay: ₱${formatNumber(report.total_gross_pay)}\n`;
+        content += `Total Deductions: ₱${formatNumber(report.total_deductions)}\n`;
+        content += `Total Net Pay: ₱${formatNumber(report.total_net_pay)}\n`;
+        content += `Total Tax Withheld: ₱${formatNumber(report.tax_withholdings.total_withheld)}\n`;
+        content += `Filing Deadline: ${report.filing_deadline}\n`;
+    } else if (report.report_type === 'Sales Tax Report') {
+        content += `Gross Sales: ₱${formatNumber(report.total_gross_sales)}\n`;
+        content += `VAT Collected: ₱${formatNumber(report.total_vat_collected)}\n`;
+        content += `Net Sales: ₱${formatNumber(report.net_sales)}\n`;
+        content += `Filing Deadline: ${report.filing_deadline}\n`;
+    }
+    
+    // Create and download file
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${report.report_type.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    showNotification(`Tax report downloaded as ${format.toUpperCase()}`, 'success');
+}
+
+/**
+ * Format number with commas
+ */
+function formatNumber(num) {
+    return new Intl.NumberFormat('en-PH').format(num);
+}
+
+/**
+ * Show notification
+ */
+function showNotification(message, type = 'info') {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-danger' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const notification = `
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 5000);
+}
+
+/**
+ * Load recent tax reports
+ */
+function loadRecentTaxReports() {
+    $.ajax({
+        url: 'api/tax-reports.php',
+        method: 'GET',
+        data: { action: 'get_recent_reports' },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                updateTaxReportsTable(response.reports);
+            } else {
+                console.error('Error loading recent reports:', response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading recent reports:', error);
+        }
+    });
+}
+
+/**
+ * Refresh tax reports table
+ */
+function refreshTaxReports() {
+    const refreshBtn = document.getElementById('refreshTaxReportsBtn');
+    const icon = refreshBtn.querySelector('i');
+    const originalText = refreshBtn.innerHTML;
+    
+    // Show loading state
+    refreshBtn.disabled = true;
+    icon.className = 'fas fa-spinner fa-spin me-1';
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+    
+    // Load recent reports
+    $.ajax({
+        url: 'api/tax-reports.php',
+        method: 'GET',
+        data: { action: 'get_recent_reports' },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                updateTaxReportsTable(response.reports);
+                
+                // Show success feedback
+                icon.className = 'fas fa-check me-1';
+                refreshBtn.innerHTML = '<i class="fas fa-check me-1"></i>Refreshed!';
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    refreshBtn.disabled = false;
+                    refreshBtn.innerHTML = originalText;
+                }, 2000);
+                
+                // Log to audit trail
+                logAuditAction('Refresh Tax Reports', 'Recent Tax Reports');
+                
+            } else {
+                console.error('Error loading recent reports:', response.message);
+                showRefreshError();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading recent reports:', error);
+            showRefreshError();
+        }
+    });
+}
+
+/**
+ * Show refresh error
+ */
+function showRefreshError() {
+    const refreshBtn = document.getElementById('refreshTaxReportsBtn');
+    const icon = refreshBtn.querySelector('i');
+    
+    // Show error state
+    icon.className = 'fas fa-exclamation-triangle me-1';
+    refreshBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Error';
+    refreshBtn.classList.add('btn-outline-danger');
+    refreshBtn.classList.remove('btn-outline-primary');
+    
+    // Reset button after 3 seconds
+    setTimeout(() => {
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Refresh';
+        refreshBtn.classList.remove('btn-outline-danger');
+        refreshBtn.classList.add('btn-outline-primary');
+    }, 3000);
+}
+
+/**
+ * Update tax reports table
+ */
+function updateTaxReportsTable(reports) {
+    const tbody = document.querySelector('#taxReportsTable tbody');
+    
+    if (reports.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    <i class="fas fa-file-invoice fa-2x mb-2"></i>
+                    <p>No tax reports generated yet</p>
+                    <small>Generate your first tax report using the buttons above</small>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let html = '';
+    reports.forEach(report => {
+        const statusBadge = report.status === 'generated' ? 
+            '<span class="badge bg-success">Generated</span>' :
+            report.status === 'downloaded' ?
+            '<span class="badge bg-info">Downloaded</span>' :
+            '<span class="badge bg-secondary">Archived</span>';
+        
+        html += `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas ${getTaxReportIcon(report.report_type)} me-2 text-primary"></i>
+                        <div>
+                            <strong>${report.report_type}</strong>
+                            <br><small class="text-muted">${report.summary}</small>
+                        </div>
+                    </div>
+                </td>
+                <td><small class="text-muted">${report.period}</small></td>
+                <td>
+                    <small class="text-muted">${formatDateTime(report.generated_date)}</small>
+                    <br><small class="text-muted">by ${report.generated_by}</small>
+                </td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewTaxReport(${report.id})" title="View Report">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="downloadTaxReportById(${report.id})" title="Download">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+/**
+ * Get tax report icon
+ */
+function getTaxReportIcon(reportType) {
+    if (reportType.includes('Income')) return 'fa-file-invoice';
+    if (reportType.includes('Payroll')) return 'fa-users';
+    if (reportType.includes('Sales')) return 'fa-shopping-cart';
+    return 'fa-file-invoice';
+}
+
+/**
+ * View tax report by ID
+ */
+function viewTaxReport(reportId) {
+    $.ajax({
+        url: 'api/tax-reports.php',
+        method: 'GET',
+        data: { action: 'get_tax_report', report_id: reportId },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Convert the stored data back to the format expected by displayTaxReport
+                const report = {
+                    report_type: response.report.report_type,
+                    period: response.report.period,
+                    generated_at: response.report.generated_date,
+                    ...response.report.data
+                };
+                displayTaxReport(report);
+            } else {
+                alert('Error loading report: ' + response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            alert('Error loading report: ' + error);
+        }
+    });
+}
+
+/**
+ * Download tax report by ID
+ */
+function downloadTaxReportById(reportId) {
+    $.ajax({
+        url: 'api/tax-reports.php',
+        method: 'GET',
+        data: { action: 'get_tax_report', report_id: reportId },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                const report = {
+                    report_type: response.report.report_type,
+                    period: response.report.period,
+                    generated_at: response.report.generated_date,
+                    ...response.report.data
+                };
+                downloadTaxReport(report, 'pdf');
+            } else {
+                alert('Error loading report: ' + response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            alert('Error loading report: ' + error);
+        }
+    });
+}
+
+/**
+ * Format date and time
+ */
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 }
 
 /**

@@ -578,6 +578,41 @@ $current_user = getCurrentUser();
             <div class="tab-pane fade" id="tax-reports" role="tabpanel">
                 <div class="section-header">
                     <h4>Tax Reporting</h4>
+                    <p class="text-muted">Generate comprehensive tax reports for compliance and filing</p>
+                </div>
+
+                <!-- Tax Summary Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar-alt fa-2x text-warning mb-3"></i>
+                                <h6 class="card-title">Income Tax Deadline</h6>
+                                <h5 class="text-warning"><?php echo date('M d, Y', strtotime(date('Y') . '-04-15')); ?></h5>
+                                <small class="text-muted">Annual Filing</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <i class="fas fa-users fa-2x text-info mb-3"></i>
+                                <h6 class="card-title">Payroll Tax Deadline</h6>
+                                <h5 class="text-info"><?php echo date('M d, Y', strtotime('+1 month')); ?></h5>
+                                <small class="text-muted">Quarterly Filing</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shopping-cart fa-2x text-success mb-3"></i>
+                                <h6 class="card-title">Sales Tax Deadline</h6>
+                                <h5 class="text-success"><?php echo date('M d, Y', strtotime('+20 days')); ?></h5>
+                                <small class="text-muted">Monthly Filing</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="report-cards-grid">
@@ -591,9 +626,22 @@ $current_user = getCurrentUser();
                         </div>
                         <h5>Income Tax Report</h5>
                         <div class="report-details">
-                            <p>Annual Income Tax Return</p>
-                            <p>Filing Deadline:</p>
-                            <p>Estimated Tax:</p>
+                            <p><i class="fas fa-calendar-alt me-2"></i>Annual Income Tax Return</p>
+                            <p><i class="fas fa-clock me-2"></i>Filing Deadline: <?php echo date('M d, Y', strtotime(date('Y') . '-04-15')); ?></p>
+                            <p><i class="fas fa-calculator me-2"></i>Estimated Tax: ₱<?php 
+                                // Calculate estimated tax from current year data
+                                $revenue_sql = "SELECT SUM(jl.credit - jl.debit) as total_revenue FROM journal_lines jl INNER JOIN journal_entries je ON jl.journal_entry_id = je.id INNER JOIN accounts a ON jl.account_id = a.id INNER JOIN account_types at ON a.type_id = at.id WHERE je.entry_date >= '" . date('Y-01-01') . "' AND je.status = 'posted' AND at.category = 'revenue'";
+                                $revenue_result = $conn->query($revenue_sql);
+                                $total_revenue = $revenue_result->fetch_assoc()['total_revenue'] ?? 0;
+                                
+                                $expense_sql = "SELECT SUM(jl.debit - jl.credit) as total_expenses FROM journal_lines jl INNER JOIN journal_entries je ON jl.journal_entry_id = je.id INNER JOIN accounts a ON jl.account_id = a.id INNER JOIN account_types at ON a.type_id = at.id WHERE je.entry_date >= '" . date('Y-01-01') . "' AND je.status = 'posted' AND at.category = 'expense'";
+                                $expense_result = $conn->query($expense_sql);
+                                $total_expenses = $expense_result->fetch_assoc()['total_expenses'] ?? 0;
+                                
+                                $taxable_income = max(0, $total_revenue - $total_expenses);
+                                $estimated_tax = $taxable_income * 0.30;
+                                echo number_format($estimated_tax, 2);
+                            ?></p>
                         </div>
                         <button class="btn btn-generate mt-3" onclick="openTaxReportModal('income-tax')">GENERATE</button>
                     </div>
@@ -608,9 +656,15 @@ $current_user = getCurrentUser();
                         </div>
                         <h5>Payroll Tax Report</h5>
                         <div class="report-details">
-                            <p>Quarterly Payroll Tax Returns</p>
-                            <p>Next Filing:</p>
-                            <p>Total Withheld:</p>
+                            <p><i class="fas fa-calendar-alt me-2"></i>Quarterly Payroll Tax Returns</p>
+                            <p><i class="fas fa-clock me-2"></i>Next Filing: <?php echo date('M d, Y', strtotime('+1 month')); ?></p>
+                            <p><i class="fas fa-money-bill-wave me-2"></i>Total Withheld: ₱<?php 
+                                // Calculate total payroll withholdings
+                                $payroll_sql = "SELECT SUM(total_deductions) as total_withheld FROM payroll_runs WHERE run_at >= '" . date('Y-m-01', strtotime('-3 months')) . "'";
+                                $payroll_result = $conn->query($payroll_sql);
+                                $total_withheld = $payroll_result->fetch_assoc()['total_withheld'] ?? 0;
+                                echo number_format($total_withheld, 2);
+                            ?></p>
                         </div>
                         <button class="btn btn-generate mt-3" onclick="openTaxReportModal('payroll-tax')">GENERATE</button>
                     </div>
@@ -625,11 +679,59 @@ $current_user = getCurrentUser();
                         </div>
                         <h5>Sales Tax Report</h5>
                         <div class="report-details">
-                            <p>Monthly Sales Tax Returns</p>
-                            <p>Next Filing:</p>
-                            <p>Total Collected:</p>
+                            <p><i class="fas fa-calendar-alt me-2"></i>Monthly Sales Tax Returns</p>
+                            <p><i class="fas fa-clock me-2"></i>Next Filing: <?php echo date('M d, Y', strtotime('+20 days')); ?></p>
+                            <p><i class="fas fa-receipt me-2"></i>Total Collected: ₱<?php 
+                                // Calculate VAT collected
+                                $vat_sql = "SELECT SUM(jl.credit) as vat_collected FROM journal_lines jl INNER JOIN journal_entries je ON jl.journal_entry_id = je.id INNER JOIN accounts a ON jl.account_id = a.id WHERE je.entry_date >= '" . date('Y-m-01', strtotime('-1 month')) . "' AND je.status = 'posted' AND (a.name LIKE '%VAT%' OR a.name LIKE '%tax%')";
+                                $vat_result = $conn->query($vat_sql);
+                                $vat_collected = $vat_result->fetch_assoc()['vat_collected'] ?? 0;
+                                echo number_format($vat_collected, 2);
+                            ?></p>
                         </div>
                         <button class="btn btn-generate mt-3" onclick="openTaxReportModal('sales-tax')">GENERATE</button>
+                    </div>
+                </div>
+
+                <!-- Tax Reports History -->
+                <div class="mt-5">
+                    <div class="section-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5>Recent Tax Reports</h5>
+                                <p class="text-muted">View and download previously generated tax reports</p>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshTaxReports()" id="refreshTaxReportsBtn" title="Refresh Reports">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="taxReportsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Report Type</th>
+                                            <th>Period</th>
+                                            <th>Generated Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">
+                                                <i class="fas fa-file-invoice fa-2x mb-2"></i>
+                                                <p>No tax reports generated yet</p>
+                                                <small>Generate your first tax report using the buttons above</small>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
