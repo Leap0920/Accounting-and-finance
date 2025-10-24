@@ -823,9 +823,6 @@ $current_user = getCurrentUser();
                             <button class="btn btn-outline-warning btn-sm" onclick="resetSettings()" id="resetSettingsBtn">
                                 <i class="fas fa-undo me-1"></i>Reset to Defaults
                             </button>
-                            <button class="btn btn-outline-primary btn-sm" onclick="loadReportSettings()">
-                                <i class="fas fa-sync-alt me-1"></i>Refresh
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -882,34 +879,12 @@ $current_user = getCurrentUser();
                         </div>
 
                         <!-- Advanced Settings -->
-                        <div class="col-md-6">
-                            <div class="settings-card">
-                                <label><i class="fas fa-envelope me-2"></i>Email Notifications</label>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="email-notifications" checked>
-                                    <label class="form-check-label" for="email-notifications">
-                                        Enable email notifications for automated reports
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="settings-card">
-                                <label><i class="fas fa-clock me-2"></i>Report Retention (Days)</label>
-                                <input type="number" class="form-control" id="report-retention-days" min="30" max="3650" value="365">
-                                <small class="text-muted">Number of days to retain generated reports (30-3650)</small>
-                            </div>
-                        </div>
 
                         <div class="col-md-12">
                             <div class="d-flex gap-2">
                                 <button class="btn btn-primary btn-lg" onclick="saveSettings()" id="saveSettingsBtn">
                                 <i class="fas fa-save me-2"></i>Save Settings
                             </button>
-                                <button class="btn btn-outline-secondary btn-lg" onclick="loadReportSettings()">
-                                    <i class="fas fa-undo me-2"></i>Reload Settings
-                                </button>
                             </div>
                         </div>
                     </div>

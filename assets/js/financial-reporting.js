@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load report settings
     loadReportSettings();
+    
+    // Add event listeners to toggle buttons for auto-save
+    addToggleEventListeners();
 });
 
 /**
@@ -1835,8 +1838,8 @@ function updateAuditTrailTable(logs) {
         const actionClass = getActionClass(log.action);
         const details = formatAuditDetails(log.action, additionalInfo);
         
-        html += `
-            <tr>
+            html += `
+                <tr>
                 <td>
                     <div class="d-flex align-items-center">
                         <i class="fas ${actionIcon} me-2 text-${actionClass}"></i>
@@ -1878,9 +1881,9 @@ function updateAuditTrailTable(logs) {
                         </button>
                     </div>
                 </td>
-            </tr>
-        `;
-    });
+                </tr>
+            `;
+        });
     
     tableBody.innerHTML = html;
 }
@@ -1987,7 +1990,7 @@ function viewAuditDetails(logId) {
         success: function(response) {
             if (response.success) {
                 displayAuditLogDetails(response.data);
-            } else {
+    } else {
                 content.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -2079,11 +2082,11 @@ function showAuditTrailError(message) {
             <td colspan="7" class="text-center text-danger py-5">
                 <i class="fas fa-exclamation-triangle fa-3x mb-3 d-block"></i>
                 ${message}
-            </td>
-        </tr>
-    `;
-}
-
+                </td>
+            </tr>
+        `;
+    }
+    
 /**
  * Log audit action to database
  */
@@ -2167,22 +2170,9 @@ function populateSettingsForm(settings) {
         document.getElementById('auto-yearend').checked = settings.auto_yearend.value;
     }
     
-    // Additional settings
-    if (settings.email_notifications) {
-        const emailToggle = document.getElementById('email-notifications');
-        if (emailToggle) {
-            emailToggle.checked = settings.email_notifications.value;
-        }
-    }
-    if (settings.report_retention_days) {
-        const retentionInput = document.getElementById('report-retention-days');
-        if (retentionInput) {
-            retentionInput.value = settings.report_retention_days.value;
-        }
-    }
-    
     // Update settings summary
-    updateSettingsSummary(settings);
+    const convertedSettings = convertSettingsForSummary(settings);
+    updateSettingsSummary(convertedSettings);
 }
 
 /**
@@ -2205,9 +2195,7 @@ function saveSettings() {
         footer_text: document.getElementById('footer-text').value,
         auto_monthly: document.getElementById('auto-monthly').checked,
         auto_quarterly: document.getElementById('auto-quarterly').checked,
-        auto_yearend: document.getElementById('auto-yearend').checked,
-        email_notifications: document.getElementById('email-notifications')?.checked || true,
-        report_retention_days: document.getElementById('report-retention-days')?.value || 365
+        auto_yearend: document.getElementById('auto-yearend').checked
     };
     
     // Validate settings
@@ -2241,9 +2229,12 @@ function saveSettings() {
                     saveBtn.classList.remove('btn-success');
                     saveBtn.classList.add('btn-primary');
                 }, 2000);
-                
+    
                 // Log to audit trail
                 logAuditAction('Update Settings', 'Report Configuration', settings);
+                
+                // Update settings summary after successful save
+                updateSettingsSummary(settings);
                 
             } else {
                 showSettingsError('Failed to save settings: ' + response.message);
@@ -2271,12 +2262,6 @@ function validateSettings(settings) {
     // Validate fiscal year end
     if (!settings.fiscal_year_end) {
         showSettingsError('Fiscal year end date is required');
-        return false;
-    }
-    
-    // Validate retention days
-    if (settings.report_retention_days < 30 || settings.report_retention_days > 3650) {
-        showSettingsError('Report retention days must be between 30 and 3650');
         return false;
     }
     
@@ -2407,34 +2392,70 @@ function showSettingsError(message) {
 }
 
 /**
+ * Add event listeners to toggle buttons for auto-save
+ */
+function addToggleEventListeners() {
+    // Add event listeners to automation toggles
+    const toggles = ['auto-monthly', 'auto-quarterly', 'auto-yearend'];
+    
+    toggles.forEach(toggleId => {
+        const toggle = document.getElementById(toggleId);
+        if (toggle) {
+            toggle.addEventListener('change', function() {
+                // Auto-save when toggle changes
+                saveSettings();
+            });
+        }
+    });
+}
+
+/**
+ * Convert settings from API format to summary format
+ */
+function convertSettingsForSummary(apiSettings) {
+    const converted = {};
+    
+    // Convert API response format to simple format
+    for (const [key, setting] of Object.entries(apiSettings)) {
+        if (setting && typeof setting === 'object' && 'value' in setting) {
+            converted[key] = setting.value;
+        } else {
+            converted[key] = setting;
+        }
+    }
+    
+    return converted;
+}
+
+/**
  * Update settings summary
  */
 function updateSettingsSummary(settings) {
     // Update basic configuration
     if (settings.default_period) {
-        document.getElementById('summary-period').textContent = settings.default_period.value;
+        document.getElementById('summary-period').textContent = settings.default_period;
     }
     if (settings.default_format) {
-        document.getElementById('summary-format').textContent = settings.default_format.value;
+        document.getElementById('summary-format').textContent = settings.default_format;
     }
     if (settings.company_name) {
-        document.getElementById('summary-company').textContent = settings.company_name.value;
+        document.getElementById('summary-company').textContent = settings.company_name;
     }
     
     // Update automation status
-    if (settings.auto_monthly) {
-        const status = settings.auto_monthly.value ? 'Enabled' : 'Disabled';
-        const color = settings.auto_monthly.value ? 'text-success' : 'text-muted';
+    if (settings.auto_monthly !== undefined) {
+        const status = settings.auto_monthly ? 'Enabled' : 'Disabled';
+        const color = settings.auto_monthly ? 'text-success' : 'text-muted';
         document.getElementById('summary-monthly').innerHTML = `<span class="${color}">${status}</span>`;
     }
-    if (settings.auto_quarterly) {
-        const status = settings.auto_quarterly.value ? 'Enabled' : 'Disabled';
-        const color = settings.auto_quarterly.value ? 'text-success' : 'text-muted';
+    if (settings.auto_quarterly !== undefined) {
+        const status = settings.auto_quarterly ? 'Enabled' : 'Disabled';
+        const color = settings.auto_quarterly ? 'text-success' : 'text-muted';
         document.getElementById('summary-quarterly').innerHTML = `<span class="${color}">${status}</span>`;
     }
-    if (settings.auto_yearend) {
-        const status = settings.auto_yearend.value ? 'Enabled' : 'Disabled';
-        const color = settings.auto_yearend.value ? 'text-success' : 'text-muted';
+    if (settings.auto_yearend !== undefined) {
+        const status = settings.auto_yearend ? 'Enabled' : 'Disabled';
+        const color = settings.auto_yearend ? 'text-success' : 'text-muted';
         document.getElementById('summary-yearend').innerHTML = `<span class="${color}">${status}</span>`;
     }
 }

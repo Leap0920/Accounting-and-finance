@@ -147,8 +147,14 @@ function saveReportSettings($conn, $settings, $user_id) {
                     updated_at = NOW()";
             
             $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("Failed to prepare statement: " . $conn->error);
+            }
+            
             $stmt->bind_param('ss', $key, $stringValue);
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to execute statement: " . $stmt->error);
+            }
             $stmt->close();
         }
         
@@ -221,16 +227,34 @@ function resetReportSettings($conn, $user_id) {
  * Log settings actions
  */
 function logSettingsAction($conn, $action, $user_id, $data) {
-    $sql = "INSERT INTO audit_logs (user_id, action, object_type, object_id, details, ip_address) VALUES (?, ?, 'report_settings', 0, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $details = json_encode([
-        'action' => $action,
-        'data' => $data,
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-    $ip_address = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-    $stmt->bind_param('isss', $user_id, $action, $details, $ip_address);
-    $stmt->execute();
-    $stmt->close();
+    try {
+        // Check if audit_logs table exists
+        $result = $conn->query("SHOW TABLES LIKE 'audit_logs'");
+        if ($result->num_rows === 0) {
+            // Table doesn't exist, skip logging
+            return;
+        }
+        
+        $sql = "INSERT INTO audit_logs (user_id, action, object_type, object_id, details, ip_address) VALUES (?, ?, 'report_settings', 0, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        
+        if (!$stmt) {
+            // If prepare fails, skip logging
+            return;
+        }
+        
+        $details = json_encode([
+            'action' => $action,
+            'data' => $data,
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $stmt->bind_param('isss', $user_id, $action, $details, $ip_address);
+        $stmt->execute();
+        $stmt->close();
+    } catch (Exception $e) {
+        // If logging fails, don't throw error - just skip it
+        error_log("Failed to log settings action: " . $e->getMessage());
+    }
 }
 ?>
