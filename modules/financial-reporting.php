@@ -44,21 +44,100 @@ $current_user = getCurrentUser();
                             <i class="fas fa-home me-1"></i>Home
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-th-large me-1"></i>Modules
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="modulesDropdown">
+                            <li><a class="dropdown-item" href="general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-line me-2"></i>Financial Reporting</a></li>
+                            <li><a class="dropdown-item" href="loan-accounting.php"><i class="fas fa-hand-holding-usd me-2"></i>Loan Accounting</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="transaction-reading.php"><i class="fas fa-exchange-alt me-2"></i>Transaction Reading</a></li>
+                            <li><a class="dropdown-item" href="expense-tracking.php"><i class="fas fa-receipt me-2"></i>Expense Tracking</a></li>
+                            <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-users me-2"></i>Payroll Management</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-alt me-1"></i>Reports
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="reportsDropdown">
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-bar me-2"></i>Financial Statements</a></li>
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-money-bill-wave me-2"></i>Cash Flow Report</a></li>
+                            <li><a class="dropdown-item" href="expense-tracking.php"><i class="fas fa-clipboard-list me-2"></i>Expense Summary</a></li>
+                            <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="#">
-                            <i class="fas fa-chart-line me-1"></i>Financial Reporting
+                        <a class="nav-link" href="#modules">
+                            <i class="fas fa-cog me-1"></i>Settings
                         </a>
                     </li>
                 </ul>
             </div>
             
             <div class="d-flex align-items-center gap-3">
-                <span class="user-info d-none d-lg-inline">
-                    <i class="fas fa-user-circle me-2"></i><?php echo htmlspecialchars($current_user['full_name']); ?>
-                </span>
-                <a href="../core/logout.php" class="btn btn-logout">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                </a>
+                <!-- Notifications -->
+                <div class="dropdown d-none d-md-block">
+                    <a class="nav-icon-btn" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom notifications-dropdown" aria-labelledby="notificationsDropdown">
+                        <li class="dropdown-header">Notifications</li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-info-circle text-info"></i>
+                            <div class="notification-content">
+                                <strong>New Report Available</strong>
+                                <small>Monthly financial report is ready</small>
+                            </div>
+                        </a></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <div class="notification-content">
+                                <strong>Pending Approvals</strong>
+                                <small>2 expense reports need review</small>
+                            </div>
+                        </a></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <div class="notification-content">
+                                <strong>Payroll Processed</strong>
+                                <small>October payroll completed</small>
+                            </div>
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-center small" href="#">View All Notifications</a></li>
+                    </ul>
+                </div>
+                
+                <!-- User Profile Dropdown -->
+                <div class="dropdown">
+                    <a class="user-profile-btn" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-2"></i>
+                        <span class="d-none d-lg-inline"><?php echo htmlspecialchars($current_user['full_name']); ?></span>
+                        <i class="fas fa-chevron-down ms-2 d-none d-lg-inline"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom" aria-labelledby="userDropdown">
+                        <li class="dropdown-header">
+                            <div class="user-dropdown-header">
+                                <i class="fas fa-user-circle fa-2x"></i>
+                                <div>
+                                    <strong><?php echo htmlspecialchars($current_user['full_name']); ?></strong>
+                                    <small><?php echo htmlspecialchars($current_user['username']); ?></small>
+                                </div>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Account Settings</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-history me-2"></i>Activity Log</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="../core/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
@@ -362,25 +441,93 @@ $current_user = getCurrentUser();
 
                 <!-- Compliance Status Cards -->
                 <div class="compliance-cards-row">
+                    <?php
+                    // Calculate GAAP compliance
+                    $gaapResult = $conn->query("
+                        SELECT 
+                            SUM(jl.debit) as total_debits,
+                            SUM(jl.credit) as total_credits,
+                            COUNT(DISTINCT a.id) as account_count
+                        FROM journal_lines jl
+                        INNER JOIN journal_entries je ON jl.journal_entry_id = je.id
+                        INNER JOIN accounts a ON jl.account_id = a.id
+                        WHERE je.status = 'posted'
+                        AND je.entry_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+                    ");
+                    $gaapData = $gaapResult->fetch_assoc();
+                    $gaapBalanced = abs($gaapData['total_debits'] - $gaapData['total_credits']) < 0.01;
+                    $gaapStatus = $gaapBalanced && $gaapData['account_count'] > 0 ? 'Compliant' : 'Review Needed';
+                    $gaapBadge = $gaapBalanced && $gaapData['account_count'] > 0 ? 'badge-compliant' : 'badge-review';
+                    ?>
                     <div class="compliance-status-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <h6>GAAP Compliance</h6>
-                            <span class="badge badge-compliant">Compliant</span>
+                            <span class="badge <?php echo $gaapBadge; ?>"><?php echo $gaapStatus; ?></span>
                         </div>
+                        <small class="text-muted">
+                            <?php echo $gaapBalanced ? 'Books Balanced' : 'Books Unbalanced'; ?> | 
+                            <?php echo $gaapData['account_count']; ?> Accounts
+                        </small>
                     </div>
 
+                    <?php
+                    // Calculate SOX compliance
+                    $soxResult = $conn->query("
+                        SELECT 
+                            COUNT(*) as total_entries,
+                            SUM(CASE WHEN created_by != posted_by THEN 1 ELSE 0 END) as segregated_entries,
+                            COUNT(DISTINCT al.id) as audit_logs
+                        FROM journal_entries je
+                        LEFT JOIN audit_logs al ON al.object_type = 'journal_entry' 
+                            AND al.object_id = je.id
+                        WHERE je.status = 'posted'
+                        AND je.entry_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+                    ");
+                    $soxData = $soxResult->fetch_assoc();
+                    $soxSegregation = $soxData['total_entries'] > 0 ? 
+                        ($soxData['segregated_entries'] / $soxData['total_entries']) * 100 : 0;
+                    $soxStatus = $soxSegregation >= 50 && $soxData['audit_logs'] > 0 ? 'Compliant' : 'Review Needed';
+                    $soxBadge = $soxSegregation >= 50 && $soxData['audit_logs'] > 0 ? 'badge-compliant' : 'badge-review';
+                    ?>
                     <div class="compliance-status-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <h6>SOX Compliance</h6>
-                            <span class="badge badge-compliant">Compliant</span>
+                            <span class="badge <?php echo $soxBadge; ?>"><?php echo $soxStatus; ?></span>
                         </div>
+                        <small class="text-muted">
+                            <?php echo number_format($soxSegregation, 1); ?>% Segregation | 
+                            <?php echo $soxData['audit_logs']; ?> Audit Logs
+                        </small>
                     </div>
 
+                    <?php
+                    // Calculate BIR compliance
+                    $birResult = $conn->query("
+                        SELECT 
+                            COUNT(*) as total_entries,
+                            SUM(CASE WHEN reference_no IS NOT NULL AND reference_no != '' THEN 1 ELSE 0 END) as documented_entries,
+                            COUNT(DISTINCT a.id) as tax_accounts
+                        FROM journal_entries je
+                        LEFT JOIN accounts a ON (a.name LIKE '%tax%' OR a.name LIKE '%VAT%' OR a.name LIKE '%withholding%')
+                            AND a.is_active = 1
+                        WHERE je.status = 'posted'
+                        AND je.entry_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+                    ");
+                    $birData = $birResult->fetch_assoc();
+                    $birDocumentation = $birData['total_entries'] > 0 ? 
+                        ($birData['documented_entries'] / $birData['total_entries']) * 100 : 0;
+                    $birStatus = $birDocumentation >= 80 && $birData['tax_accounts'] > 0 ? 'Compliant' : 'Review Needed';
+                    $birBadge = $birDocumentation >= 80 && $birData['tax_accounts'] > 0 ? 'badge-compliant' : 'badge-review';
+                    ?>
                     <div class="compliance-status-card">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6>SOX Compliance</h6>
-                            <span class="badge badge-review">Review Needed</span>
+                            <h6>BIR Compliance</h6>
+                            <span class="badge <?php echo $birBadge; ?>"><?php echo $birStatus; ?></span>
                         </div>
+                        <small class="text-muted">
+                            <?php echo number_format($birDocumentation, 1); ?>% Documented | 
+                            <?php echo $birData['tax_accounts']; ?> Tax Accounts
+                        </small>
                     </div>
                 </div>
 
@@ -493,16 +640,24 @@ $current_user = getCurrentUser();
                         <div class="col-md-2">
                             <select class="form-select" id="audit-user-filter">
                                 <option>All Users</option>
-                                <option>Admin</option>
-                                <option>Accountant</option>
+                                <?php
+                                $userResult = $conn->query("SELECT DISTINCT username, full_name FROM users WHERE is_active = 1 ORDER BY full_name");
+                                while ($user = $userResult->fetch_assoc()) {
+                                    echo '<option value="' . htmlspecialchars($user['username']) . '">' . htmlspecialchars($user['full_name']) . '</option>';
+                                }
+                                ?>
                             </select>
                         </div>
                         <div class="col-md-2">
                             <select class="form-select" id="audit-action-filter">
                                 <option>All Actions</option>
-                                <option>View</option>
-                                <option>Generate</option>
-                                <option>Export</option>
+                                <option>Generate Report</option>
+                                <option>Generate Compliance Report</option>
+                                <option>Export Report</option>
+                                <option>View Report</option>
+                                <option>Update Settings</option>
+                                <option>Login</option>
+                                <option>Logout</option>
                             </select>
                         </div>
                         <div class="col-md-4">

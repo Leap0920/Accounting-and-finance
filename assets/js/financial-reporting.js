@@ -470,18 +470,318 @@ function openTaxReportModal(taxType) {
  * Generate compliance report
  */
 function generateComplianceReport() {
-    alert('Generate Compliance Report\n\nThis feature creates regulatory compliance reports.\n\nComing soon!');
+    // Show compliance report modal
+    const modal = document.getElementById('reportModal');
+    const title = document.getElementById('reportModalTitle');
+    const content = document.getElementById('reportModalContent');
+    
+    title.textContent = 'Generate Compliance Report';
+    
+    content.innerHTML = `
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label class="form-label">Compliance Type</label>
+                <select class="form-select" id="compliance-type">
+                    <option value="gaap">GAAP Compliance</option>
+                    <option value="sox">SOX Compliance</option>
+                    <option value="bir">BIR Compliance</option>
+                    <option value="ifrs">IFRS Compliance</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Period</label>
+                <select class="form-select" id="compliance-period">
+                    <option value="current_month">Current Month</option>
+                    <option value="current_quarter">Current Quarter</option>
+                    <option value="current_year">Current Year</option>
+                    <option value="custom">Custom Period</option>
+                </select>
+            </div>
+            <div class="col-md-6" id="custom-period-start" style="display: none;">
+                <label class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="period-start">
+            </div>
+            <div class="col-md-6" id="custom-period-end" style="display: none;">
+                <label class="form-label">End Date</label>
+                <input type="date" class="form-control" id="period-end">
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" onclick="executeComplianceReport()">
+                <i class="fas fa-sync-alt me-2"></i>Generate Report
+            </button>
+        </div>
+        
+        <div id="compliance-report-content" class="mt-4"></div>
+    `;
+    
+    // Show/hide custom period fields
+    document.getElementById('compliance-period').addEventListener('change', function() {
+        const customFields = document.getElementById('custom-period-start');
+        const customFieldsEnd = document.getElementById('custom-period-end');
+        if (this.value === 'custom') {
+            customFields.style.display = 'block';
+            customFieldsEnd.style.display = 'block';
+        } else {
+            customFields.style.display = 'none';
+            customFieldsEnd.style.display = 'none';
+        }
+    });
+    
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    document.getElementById('period-start').value = firstDayOfMonth;
+    document.getElementById('period-end').value = today;
+    
+    if (reportModal) {
+        reportModal.show();
+    }
+}
+
+/**
+ * Execute compliance report generation
+ */
+function executeComplianceReport() {
+    const contentDiv = document.getElementById('compliance-report-content');
+    
+    // Show loading state
+    contentDiv.innerHTML = `
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Generating compliance report, please wait...</p>
+        </div>
+    `;
+    
+    // Get form data
+    const reportType = document.getElementById('compliance-type').value;
+    const period = document.getElementById('compliance-period').value;
+    
+    let periodStart, periodEnd;
+    
+    if (period === 'custom') {
+        periodStart = document.getElementById('period-start').value;
+        periodEnd = document.getElementById('period-end').value;
+    } else {
+        const dates = getPeriodDates(period);
+        periodStart = dates.start;
+        periodEnd = dates.end;
+    }
+    
+    // Make AJAX request
+    $.ajax({
+        url: 'api/compliance-reports.php',
+        method: 'POST',
+        data: {
+            action: 'generate_compliance_report',
+            report_type: reportType,
+            period_start: periodStart,
+            period_end: periodEnd
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                displayComplianceReport(response.data);
+                loadComplianceReports(); // Refresh the table
+            } else {
+                showComplianceError(response.error || 'Failed to generate compliance report');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            showComplianceError('Connection error. Please try again.');
+        }
+    });
+}
+
+/**
+ * Get period dates based on selection
+ */
+function getPeriodDates(period) {
+    const today = new Date();
+    let start, end;
+    
+    switch (period) {
+        case 'current_month':
+            start = new Date(today.getFullYear(), today.getMonth(), 1);
+            end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            break;
+        case 'current_quarter':
+            const quarter = Math.floor(today.getMonth() / 3);
+            start = new Date(today.getFullYear(), quarter * 3, 1);
+            end = new Date(today.getFullYear(), quarter * 3 + 3, 0);
+            break;
+        case 'current_year':
+            start = new Date(today.getFullYear(), 0, 1);
+            end = new Date(today.getFullYear(), 11, 31);
+            break;
+        default:
+            start = new Date(today.getFullYear(), today.getMonth(), 1);
+            end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    }
+    
+    return {
+        start: start.toISOString().split('T')[0],
+        end: end.toISOString().split('T')[0]
+    };
+}
+
+/**
+ * Display compliance report results
+ */
+function displayComplianceReport(data) {
+    const contentDiv = document.getElementById('compliance-report-content');
+    
+    const scoreColor = data.compliance_score >= 80 ? 'success' : 
+                      data.compliance_score >= 60 ? 'warning' : 'danger';
+    
+    let html = `
+        <div class="compliance-report-results">
+            <div class="alert alert-${scoreColor}">
+                <h5><i class="fas fa-chart-pie me-2"></i>Compliance Score: ${data.compliance_score}%</h5>
+                <p class="mb-0">Report Type: ${data.report_type.toUpperCase()}</p>
+                <p class="mb-0">Period: ${data.period_start} to ${data.period_end}</p>
+                <p class="mb-0">Generated: ${data.generated_date}</p>
+            </div>
+    `;
+    
+    if (data.issues_found && data.issues_found.length > 0) {
+        html += `
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Issues Found:</h6>
+                <ul class="mb-0">
+        `;
+        data.issues_found.forEach(issue => {
+            html += `<li>${issue}</li>`;
+        });
+        html += `
+                </ul>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>No compliance issues found!
+            </div>
+        `;
+    }
+    
+    html += `
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button class="btn btn-success" onclick="exportComplianceReport('${data.report_id}', 'excel')">
+                    <i class="fas fa-file-excel me-2"></i>Export Excel
+                </button>
+                <button class="btn btn-danger" onclick="exportComplianceReport('${data.report_id}', 'pdf')">
+                    <i class="fas fa-file-pdf me-2"></i>Export PDF
+                </button>
+            </div>
+        </div>
+    `;
+    
+    contentDiv.innerHTML = html;
+}
+
+/**
+ * Show compliance error
+ */
+function showComplianceError(message) {
+    const contentDiv = document.getElementById('compliance-report-content');
+    contentDiv.innerHTML = `
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>${message}
+        </div>
+    `;
+}
+
+/**
+ * Export compliance report
+ */
+function exportComplianceReport(reportId, format) {
+    alert(`Exporting compliance report ${reportId} as ${format.toUpperCase()}...\n\nThis feature will download the report in the selected format.`);
     
     // Log to audit trail
-    logAuditAction('Generate Compliance Report', 'compliance');
+    logAuditActionToDB('Export Compliance Report', 'compliance_report', reportId, { format: format });
 }
 
 /**
  * Load compliance reports
  */
 function loadComplianceReports() {
-    // This would load from database in real implementation
-    // For now, just show empty state
+    $.ajax({
+        url: 'api/compliance-reports.php',
+        method: 'GET',
+        data: { action: 'get_compliance_reports' },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                updateComplianceReportsTable(response.data);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading compliance reports:', error);
+        }
+    });
+}
+
+/**
+ * Update compliance reports table
+ */
+function updateComplianceReportsTable(reports) {
+    const tableBody = document.getElementById('complianceReportsTable');
+    if (!tableBody) return;
+    
+    let html = '';
+    if (reports && reports.length > 0) {
+        reports.forEach(report => {
+            const statusBadge = report.status === 'completed' ? 
+                `<span class="badge badge-compliant">Completed</span>` :
+                report.status === 'generating' ?
+                `<span class="badge badge-review">Generating</span>` :
+                `<span class="badge badge-due-soon">Failed</span>`;
+            
+            html += `
+                <tr>
+                    <td>${report.report_type.toUpperCase()}</td>
+                    <td>${report.period_start} to ${report.period_end}</td>
+                    <td>${new Date(report.generated_date).toLocaleDateString()}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewComplianceReport(${report.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${report.status === 'completed' ? `
+                            <button class="btn btn-sm btn-outline-success" onclick="exportComplianceReport('${report.id}', 'pdf')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        html = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-5">
+                    <i class="fas fa-folder-open fa-3x mb-3 d-block"></i>
+                    No compliance reports generated yet. Click "Generate Compliance Reports" to create one.
+                </td>
+            </tr>
+        `;
+    }
+    
+    tableBody.innerHTML = html;
+}
+
+/**
+ * View compliance report
+ */
+function viewComplianceReport(reportId) {
+    alert(`Viewing compliance report ${reportId}...\n\nThis feature will show the detailed report in a modal.`);
+    
+    // Log to audit trail
+    logAuditActionToDB('View Compliance Report', 'compliance_report', reportId);
 }
 
 /**
@@ -498,32 +798,70 @@ function loadAuditTrail() {
     const tableBody = document.getElementById('auditTrailTable');
     if (!tableBody) return;
     
-    // In real implementation, this would fetch from database
-    // For now, show sample data if available
-    const sampleData = [
-        {
-            timestamp: new Date().toISOString(),
-            user: 'Admin',
-            action: 'Generate Report',
-            module: 'Financial Reporting',
-            record_id: 'N/A',
-            details: 'Generated Trial Balance',
-            ip_address: '127.0.0.1'
+    // Show loading state
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center text-muted py-5">
+                <div class="loading-spinner"></div>
+                <p class="mt-3">Loading audit trail...</p>
+            </td>
+        </tr>
+    `;
+    
+    // Get filter values
+    const dateFrom = document.getElementById('audit-date-from').value;
+    const dateTo = document.getElementById('audit-date-to').value;
+    const userFilter = document.getElementById('audit-user-filter').value;
+    const actionFilter = document.getElementById('audit-action-filter').value;
+    
+    // Make AJAX request
+    $.ajax({
+        url: 'api/compliance-reports.php',
+        method: 'GET',
+        data: {
+            action: 'get_audit_trail',
+            date_from: dateFrom,
+            date_to: dateTo,
+            user_filter: userFilter,
+            action_filter: actionFilter
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                updateAuditTrailTable(response.data);
+            } else {
+                showAuditTrailError(response.error || 'Failed to load audit trail');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            showAuditTrailError('Connection error. Please try again.');
         }
-    ];
+    });
+}
+
+/**
+ * Update audit trail table
+ */
+function updateAuditTrailTable(logs) {
+    const tableBody = document.getElementById('auditTrailTable');
+    if (!tableBody) return;
     
     let html = '';
-    if (sampleData.length > 0) {
-        sampleData.forEach(log => {
+    if (logs && logs.length > 0) {
+        logs.forEach(log => {
+            const additionalInfo = log.additional_info ? JSON.parse(log.additional_info) : {};
+            const details = additionalInfo.details || log.action;
+            
             html += `
                 <tr>
-                    <td>${new Date(log.timestamp).toLocaleString()}</td>
-                    <td>${log.user}</td>
+                    <td>${new Date(log.created_at).toLocaleString()}</td>
+                    <td>${log.full_name || log.username || 'Unknown'}</td>
                     <td>${log.action}</td>
-                    <td>${log.module}</td>
-                    <td>${log.record_id}</td>
-                    <td>${log.details}</td>
-                    <td>${log.ip_address}</td>
+                    <td>${log.object_type}</td>
+                    <td>${log.object_id}</td>
+                    <td>${details}</td>
+                    <td>${log.ip_address || 'N/A'}</td>
                 </tr>
             `;
         });
@@ -532,7 +870,7 @@ function loadAuditTrail() {
             <tr>
                 <td colspan="7" class="text-center text-muted py-5">
                     <i class="fas fa-history fa-3x mb-3 d-block"></i>
-                    No audit records found.
+                    No audit records found. Apply filters to view audit trail.
                 </td>
             </tr>
         `;
@@ -542,19 +880,47 @@ function loadAuditTrail() {
 }
 
 /**
- * Log audit action
+ * Show audit trail error
  */
-function logAuditAction(action, module, details = '') {
-    // In real implementation, this would save to database
-    console.log('Audit Log:', {
-        action: action,
-        module: module,
-        details: details,
-        timestamp: new Date().toISOString()
-    });
+function showAuditTrailError(message) {
+    const tableBody = document.getElementById('auditTrailTable');
+    if (!tableBody) return;
     
-    // Reload audit trail
-    loadAuditTrail();
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center text-danger py-5">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3 d-block"></i>
+                ${message}
+            </td>
+        </tr>
+    `;
+}
+
+/**
+ * Log audit action to database
+ */
+function logAuditActionToDB(action, objectType, objectId, additionalInfo = {}) {
+    $.ajax({
+        url: 'api/compliance-reports.php',
+        method: 'POST',
+        data: {
+            action: 'log_audit_action',
+            audit_action: action,
+            object_type: objectType,
+            object_id: objectId,
+            additional_info: additionalInfo
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Reload audit trail to show new entry
+                loadAuditTrail();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error logging audit action:', error);
+        }
+    });
 }
 
 /**

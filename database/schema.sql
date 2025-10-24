@@ -326,6 +326,26 @@ CREATE TABLE expense_claims (
 );
 
 -- ========================================
+-- COMPLIANCE REPORTS
+-- ========================================
+
+CREATE TABLE compliance_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    report_type ENUM('gaap','sox','bir','ifrs') NOT NULL,
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    generated_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    generated_by INT NOT NULL,
+    status ENUM('generating','completed','failed') DEFAULT 'generating',
+    file_path VARCHAR(500),
+    report_data JSON,
+    compliance_score DECIMAL(5,2),
+    issues_found TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (generated_by) REFERENCES users(id)
+);
+
+-- ========================================
 -- AUDIT LOGGING
 -- ========================================
 
