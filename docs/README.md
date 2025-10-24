@@ -50,10 +50,11 @@ C:\xampp\htdocs\Accounting and finance\
    - Go to the **Import** tab
    - Choose the file `database/schema.sql`
    - Click **Go** to execute
-5. Insert the admin user and sample data:
+5. **⚠️ CRITICAL:** Insert the admin user and sample data:
    - Go to the **SQL** tab
    - Copy and paste the contents of `database/insert_admin.sql`
    - Click **Go** to execute
+   - **Without this step, you cannot log in to the system!**
 
 ### 3. Configuration
 The database configuration is already set up in `config/database.php` for XAMPP default settings:
@@ -310,6 +311,48 @@ The system is fully responsive and works on:
 - Extend modules for additional features
 - Use utility files in `utils/` for system maintenance
 
+## 🔄 Migration & Deployment Guide
+
+### Moving System Between Devices
+When migrating your Accounting & Finance System to a new device or server:
+
+#### **Pre-Migration Checklist:**
+1. ✅ Export database from current system
+2. ✅ Copy all PHP files and folders
+3. ✅ Note current database configuration
+4. ✅ Backup any custom configurations
+
+#### **New Device Setup:**
+1. **Install XAMPP** on the new device
+2. **Start Apache and MySQL** services
+3. **Run Automated Setup:**
+   - Navigate to: `http://localhost/Accounting and finance/database/init.php`
+   - This will create database, schema, and admin user automatically
+4. **Or Manual Setup:**
+   - Create database `accounting_finance` in phpMyAdmin
+   - Import `database/schema.sql`
+   - **CRITICAL:** Import `database/insert_admin.sql` (admin user creation)
+5. **Test Login** with `admin` / `admin123`
+
+#### **Common Migration Issues:**
+- **"Admin user not found"** → Run `database/insert_admin.sql` or use `utils/fix_admin_password.php`
+- **Database connection failed** → Check `config/database.php` settings
+- **Tables missing** → Re-import `database/schema.sql`
+
+#### **Verification Steps:**
+1. Test database connection: `http://localhost/Accounting and finance/test_db_connection.php`
+2. Verify admin user exists in database
+3. Test login functionality
+4. Check all modules are accessible
+
+### Production Deployment
+For production environments:
+1. Change default admin password immediately
+2. Update database credentials in `config/database.php`
+3. Configure proper file permissions
+4. Set up regular database backups
+5. Enable SSL/HTTPS for security
+
 ## 📚 Documentation
 
 The system includes comprehensive documentation in the `docs/` directory:
@@ -317,6 +360,7 @@ The system includes comprehensive documentation in the `docs/` directory:
 - **README.md** - This comprehensive overview
 - **SETUP.md** - Quick 5-minute setup guide
 - **INSTALLATION_GUIDE.md** - Detailed installation instructions
+- **MIGRATION_GUIDE.md** - Complete migration and deployment guide
 - **PATH_REFERENCE.md** - File path reference guide
 - **ACCOUNTING_FINANCE_SYSTEM_OVERVIEW.md** - System architecture overview
 

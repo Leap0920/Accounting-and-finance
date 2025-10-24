@@ -129,6 +129,22 @@ Accounting and finance/
 2. Clear browser cache and cookies
 3. Check if session is enabled in PHP
 
+### **Common Issue: "Admin User Not Found"**
+This is the most common setup problem! If you get "Invalid username or password" errors:
+
+**Quick Fix:**
+1. Run the automated setup: `http://localhost/Accounting and finance/database/init.php`
+2. Or manually run `database/insert_admin.sql` in phpMyAdmin
+3. Or use the utility script: `utils/fix_admin_password.php`
+
+**Manual Fix Steps:**
+1. Open phpMyAdmin (`http://localhost/phpmyadmin`)
+2. Select the `accounting_finance` database
+3. Go to **SQL** tab
+4. Copy and paste contents of `database/insert_admin.sql`
+5. Click **Go** to execute
+6. Try logging in again with `admin` / `admin123`
+
 ### Permission Issues
 1. Ensure XAMPP has proper file permissions
 2. Check if PHP can write to session directory
