@@ -336,5 +336,73 @@ FROM journal_lines jl
 INNER JOIN journal_entries je ON jl.journal_entry_id = je.id
 WHERE je.status = 'posted';
 
-SELECT '=== FINANCIAL REPORTING MODULE IS READY FOR TESTING ===' AS status;
+-- ========================================
+-- INSERT COMPLIANCE SAMPLE DATA
+-- ========================================
+
+-- Insert Sample Audit Logs
+INSERT IGNORE INTO audit_logs (id, user_id, ip_address, action, object_type, object_id, additional_info, created_at) VALUES
+(1, @admin_user, '127.0.0.1', 'Generate Report', 'financial_report', 'balance_sheet_2025_01', '{"report_type":"balance_sheet","period":"2025-01"}', '2025-01-31 10:00:00'),
+(2, @admin_user, '127.0.0.1', 'Generate Compliance Report', 'compliance_report', '1', '{"report_type":"gaap","period_start":"2025-01-01","period_end":"2025-01-31","compliance_score":95}', '2025-01-31 11:30:00'),
+(3, @admin_user, '127.0.0.1', 'Export Report', 'financial_report', 'income_statement_2025_01', '{"format":"pdf","report_type":"income_statement"}', '2025-01-31 14:15:00'),
+(4, @admin_user, '127.0.0.1', 'View Report', 'compliance_report', '1', '{"report_type":"gaap"}', '2025-01-31 15:45:00'),
+(5, @admin_user, '127.0.0.1', 'Generate Compliance Report', 'compliance_report', '2', '{"report_type":"sox","period_start":"2025-01-01","period_end":"2025-01-31","compliance_score":78}', '2025-02-01 09:20:00'),
+(6, @admin_user, '127.0.0.1', 'Generate Report', 'financial_report', 'trial_balance_2025_02', '{"report_type":"trial_balance","period":"2025-02"}', '2025-02-28 16:30:00'),
+(7, @admin_user, '127.0.0.1', 'Generate Compliance Report', 'compliance_report', '3', '{"report_type":"bir","period_start":"2025-02-01","period_end":"2025-02-28","compliance_score":85}', '2025-02-28 17:00:00'),
+(8, @admin_user, '127.0.0.1', 'Export Report', 'compliance_report', '2', '{"format":"excel","report_type":"sox"}', '2025-03-01 10:15:00'),
+(9, @admin_user, '127.0.0.1', 'Update Settings', 'system_settings', 'report_config', '{"default_period":"monthly","default_format":"pdf"}', '2025-03-05 14:30:00'),
+(10, @admin_user, '127.0.0.1', 'Generate Compliance Report', 'compliance_report', '4', '{"report_type":"ifrs","period_start":"2025-03-01","period_end":"2025-03-31","compliance_score":92}', '2025-03-15 11:45:00'),
+(11, @admin_user, '127.0.0.1', 'Login', 'user_session', @admin_user, '{"login_time":"2025-01-01 08:00:00"}', '2025-01-01 08:00:00'),
+(12, @admin_user, '127.0.0.1', 'Create Journal Entry', 'journal_entry', 'JE-2025-0001', '{"entry_type":"general","amount":5000000}', '2025-01-02 10:00:00'),
+(13, @admin_user, '127.0.0.1', 'Post Journal Entry', 'journal_entry', 'JE-2025-0001', '{"status":"posted","posted_by":@admin_user}', '2025-01-02 10:05:00');
+
+-- Insert Sample Compliance Reports
+INSERT IGNORE INTO compliance_reports (id, report_type, period_start, period_end, generated_date, generated_by, status, compliance_score, issues_found, created_at) VALUES
+(1, 'gaap', '2025-01-01', '2025-01-31', '2025-01-31 11:30:00', @admin_user, 'completed', 95.00, 'No issues found. Books are balanced and properly documented.', '2025-01-31 11:30:00'),
+(2, 'sox', '2025-01-01', '2025-01-31', '2025-02-01 09:20:00', @admin_user, 'completed', 78.00, 'Segregation of duties could be improved. Some entries created and posted by same user.', '2025-02-01 09:20:00'),
+(3, 'bir', '2025-02-01', '2025-02-28', '2025-02-28 17:00:00', @admin_user, 'completed', 85.00, 'Most transactions properly documented. Consider adding more detailed reference numbers.', '2025-02-28 17:00:00'),
+(4, 'ifrs', '2025-03-01', '2025-03-31', '2025-03-15 11:45:00', @admin_user, 'completed', 92.00, 'Asset classification meets IFRS standards. Revenue recognition properly implemented.', '2025-03-15 11:45:00'),
+(5, 'gaap', '2025-03-01', '2025-03-31', '2025-03-31 10:00:00', @admin_user, 'generating', NULL, NULL, '2025-03-31 10:00:00'),
+(6, 'sox', '2025-02-01', '2025-02-28', '2025-02-28 16:45:00', @admin_user, 'failed', 0.00, 'Unable to generate report due to insufficient audit trail data.', '2025-02-28 16:45:00');
+
+-- ========================================
+-- COMPLIANCE DATA VERIFICATION
+-- ========================================
+
+SELECT '=== COMPLIANCE DATA INSERTION COMPLETE ===' AS status;
+SELECT 'Audit Logs Created:' AS info, COUNT(*) AS count FROM audit_logs;
+SELECT 'Compliance Reports Created:' AS info, COUNT(*) AS count FROM compliance_reports;
+
+-- Check GAAP compliance (should show balanced books)
+SELECT 
+    'GAAP Compliance Check' as check_type,
+    SUM(jl.debit) as total_debits,
+    SUM(jl.credit) as total_credits,
+    CASE 
+        WHEN ABS(SUM(jl.debit) - SUM(jl.credit)) < 0.01 THEN 'BALANCED'
+        ELSE 'UNBALANCED'
+    END as status
+FROM journal_lines jl
+INNER JOIN journal_entries je ON jl.journal_entry_id = je.id
+WHERE je.status = 'posted';
+
+-- Check SOX compliance (segregation of duties)
+SELECT 
+    'SOX Compliance Check' as check_type,
+    COUNT(*) as total_entries,
+    SUM(CASE WHEN created_by != posted_by THEN 1 ELSE 0 END) as segregated_entries,
+    ROUND((SUM(CASE WHEN created_by != posted_by THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as segregation_percentage
+FROM journal_entries
+WHERE status = 'posted';
+
+-- Check BIR compliance (documentation)
+SELECT 
+    'BIR Compliance Check' as check_type,
+    COUNT(*) as total_entries,
+    SUM(CASE WHEN reference_no IS NOT NULL AND reference_no != '' THEN 1 ELSE 0 END) as documented_entries,
+    ROUND((SUM(CASE WHEN reference_no IS NOT NULL AND reference_no != '' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as documentation_percentage
+FROM journal_entries
+WHERE status = 'posted';
+
+SELECT '=== FINANCIAL REPORTING & COMPLIANCE MODULE IS READY FOR TESTING ===' AS status;
 

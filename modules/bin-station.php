@@ -1,0 +1,533 @@
+<?php
+/**
+ * Bin Station - Manage Deleted Compliance Reports
+ * Allows users to restore or permanently delete soft-deleted reports
+ */
+
+require_once '../config/database.php';
+require_once '../includes/session.php';
+
+// Verify user is logged in
+requireLogin();
+$current_user = getCurrentUser();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bin Station - Compliance Reports</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../assets/css/financial-reporting.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container-fluid px-4">
+            <div class="logo-section">
+                <div class="logo-circle">E</div>
+                <div class="logo-text">
+                    <h1>EVERGREEN</h1>
+                    <p>Secure. Invest. Achieve</p>
+                </div>
+            </div>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../core/dashboard.php">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-th-large me-1"></i>Modules
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="modulesDropdown">
+                            <li><a class="dropdown-item" href="general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-line me-2"></i>Financial Reporting</a></li>
+                            <li><a class="dropdown-item" href="loan-accounting.php"><i class="fas fa-hand-holding-usd me-2"></i>Loan Accounting</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="transaction-reading.php"><i class="fas fa-exchange-alt me-2"></i>Transaction Reading</a></li>
+                            <li><a class="dropdown-item" href="expense-tracking.php"><i class="fas fa-receipt me-2"></i>Expense Tracking</a></li>
+                            <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-users me-2"></i>Payroll Management</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-alt me-1"></i>Reports
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="reportsDropdown">
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-bar me-2"></i>Financial Statements</a></li>
+                            <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-money-bill-wave me-2"></i>Cash Flow Report</a></li>
+                            <li><a class="dropdown-item" href="expense-tracking.php"><i class="fas fa-clipboard-list me-2"></i>Expense Summary</a></li>
+                            <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog me-1"></i>Settings
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="settingsDropdown">
+                            <li><a class="dropdown-item active" href="bin-station.php"><i class="fas fa-trash-alt me-2"></i>Bin Station</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>General Settings</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>User Management</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-database me-2"></i>Database Settings</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Notifications -->
+                <div class="dropdown d-none d-md-block">
+                    <a class="nav-icon-btn" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom notifications-dropdown" aria-labelledby="notificationsDropdown">
+                        <li class="dropdown-header">Notifications</li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-info-circle text-info"></i>
+                            <div class="notification-content">
+                                <strong>New Report Available</strong>
+                                <small>Monthly financial report is ready</small>
+                            </div>
+                        </a></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <div class="notification-content">
+                                <strong>Pending Approvals</strong>
+                                <small>2 expense reports need review</small>
+                            </div>
+                        </a></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <div class="notification-content">
+                                <strong>Payroll Processed</strong>
+                                <small>October payroll completed</small>
+                            </div>
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-center small" href="#">View All Notifications</a></li>
+                    </ul>
+                </div>
+                
+                <!-- User Profile Dropdown -->
+                <div class="dropdown">
+                    <a class="user-profile-btn" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-2"></i>
+                        <span class="d-none d-lg-inline"><?php echo htmlspecialchars($current_user['full_name']); ?></span>
+                        <i class="fas fa-chevron-down ms-2 d-none d-lg-inline"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom" aria-labelledby="userDropdown">
+                        <li class="dropdown-header">
+                            <div class="user-dropdown-header">
+                                <i class="fas fa-user-circle fa-2x"></i>
+                                <div>
+                                    <strong><?php echo htmlspecialchars($current_user['full_name']); ?></strong>
+                                    <small><?php echo htmlspecialchars($current_user['username']); ?></small>
+                                </div>
+                            </div>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>My Profile</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Account Settings</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-history me-2"></i>Activity Log</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="../core/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header-simple">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2><i class="fas fa-trash-alt me-3"></i>Bin Station</h2>
+                    <p class="text-muted mb-0">Manage deleted compliance reports. Restore accidentally deleted reports or permanently remove them.</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-outline-primary" onclick="refreshBin()">
+                        <i class="fas fa-refresh me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Bin Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon bg-danger">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 id="totalDeleted">0</h3>
+                        <p>Total Deleted</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon bg-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 id="recentDeleted">0</h3>
+                        <p>Deleted Today</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon bg-info">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 id="oldestDeleted">-</h3>
+                        <p>Oldest Deleted</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-icon bg-success">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3 id="spaceSaved">0 MB</h3>
+                        <p>Space Saved</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bin Management -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Deleted Compliance Reports</h4>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-success" onclick="restoreAll()">
+                            <i class="fas fa-undo me-2"></i>Restore All
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="emptyBin()">
+                            <i class="fas fa-trash me-2"></i>Empty Bin
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="binItems">
+                    <div class="text-center py-5">
+                        <div class="loading-spinner"></div>
+                        <p class="mt-3">Loading deleted reports...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Load bin data on page load
+        $(document).ready(function() {
+            loadBinData();
+        });
+
+        /**
+         * Load bin data
+         */
+        function loadBinData() {
+            $.ajax({
+                url: 'api/compliance-reports.php',
+                method: 'GET',
+                data: { action: 'get_bin_reports' },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        updateBinDisplay(response.data);
+                        updateBinStats(response.data);
+                    } else {
+                        showBinError(response.error || 'Failed to load bin data');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showBinError('Connection error. Please try again.');
+                }
+            });
+        }
+
+        /**
+         * Update bin display
+         */
+        function updateBinDisplay(reports) {
+            const container = document.getElementById('binItems');
+            
+            if (!reports || reports.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-trash-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Bin is Empty</h5>
+                        <p class="text-muted">No deleted compliance reports found.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            reports.forEach(report => {
+                const deletedDate = new Date(report.deleted_at).toLocaleString();
+                const reportTypeLabel = getReportTypeLabel(report.report_type);
+                const period = `${formatDate(report.period_start)} to ${formatDate(report.period_end)}`;
+                
+                html += `
+                    <div class="bin-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas ${getReportTypeIcon(report.report_type)} me-2 text-primary"></i>
+                                    <div>
+                                        <strong>${reportTypeLabel}</strong>
+                                        <br><small class="text-muted">Score: ${report.compliance_score || 'N/A'}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">${period}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">${formatDateTime(report.generated_date)}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-trash me-1"></i>
+                                    Deleted ${deletedDate}
+                                </span>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex gap-1">
+                                    <button class="btn btn-sm btn-success" onclick="restoreReport(${report.id})" title="Restore Report">
+                                        <i class="fas fa-undo"></i> Restore
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="permanentDeleteReport(${report.id})" title="Permanently Delete">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        /**
+         * Update bin statistics
+         */
+        function updateBinStats(reports) {
+            const totalDeleted = reports.length;
+            const today = new Date().toDateString();
+            const recentDeleted = reports.filter(r => new Date(r.deleted_at).toDateString() === today).length;
+            
+            const oldestDeleted = reports.length > 0 ? 
+                reports.reduce((oldest, current) => 
+                    new Date(current.deleted_at) < new Date(oldest.deleted_at) ? current : oldest
+                ) : null;
+            
+            document.getElementById('totalDeleted').textContent = totalDeleted;
+            document.getElementById('recentDeleted').textContent = recentDeleted;
+            document.getElementById('oldestDeleted').textContent = oldestDeleted ? 
+                formatDate(oldestDeleted.deleted_at) : '-';
+            document.getElementById('spaceSaved').textContent = (totalDeleted * 0.5).toFixed(1) + ' MB';
+        }
+
+        /**
+         * Restore report
+         */
+        function restoreReport(reportId) {
+            if (!confirm('Are you sure you want to restore this compliance report?')) {
+                return;
+            }
+
+            $.ajax({
+                url: 'api/compliance-reports.php',
+                method: 'POST',
+                data: { 
+                    action: 'restore_report',
+                    report_id: reportId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Report restored successfully!', 'success');
+                        loadBinData(); // Refresh bin
+                    } else {
+                        showNotification('Restore failed: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Restore failed: ' + error, 'error');
+                }
+            });
+        }
+
+        /**
+         * Permanently delete report
+         */
+        function permanentDeleteReport(reportId) {
+            if (!confirm('Are you sure you want to permanently delete this compliance report? This action cannot be undone.')) {
+                return;
+            }
+
+            $.ajax({
+                url: 'api/compliance-reports.php',
+                method: 'POST',
+                data: { 
+                    action: 'permanent_delete_report',
+                    report_id: reportId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Report permanently deleted!', 'success');
+                        loadBinData(); // Refresh bin
+                    } else {
+                        showNotification('Delete failed: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Delete failed: ' + error, 'error');
+                }
+            });
+        }
+
+        /**
+         * Restore all reports
+         */
+        function restoreAll() {
+            if (!confirm('Are you sure you want to restore all deleted compliance reports?')) {
+                return;
+            }
+
+            // This would need to be implemented in the API
+            showNotification('Restore all feature coming soon!', 'info');
+        }
+
+        /**
+         * Empty bin (permanently delete all)
+         */
+        function emptyBin() {
+            if (!confirm('Are you sure you want to permanently delete ALL reports in the bin? This action cannot be undone.')) {
+                return;
+            }
+
+            // This would need to be implemented in the API
+            showNotification('Empty bin feature coming soon!', 'info');
+        }
+
+        /**
+         * Refresh bin
+         */
+        function refreshBin() {
+            loadBinData();
+        }
+
+        /**
+         * Show bin error
+         */
+        function showBinError(message) {
+            const container = document.getElementById('binItems');
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h5 class="text-danger">Error Loading Bin</h5>
+                    <p class="text-muted">${message}</p>
+                    <button class="btn btn-primary" onclick="loadBinData()">
+                        <i class="fas fa-refresh me-2"></i>Try Again
+                    </button>
+                </div>
+            `;
+        }
+
+        /**
+         * Show notification
+         */
+        function showNotification(message, type = 'info') {
+            const alertClass = type === 'success' ? 'alert-success' : 
+                              type === 'error' ? 'alert-danger' : 'alert-info';
+            
+            const notification = document.createElement('div');
+            notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Helper functions
+        function getReportTypeLabel(type) {
+            const labels = {
+                'gaap': 'GAAP Compliance',
+                'sox': 'SOX Compliance', 
+                'bir': 'BIR Compliance',
+                'ifrs': 'IFRS Compliance'
+            };
+            return labels[type] || type.toUpperCase();
+        }
+
+        function getReportTypeIcon(type) {
+            const icons = {
+                'gaap': 'fa-balance-scale',
+                'sox': 'fa-shield-alt',
+                'bir': 'fa-file-invoice',
+                'ifrs': 'fa-globe'
+            };
+            return icons[type] || 'fa-file-alt';
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        }
+
+        function formatDateTime(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
+    </script>
+</body>
+</html>

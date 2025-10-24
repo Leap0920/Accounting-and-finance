@@ -699,30 +699,138 @@ function showComplianceError(message) {
  * Export compliance report
  */
 function exportComplianceReport(reportId, format) {
-    alert(`Exporting compliance report ${reportId} as ${format.toUpperCase()}...\n\nThis feature will download the report in the selected format.`);
+    // Show loading state
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+    button.disabled = true;
+    
+    // Create direct download link
+    const link = document.createElement('a');
+    link.href = `api/compliance-reports.php?action=export_compliance_report&report_id=${reportId}&format=${format}`;
+    link.download = `compliance_report_${reportId}.${format}`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Report exported successfully!', 'success');
+    
+    // Reset button state
+    setTimeout(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+    }, 1000);
     
     // Log to audit trail
     logAuditActionToDB('Export Compliance Report', 'compliance_report', reportId, { format: format });
 }
 
 /**
+ * Delete compliance report (soft delete - move to bin)
+ */
+function deleteComplianceReport(reportId) {
+    if (!confirm('Are you sure you want to move this compliance report to the bin? You can restore it later from Settings > Bin Station.')) {
+        return;
+    }
+    
+    $.ajax({
+        url: 'api/compliance-reports.php',
+        method: 'POST',
+        data: { 
+            action: 'delete_compliance_report',
+            report_id: reportId
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                showNotification('Compliance report moved to bin successfully!', 'success');
+                loadComplianceReports(); // Refresh the table
+            } else {
+                showNotification('Delete failed: ' + response.error, 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            showNotification('Delete failed: ' + error, 'error');
+        }
+    });
+    
+    // Log to audit trail
+    logAuditActionToDB('Soft Delete Compliance Report', 'compliance_report', reportId);
+}
+
+/**
+ * Show notification
+ */
+function showNotification(message, type = 'info') {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-danger' : 'alert-info';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+/**
  * Load compliance reports
  */
 function loadComplianceReports() {
+    console.log('Loading compliance reports...');
+    
     $.ajax({
         url: 'api/compliance-reports.php',
         method: 'GET',
         data: { action: 'get_compliance_reports' },
         dataType: 'json',
         success: function(response) {
+            console.log('Compliance reports response:', response);
             if (response.success) {
                 updateComplianceReportsTable(response.data);
+            } else {
+                console.error('API Error:', response.error);
+                showComplianceReportsError(response.error || 'Failed to load compliance reports');
             }
         },
         error: function(xhr, status, error) {
-            console.error('Error loading compliance reports:', error);
+            console.error('AJAX Error loading compliance reports:', error);
+            console.error('Response:', xhr.responseText);
+            showComplianceReportsError('Connection error. Please check console for details.');
         }
     });
+}
+
+/**
+ * Show compliance reports error
+ */
+function showComplianceReportsError(message) {
+    const tableBody = document.getElementById('complianceReportsTable');
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="5" class="text-center text-danger py-5">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3 d-block"></i>
+                <strong>Error Loading Compliance Reports</strong><br>
+                <small>${message}</small><br>
+                <button class="btn btn-sm btn-primary mt-2" onclick="loadComplianceReports()">
+                    <i class="fas fa-refresh me-1"></i>Retry
+                </button>
+            </td>
+        </tr>
+    `;
 }
 
 /**
@@ -732,36 +840,8 @@ function updateComplianceReportsTable(reports) {
     const tableBody = document.getElementById('complianceReportsTable');
     if (!tableBody) return;
     
-    let html = '';
-    if (reports && reports.length > 0) {
-        reports.forEach(report => {
-            const statusBadge = report.status === 'completed' ? 
-                `<span class="badge badge-compliant">Completed</span>` :
-                report.status === 'generating' ?
-                `<span class="badge badge-review">Generating</span>` :
-                `<span class="badge badge-due-soon">Failed</span>`;
-            
-            html += `
-                <tr>
-                    <td>${report.report_type.toUpperCase()}</td>
-                    <td>${report.period_start} to ${report.period_end}</td>
-                    <td>${new Date(report.generated_date).toLocaleDateString()}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewComplianceReport(${report.id})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        ${report.status === 'completed' ? `
-                            <button class="btn btn-sm btn-outline-success" onclick="exportComplianceReport('${report.id}', 'pdf')">
-                                <i class="fas fa-download"></i>
-                            </button>
-                        ` : ''}
-                    </td>
-                </tr>
-            `;
-        });
-    } else {
-        html = `
+    if (!reports || reports.length === 0) {
+        tableBody.innerHTML = `
             <tr>
                 <td colspan="5" class="text-center text-muted py-5">
                     <i class="fas fa-folder-open fa-3x mb-3 d-block"></i>
@@ -769,19 +849,214 @@ function updateComplianceReportsTable(reports) {
                 </td>
             </tr>
         `;
+        return;
     }
     
+    let html = '';
+    reports.forEach(report => {
+        const statusBadge = getStatusBadge(report.status);
+        const reportTypeLabel = getReportTypeLabel(report.report_type);
+        const period = `${formatDate(report.period_start)} to ${formatDate(report.period_end)}`;
+        const scoreDisplay = report.compliance_score ? `${report.compliance_score}%` : 'N/A';
+        
+        html += `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas ${getReportTypeIcon(report.report_type)} me-2 text-primary"></i>
+                        <div>
+                            <strong>${reportTypeLabel}</strong>
+                            <br><small class="text-muted">Score: ${scoreDisplay}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <small class="text-muted">${period}</small>
+                </td>
+                <td>
+                    <small class="text-muted">${formatDateTime(report.generated_date)}</small>
+                </td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewComplianceReport(${report.id})" title="View Report">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Export">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportComplianceReport(${report.id}, 'pdf')"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportComplianceReport(${report.id}, 'excel')"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportComplianceReport(${report.id}, 'csv')"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteComplianceReport(${report.id})" title="Delete Report">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
     tableBody.innerHTML = html;
+}
+
+/**
+ * Helper functions for compliance reports
+ */
+function getStatusBadge(status) {
+    switch(status) {
+        case 'completed':
+            return '<span class="badge badge-compliant">Completed</span>';
+        case 'generating':
+            return '<span class="badge badge-review">Generating</span>';
+        case 'failed':
+            return '<span class="badge badge-due-soon">Failed</span>';
+        default:
+            return '<span class="badge badge-secondary">Unknown</span>';
+    }
+}
+
+function getReportTypeLabel(type) {
+    const labels = {
+        'gaap': 'GAAP Compliance',
+        'sox': 'SOX Compliance', 
+        'bir': 'BIR Compliance',
+        'ifrs': 'IFRS Compliance'
+    };
+    return labels[type] || type.toUpperCase();
+}
+
+function getReportTypeIcon(type) {
+    const icons = {
+        'gaap': 'fa-balance-scale',
+        'sox': 'fa-shield-alt',
+        'bir': 'fa-file-invoice',
+        'ifrs': 'fa-globe'
+    };
+    return icons[type] || 'fa-file-alt';
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+}
+
+function formatDateTime(dateString) {
+    return new Date(dateString).toLocaleString();
 }
 
 /**
  * View compliance report
  */
 function viewComplianceReport(reportId) {
-    alert(`Viewing compliance report ${reportId}...\n\nThis feature will show the detailed report in a modal.`);
+    // Show loading modal
+    const modal = document.getElementById('reportModal');
+    const title = document.getElementById('reportModalTitle');
+    const content = document.getElementById('reportModalContent');
+    
+    title.textContent = 'Compliance Report Details';
+    content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="loading-spinner"></div>
+            <p class="mt-3">Loading report details...</p>
+        </div>
+    `;
+    
+    if (modal) {
+        modal.show();
+    }
+    
+    // Fetch report details
+    $.ajax({
+        url: 'api/compliance-reports.php',
+        method: 'GET',
+        data: { action: 'get_compliance_report', report_id: reportId },
+        dataType: 'json',
+        success: function(response) {
+            console.log('View report response:', response);
+            if (response.success) {
+                displayComplianceReportDetails(response.data);
+            } else {
+                content.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading report: ${response.error}
+                    </div>
+                `;
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('View report error:', error);
+            console.error('Response:', xhr.responseText);
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Connection error: ${error}
+                </div>
+            `;
+        }
+    });
     
     // Log to audit trail
     logAuditActionToDB('View Compliance Report', 'compliance_report', reportId);
+}
+
+/**
+ * Display compliance report details in modal
+ */
+function displayComplianceReportDetails(report) {
+    const content = document.getElementById('reportModalContent');
+    
+    const issuesList = report.issues_found && report.issues_found.length > 0 
+        ? report.issues_found.map(issue => `<li>${issue}</li>`).join('')
+        : '<li class="text-success">No issues found</li>';
+    
+    content.innerHTML = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Report Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Type:</strong></td><td>${getReportTypeLabel(report.report_type)}</td></tr>
+                    <tr><td><strong>Period:</strong></td><td>${formatDate(report.period_start)} to ${formatDate(report.period_end)}</td></tr>
+                    <tr><td><strong>Generated:</strong></td><td>${formatDateTime(report.generated_date)}</td></tr>
+                    <tr><td><strong>Status:</strong></td><td>${getStatusBadge(report.status)}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Compliance Score</h6>
+                <div class="text-center">
+                    <div class="compliance-score-circle ${getScoreClass(report.compliance_score)}">
+                        <span class="score-value">${report.compliance_score || 0}%</span>
+                    </div>
+                    <p class="mt-2 text-muted">Overall Compliance</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6>Issues Found</h6>
+            <ul class="list-unstyled">
+                ${issuesList}
+            </ul>
+        </div>
+        
+        <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button class="btn btn-primary" onclick="exportComplianceReport(${report.id}, 'pdf')">
+                <i class="fas fa-download me-2"></i>Export PDF
+            </button>
+        </div>
+    `;
+}
+
+function getScoreClass(score) {
+    if (score >= 90) return 'score-excellent';
+    if (score >= 70) return 'score-good';
+    if (score >= 50) return 'score-fair';
+    return 'score-poor';
 }
 
 /**
@@ -847,26 +1122,8 @@ function updateAuditTrailTable(logs) {
     const tableBody = document.getElementById('auditTrailTable');
     if (!tableBody) return;
     
-    let html = '';
-    if (logs && logs.length > 0) {
-        logs.forEach(log => {
-            const additionalInfo = log.additional_info ? JSON.parse(log.additional_info) : {};
-            const details = additionalInfo.details || log.action;
-            
-            html += `
-                <tr>
-                    <td>${new Date(log.created_at).toLocaleString()}</td>
-                    <td>${log.full_name || log.username || 'Unknown'}</td>
-                    <td>${log.action}</td>
-                    <td>${log.object_type}</td>
-                    <td>${log.object_id}</td>
-                    <td>${details}</td>
-                    <td>${log.ip_address || 'N/A'}</td>
-                </tr>
-            `;
-        });
-    } else {
-        html = `
+    if (!logs || logs.length === 0) {
+        tableBody.innerHTML = `
             <tr>
                 <td colspan="7" class="text-center text-muted py-5">
                     <i class="fas fa-history fa-3x mb-3 d-block"></i>
@@ -874,9 +1131,246 @@ function updateAuditTrailTable(logs) {
                 </td>
             </tr>
         `;
+        return;
     }
     
+    let html = '';
+    logs.forEach(log => {
+        const additionalInfo = log.additional_info ? JSON.parse(log.additional_info) : {};
+        const actionIcon = getActionIcon(log.action);
+        const actionClass = getActionClass(log.action);
+        const details = formatAuditDetails(log.action, additionalInfo);
+        
+        html += `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="fas ${actionIcon} me-2 text-${actionClass}"></i>
+                        <small class="text-muted">${formatDateTime(log.created_at)}</small>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar me-2">
+                            <i class="fas fa-user-circle text-primary"></i>
+                        </div>
+                        <div>
+                            <strong>${log.full_name || log.username || 'Unknown'}</strong>
+                            <br><small class="text-muted">${log.ip_address || 'N/A'}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-${actionClass}">${log.action}</span>
+                </td>
+                <td>
+                    <small class="text-muted">${log.object_type || 'N/A'}</small>
+                </td>
+                <td>
+                    <code class="text-primary">${log.object_id || 'N/A'}</code>
+                </td>
+                <td>
+                    <div class="audit-details">
+                        ${details}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-info" onclick="viewAuditDetails(${log.id})" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="exportAuditLog(${log.id})" title="Export">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
     tableBody.innerHTML = html;
+}
+
+/**
+ * Get action icon based on action type
+ */
+function getActionIcon(action) {
+    const icons = {
+        'Login': 'fa-sign-in-alt',
+        'Logout': 'fa-sign-out-alt',
+        'Create': 'fa-plus',
+        'Update': 'fa-edit',
+        'Delete': 'fa-trash',
+        'View': 'fa-eye',
+        'Export': 'fa-download',
+        'Generate': 'fa-file-alt',
+        'Post': 'fa-check',
+        'Approve': 'fa-check-circle',
+        'Reject': 'fa-times-circle'
+    };
+    
+    // Find matching icon by partial match
+    for (const [key, icon] of Object.entries(icons)) {
+        if (action.toLowerCase().includes(key.toLowerCase())) {
+            return icon;
+        }
+    }
+    
+    return 'fa-circle';
+}
+
+/**
+ * Get action class based on action type
+ */
+function getActionClass(action) {
+    if (action.toLowerCase().includes('create') || action.toLowerCase().includes('generate')) {
+        return 'success';
+    } else if (action.toLowerCase().includes('update') || action.toLowerCase().includes('edit')) {
+        return 'warning';
+    } else if (action.toLowerCase().includes('delete') || action.toLowerCase().includes('reject')) {
+        return 'danger';
+    } else if (action.toLowerCase().includes('view') || action.toLowerCase().includes('export')) {
+        return 'info';
+    } else if (action.toLowerCase().includes('login') || action.toLowerCase().includes('logout')) {
+        return 'primary';
+    }
+    
+    return 'secondary';
+}
+
+/**
+ * Format audit details based on action and additional info
+ */
+function formatAuditDetails(action, additionalInfo) {
+    let details = action;
+    
+    if (additionalInfo.report_type) {
+        details += ` (${additionalInfo.report_type.toUpperCase()})`;
+    }
+    
+    if (additionalInfo.format) {
+        details += ` - ${additionalInfo.format.toUpperCase()}`;
+    }
+    
+    if (additionalInfo.amount) {
+        details += ` - ₱${parseFloat(additionalInfo.amount).toLocaleString()}`;
+    }
+    
+    if (additionalInfo.status) {
+        details += ` - Status: ${additionalInfo.status}`;
+    }
+    
+    return `<small class="text-muted">${details}</small>`;
+}
+
+/**
+ * View audit log details
+ */
+function viewAuditDetails(logId) {
+    // Show loading modal
+    const modal = document.getElementById('reportModal');
+    const title = document.getElementById('reportModalTitle');
+    const content = document.getElementById('reportModalContent');
+    
+    title.textContent = 'Audit Log Details';
+    content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="loading-spinner"></div>
+            <p class="mt-3">Loading audit details...</p>
+        </div>
+    `;
+    
+    if (modal) {
+        modal.show();
+    }
+    
+    // Fetch audit log details
+    $.ajax({
+        url: 'api/compliance-reports.php',
+        method: 'GET',
+        data: { action: 'get_audit_log', log_id: logId },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                displayAuditLogDetails(response.data);
+            } else {
+                content.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading audit details: ${response.error}
+                    </div>
+                `;
+            }
+        },
+        error: function(xhr, status, error) {
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Connection error: ${error}
+                </div>
+            `;
+        }
+    });
+}
+
+/**
+ * Display audit log details in modal
+ */
+function displayAuditLogDetails(log) {
+    const content = document.getElementById('reportModalContent');
+    const additionalInfo = log.additional_info ? JSON.parse(log.additional_info) : {};
+    
+    content.innerHTML = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Audit Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Action:</strong></td><td>${log.action}</td></tr>
+                    <tr><td><strong>User:</strong></td><td>${log.full_name || log.username}</td></tr>
+                    <tr><td><strong>Timestamp:</strong></td><td>${formatDateTime(log.created_at)}</td></tr>
+                    <tr><td><strong>IP Address:</strong></td><td>${log.ip_address || 'N/A'}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>Object Details</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Type:</strong></td><td>${log.object_type || 'N/A'}</td></tr>
+                    <tr><td><strong>ID:</strong></td><td>${log.object_id || 'N/A'}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        ${Object.keys(additionalInfo).length > 0 ? `
+        <div class="mb-4">
+            <h6>Additional Information</h6>
+            <div class="bg-light p-3 rounded">
+                <pre class="mb-0"><code>${JSON.stringify(additionalInfo, null, 2)}</code></pre>
+            </div>
+        </div>
+        ` : ''}
+        
+        <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button class="btn btn-primary" onclick="exportAuditLog(${log.id})">
+                <i class="fas fa-download me-2"></i>Export Log
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Export audit log
+ */
+function exportAuditLog(logId) {
+    showNotification('Exporting audit log...', 'info');
+    
+    // Create download link for audit log
+    const link = document.createElement('a');
+    link.href = `api/compliance-reports.php?action=export_audit_log&log_id=${logId}`;
+    link.download = `audit_log_${logId}.txt`;
+    link.click();
+    
+    showNotification('Audit log exported successfully!', 'success');
 }
 
 /**

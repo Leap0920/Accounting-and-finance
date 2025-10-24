@@ -32,6 +32,18 @@ try {
             getComplianceReports();
             break;
         
+        case 'get_compliance_report':
+            getComplianceReport();
+            break;
+        
+        case 'export_compliance_report':
+            exportComplianceReport();
+            break;
+        
+        case 'delete_compliance_report':
+            deleteComplianceReport();
+            break;
+        
         case 'get_compliance_status':
             getComplianceStatus();
             break;
@@ -42,6 +54,26 @@ try {
         
         case 'log_audit_action':
             logAuditAction();
+            break;
+        
+        case 'get_audit_log':
+            getAuditLog();
+            break;
+        
+        case 'export_audit_log':
+            exportAuditLog();
+            break;
+        
+        case 'get_bin_reports':
+            getBinReports();
+            break;
+        
+        case 'restore_report':
+            restoreReport();
+            break;
+        
+        case 'permanent_delete_report':
+            permanentDeleteReport();
             break;
         
         default:
@@ -396,7 +428,7 @@ function generateIFRSCompliance($periodStart, $periodEnd) {
 }
 
 /**
- * Get compliance reports
+ * Get compliance reports (only non-deleted)
  */
 function getComplianceReports() {
     global $conn;
@@ -407,6 +439,7 @@ function getComplianceReports() {
             u.full_name as generated_by_name
         FROM compliance_reports cr
         LEFT JOIN users u ON cr.generated_by = u.id
+        WHERE cr.deleted_at IS NULL
         ORDER BY cr.created_at DESC
         LIMIT 50
     ");
@@ -562,6 +595,414 @@ function logAuditAction() {
     echo json_encode([
         'success' => true,
         'message' => 'Audit action logged successfully'
+    ]);
+}
+
+/**
+ * Get single compliance report details
+ */
+function getComplianceReport() {
+    global $conn;
+    
+    $reportId = $_GET['report_id'] ?? '';
+    
+    if (empty($reportId)) {
+        throw new Exception('Report ID is required');
+    }
+    
+    $stmt = $conn->prepare("
+        SELECT cr.*, u.full_name as generated_by_name
+        FROM compliance_reports cr
+        LEFT JOIN users u ON cr.generated_by = u.id
+        WHERE cr.id = ? AND cr.deleted_at IS NULL
+    ");
+    $stmt->bind_param('i', $reportId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        throw new Exception('Report not found');
+    }
+    
+    $report = $result->fetch_assoc();
+    
+    // Parse report data if it exists, otherwise use issues_found field
+    if ($report['report_data']) {
+        $reportData = json_decode($report['report_data'], true);
+        $report['issues_found'] = $reportData['issues_found'] ?? [];
+    } else {
+        // If no report_data, parse issues_found field
+        $report['issues_found'] = $report['issues_found'] ? 
+            explode('. ', trim($report['issues_found'], '.')) : [];
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $report
+    ]);
+}
+
+/**
+ * Export compliance report
+ */
+function exportComplianceReport() {
+    global $conn, $current_user;
+    
+    $reportId = $_GET['report_id'] ?? $_POST['report_id'] ?? '';
+    $format = $_GET['format'] ?? $_POST['format'] ?? 'pdf';
+    
+    if (empty($reportId)) {
+        throw new Exception('Report ID is required');
+    }
+    
+    $validFormats = ['pdf', 'excel', 'csv'];
+    if (!in_array($format, $validFormats)) {
+        throw new Exception('Invalid export format');
+    }
+    
+    // Get report data
+    $stmt = $conn->prepare("
+        SELECT cr.*, u.full_name as generated_by_name
+        FROM compliance_reports cr
+        LEFT JOIN users u ON cr.generated_by = u.id
+        WHERE cr.id = ? AND cr.deleted_at IS NULL
+    ");
+    $stmt->bind_param('i', $reportId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        throw new Exception('Report not found');
+    }
+    
+    $report = $result->fetch_assoc();
+    
+    // Generate filename
+    $filename = sprintf(
+        'compliance_report_%s_%s_%s.%s',
+        $report['report_type'],
+        date('Y-m-d', strtotime($report['period_start'])),
+        date('Y-m-d', strtotime($report['period_end'])),
+        $format
+    );
+    
+    // Generate export data
+    $exportData = generateExportData($report, $format);
+    
+    // For direct download, set headers and output content
+    header('Content-Type: ' . getContentType($format));
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . strlen($exportData));
+    
+    // Log audit action
+    logAuditActionToDB('Export Compliance Report', 'compliance_report', $reportId, [
+        'format' => $format,
+        'filename' => $filename
+    ]);
+    
+    echo $exportData;
+    exit;
+}
+
+/**
+ * Soft delete compliance report (move to bin)
+ */
+function deleteComplianceReport() {
+    global $conn, $current_user;
+    
+    $reportId = $_POST['report_id'] ?? '';
+    
+    if (empty($reportId)) {
+        throw new Exception('Report ID is required');
+    }
+    
+    // Check if report exists and is not already deleted
+    $stmt = $conn->prepare("SELECT id FROM compliance_reports WHERE id = ? AND deleted_at IS NULL");
+    $stmt->bind_param('i', $reportId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        throw new Exception('Report not found or already deleted');
+    }
+    
+    // Soft delete the report
+    $stmt = $conn->prepare("UPDATE compliance_reports SET deleted_at = NOW() WHERE id = ?");
+    $stmt->bind_param('i', $reportId);
+    $stmt->execute();
+    
+    // Log audit action
+    logAuditActionToDB('Soft Delete Compliance Report', 'compliance_report', $reportId);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Report moved to bin successfully'
+    ]);
+}
+
+/**
+ * Get content type for export format
+ */
+function getContentType($format) {
+    switch ($format) {
+        case 'pdf':
+            return 'application/pdf';
+        case 'excel':
+            return 'application/vnd.ms-excel';
+        case 'csv':
+            return 'text/csv';
+        default:
+            return 'text/plain';
+    }
+}
+
+/**
+ * Generate export data based on format
+ */
+function generateExportData($report, $format) {
+    $data = '';
+    
+    switch ($format) {
+        case 'pdf':
+            // Simple text format for PDF (in production, use TCPDF or similar)
+            $data = "COMPLIANCE REPORT\n";
+            $data .= "================\n\n";
+            $data .= "Report Type: " . strtoupper($report['report_type']) . "\n";
+            $data .= "Period: " . $report['period_start'] . " to " . $report['period_end'] . "\n";
+            $data .= "Generated: " . $report['generated_date'] . "\n";
+            $data .= "Status: " . $report['status'] . "\n";
+            $data .= "Compliance Score: " . $report['compliance_score'] . "%\n\n";
+            
+            if ($report['issues_found']) {
+                $issues = json_decode($report['issues_found'], true);
+                if (is_array($issues) && !empty($issues)) {
+                    $data .= "Issues Found:\n";
+                    foreach ($issues as $issue) {
+                        $data .= "- " . $issue . "\n";
+                    }
+                }
+            }
+            break;
+            
+        case 'excel':
+            // CSV format for Excel compatibility
+            $data = "Report Type,Period Start,Period End,Generated Date,Status,Compliance Score,Issues Found\n";
+            $data .= '"' . strtoupper($report['report_type']) . '",';
+            $data .= '"' . $report['period_start'] . '",';
+            $data .= '"' . $report['period_end'] . '",';
+            $data .= '"' . $report['generated_date'] . '",';
+            $data .= '"' . $report['status'] . '",';
+            $data .= '"' . $report['compliance_score'] . '%",';
+            $data .= '"' . str_replace('"', '""', $report['issues_found']) . '"';
+            break;
+            
+        case 'csv':
+            // CSV format
+            $data = "Report Type,Period Start,Period End,Generated Date,Status,Compliance Score,Issues Found\n";
+            $data .= '"' . strtoupper($report['report_type']) . '",';
+            $data .= '"' . $report['period_start'] . '",';
+            $data .= '"' . $report['period_end'] . '",';
+            $data .= '"' . $report['generated_date'] . '",';
+            $data .= '"' . $report['status'] . '",';
+            $data .= '"' . $report['compliance_score'] . '%",';
+            $data .= '"' . str_replace('"', '""', $report['issues_found']) . '"';
+            break;
+    }
+    
+    return $data;
+}
+
+/**
+ * Get single audit log details
+ */
+function getAuditLog() {
+    global $conn;
+    
+    $logId = $_GET['log_id'] ?? '';
+    
+    if (empty($logId)) {
+        throw new Exception('Log ID is required');
+    }
+    
+    $stmt = $conn->prepare("
+        SELECT al.*, u.full_name, u.username
+        FROM audit_logs al
+        LEFT JOIN users u ON al.user_id = u.id
+        WHERE al.id = ?
+    ");
+    $stmt->bind_param('i', $logId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        throw new Exception('Audit log not found');
+    }
+    
+    $log = $result->fetch_assoc();
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $log
+    ]);
+}
+
+/**
+ * Export audit log
+ */
+function exportAuditLog() {
+    global $conn;
+    
+    $logId = $_GET['log_id'] ?? '';
+    
+    if (empty($logId)) {
+        throw new Exception('Log ID is required');
+    }
+    
+    // Get audit log data
+    $stmt = $conn->prepare("
+        SELECT al.*, u.full_name, u.username
+        FROM audit_logs al
+        LEFT JOIN users u ON al.user_id = u.id
+        WHERE al.id = ?
+    ");
+    $stmt->bind_param('i', $logId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        throw new Exception('Audit log not found');
+    }
+    
+    $log = $result->fetch_assoc();
+    
+    // Generate export content
+    $content = "AUDIT LOG EXPORT\n";
+    $content .= "================\n\n";
+    $content .= "Log ID: " . $log['id'] . "\n";
+    $content .= "Action: " . $log['action'] . "\n";
+    $content .= "User: " . ($log['full_name'] ?: $log['username']) . "\n";
+    $content .= "Timestamp: " . $log['created_at'] . "\n";
+    $content .= "IP Address: " . $log['ip_address'] . "\n";
+    $content .= "Object Type: " . $log['object_type'] . "\n";
+    $content .= "Object ID: " . $log['object_id'] . "\n";
+    
+    if ($log['additional_info']) {
+        $additionalInfo = json_decode($log['additional_info'], true);
+        $content .= "\nAdditional Information:\n";
+        $content .= "----------------------\n";
+        foreach ($additionalInfo as $key => $value) {
+            $content .= $key . ": " . (is_array($value) ? json_encode($value) : $value) . "\n";
+        }
+    }
+    
+    // Set headers for download
+    header('Content-Type: text/plain');
+    header('Content-Disposition: attachment; filename="audit_log_' . $logId . '.txt"');
+    header('Content-Length: ' . strlen($content));
+    
+    echo $content;
+    exit;
+}
+
+/**
+ * Get reports in bin (soft deleted)
+ */
+function getBinReports() {
+    global $conn;
+    
+    $stmt = $conn->prepare("
+        SELECT 
+            cr.*,
+            u.full_name as generated_by_name
+        FROM compliance_reports cr
+        LEFT JOIN users u ON cr.generated_by = u.id
+        WHERE cr.deleted_at IS NOT NULL
+        ORDER BY cr.deleted_at DESC
+        LIMIT 50
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $reports = [];
+    while ($row = $result->fetch_assoc()) {
+        $reports[] = $row;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $reports
+    ]);
+}
+
+/**
+ * Restore report from bin
+ */
+function restoreReport() {
+    global $conn, $current_user;
+    
+    $reportId = $_POST['report_id'] ?? '';
+    
+    if (empty($reportId)) {
+        throw new Exception('Report ID is required');
+    }
+    
+    // Check if report exists and is deleted
+    $stmt = $conn->prepare("SELECT id FROM compliance_reports WHERE id = ? AND deleted_at IS NOT NULL");
+    $stmt->bind_param('i', $reportId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        throw new Exception('Report not found in bin');
+    }
+    
+    // Restore the report
+    $stmt = $conn->prepare("UPDATE compliance_reports SET deleted_at = NULL WHERE id = ?");
+    $stmt->bind_param('i', $reportId);
+    $stmt->execute();
+    
+    // Log audit action
+    logAuditActionToDB('Restore Compliance Report', 'compliance_report', $reportId);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Report restored successfully'
+    ]);
+}
+
+/**
+ * Permanently delete report from bin
+ */
+function permanentDeleteReport() {
+    global $conn, $current_user;
+    
+    $reportId = $_POST['report_id'] ?? '';
+    
+    if (empty($reportId)) {
+        throw new Exception('Report ID is required');
+    }
+    
+    // Check if report exists and is deleted
+    $stmt = $conn->prepare("SELECT id FROM compliance_reports WHERE id = ? AND deleted_at IS NOT NULL");
+    $stmt->bind_param('i', $reportId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 0) {
+        throw new Exception('Report not found in bin');
+    }
+    
+    // Permanently delete the report
+    $stmt = $conn->prepare("DELETE FROM compliance_reports WHERE id = ?");
+    $stmt->bind_param('i', $reportId);
+    $stmt->execute();
+    
+    // Log audit action
+    logAuditActionToDB('Permanent Delete Compliance Report', 'compliance_report', $reportId);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => 'Report permanently deleted'
     ]);
 }
 

@@ -69,11 +69,18 @@ $current_user = getCurrentUser();
                             <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#modules">
-                            <i class="fas fa-cog me-1"></i>Settings
-                        </a>
-                    </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog me-1"></i>Settings
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="settingsDropdown">
+                                <li><a class="dropdown-item" href="bin-station.php"><i class="fas fa-trash-alt me-2"></i>Bin Station</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>General Settings</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>User Management</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#"><i class="fas fa-database me-2"></i>Database Settings</a></li>
+                            </ul>
+                        </li>
                 </ul>
             </div>
             
@@ -534,9 +541,14 @@ $current_user = getCurrentUser();
                 <!-- Compliance Reports Table -->
                 <div class="section-header mt-5">
                     <h4>Compliance Reports</h4>
-                    <button class="btn btn-primary" onclick="generateComplianceReport()">
-                        <i class="fas fa-file-alt me-2"></i>Generate Compliance Reports
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary" onclick="loadComplianceReports()">
+                            <i class="fas fa-refresh me-2"></i>Refresh
+                        </button>
+                        <button class="btn btn-primary" onclick="generateComplianceReport()">
+                            <i class="fas fa-file-alt me-2"></i>Generate Compliance Reports
+                        </button>
+                    </div>
                 </div>
 
                 <div class="table-container">
