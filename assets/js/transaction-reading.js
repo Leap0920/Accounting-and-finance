@@ -52,7 +52,9 @@
                 },
                 columnDefs: [
                     { orderable: false, targets: [9] }, // Actions column not sortable
-                    { type: 'date', targets: [1] } // Date column
+                    { type: 'date', targets: [1] }, // Date column
+                    { className: 'text-end', targets: [5, 6] }, // Debit and Credit columns right-aligned
+                    { className: 'text-center', targets: [7] } // Status column centered
                 ],
                 dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip'
             });

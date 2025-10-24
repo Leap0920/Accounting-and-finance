@@ -56,6 +56,10 @@ C:\xampp\htdocs\Accounting and finance\
    - Click **Go** to execute
    - **Without this step, you cannot log in to the system!**
 
+**Alternative:** Use the automated setup script:
+- Navigate to: `http://localhost/Accounting and finance/database/init.php`
+- This will create database, schema, and admin user automatically
+
 ### 3. Configuration
 The database configuration is already set up in `config/database.php` for XAMPP default settings:
 - Host: localhost

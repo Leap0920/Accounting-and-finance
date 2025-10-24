@@ -69,6 +69,6 @@ if ($result && $result->num_rows > 0) {
 echo "<hr>";
 echo "<h3>Summary</h3>";
 echo "<p>If all tests passed, your database connection is working correctly!</p>";
-echo "<p><a href='modules/modules/transaction-reading.php'>→ Go to Transaction Recording Module</a></p>";
+echo "<p><a href='modules/transaction-reading.php'>→ Go to Transaction Recording Module</a></p>";
 ?>
 
