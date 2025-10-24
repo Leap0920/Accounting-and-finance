@@ -80,7 +80,7 @@ $current_user = getCurrentUser();
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="#"><i class="fas fa-database me-2"></i>Database Settings</a></li>
                             </ul>
-                        </li>
+                    </li>
                 </ul>
             </div>
             
@@ -545,9 +545,9 @@ $current_user = getCurrentUser();
                         <button class="btn btn-outline-secondary" onclick="loadComplianceReports()">
                             <i class="fas fa-refresh me-2"></i>Refresh
                         </button>
-                        <button class="btn btn-primary" onclick="generateComplianceReport()">
-                            <i class="fas fa-file-alt me-2"></i>Generate Compliance Reports
-                        </button>
+                    <button class="btn btn-primary" onclick="generateComplianceReport()">
+                        <i class="fas fa-file-alt me-2"></i>Generate Compliance Reports
+                    </button>
                     </div>
                 </div>
 
@@ -814,82 +814,129 @@ $current_user = getCurrentUser();
             <!-- REPORT SETTINGS TAB -->
             <div class="tab-pane fade" id="report-settings" role="tabpanel">
                 <div class="section-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
                     <h4>Report Configuration</h4>
+                            <p class="text-muted">Configure default settings for report generation and automation</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-warning btn-sm" onclick="resetSettings()" id="resetSettingsBtn">
+                                <i class="fas fa-undo me-1"></i>Reset to Defaults
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadReportSettings()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="settings-container">
                     <div class="row g-4">
-                        <!-- Default Settings -->
+                        <!-- Basic Settings -->
                         <div class="col-md-6">
                             <div class="settings-card">
-                                <label>Default Report Period</label>
+                                <label><i class="fas fa-calendar-alt me-2"></i>Default Report Period</label>
                                 <select class="form-select" id="default-period">
-                                    <option>Monthly</option>
-                                    <option>Quarterly</option>
-                                    <option>Yearly</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Quarterly">Quarterly</option>
+                                    <option value="Yearly">Yearly</option>
                                 </select>
+                                <small class="text-muted">Default time period for new reports</small>
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="settings-card">
-                                <label>Default Format</label>
+                                <label><i class="fas fa-file-export me-2"></i>Default Format</label>
                                 <select class="form-select" id="default-format">
-                                    <option>PDF</option>
-                                    <option>Excel</option>
-                                    <option>CSV</option>
+                                    <option value="PDF">PDF</option>
+                                    <option value="Excel">Excel</option>
+                                    <option value="CSV">CSV</option>
                                 </select>
+                                <small class="text-muted">Default export format for reports</small>
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="settings-card">
-                                <label>Company Name</label>
-                                <input type="text" class="form-control" id="company-name" value="Evergreen">
+                                <label><i class="fas fa-building me-2"></i>Company Name</label>
+                                <input type="text" class="form-control" id="company-name" placeholder="Enter company name">
+                                <small class="text-muted">Company name displayed on reports</small>
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="settings-card">
-                                <label>Fiscal Year End</label>
-                                <input type="date" class="form-control" id="fiscal-year-end" value="2025-12-31">
+                                <label><i class="fas fa-calendar-check me-2"></i>Fiscal Year End</label>
+                                <input type="date" class="form-control" id="fiscal-year-end">
+                                <small class="text-muted">End date of fiscal year</small>
                             </div>
                         </div>
 
                         <div class="col-md-12">
                             <div class="settings-card">
-                                <label>Report Footer Text</label>
+                                <label><i class="fas fa-align-center me-2"></i>Report Footer Text</label>
                                 <textarea class="form-control" id="footer-text" rows="3" placeholder="Enter custom footer text for reports..."></textarea>
+                                <small class="text-muted">Custom text displayed at the bottom of reports</small>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Settings -->
+                        <div class="col-md-6">
+                            <div class="settings-card">
+                                <label><i class="fas fa-envelope me-2"></i>Email Notifications</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="email-notifications" checked>
+                                    <label class="form-check-label" for="email-notifications">
+                                        Enable email notifications for automated reports
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="settings-card">
+                                <label><i class="fas fa-clock me-2"></i>Report Retention (Days)</label>
+                                <input type="number" class="form-control" id="report-retention-days" min="30" max="3650" value="365">
+                                <small class="text-muted">Number of days to retain generated reports (30-3650)</small>
                             </div>
                         </div>
 
                         <div class="col-md-12">
-                            <button class="btn btn-primary btn-lg" onclick="saveSettings()">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-lg" onclick="saveSettings()" id="saveSettingsBtn">
                                 <i class="fas fa-save me-2"></i>Save Settings
                             </button>
+                                <button class="btn btn-outline-secondary btn-lg" onclick="loadReportSettings()">
+                                    <i class="fas fa-undo me-2"></i>Reload Settings
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Automated Reports -->
                     <div class="section-header mt-5">
-                        <h4>Automated Reports</h4>
+                        <h4><i class="fas fa-robot me-2"></i>Automated Reports</h4>
+                        <p class="text-muted">Configure automatic report generation and delivery</p>
                     </div>
 
                     <div class="automated-reports-list">
                         <div class="automation-item">
                             <div>
-                                <h6>Monthly Financial Summary</h6>
-                                <p class="text-muted small mb-0">Automatically generate and email reports</p>
+                                <h6><i class="fas fa-calendar-alt me-2 text-primary"></i>Monthly Financial Summary</h6>
+                                <p class="text-muted small mb-0">Automatically generate and email monthly financial reports</p>
+                                <small class="text-info">Next run: <?php echo date('M d, Y', strtotime('+1 month')); ?></small>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="auto-monthly" checked>
+                                <input class="form-check-input" type="checkbox" id="auto-monthly">
                             </div>
                         </div>
 
                         <div class="automation-item">
                             <div>
-                                <h6>Quarterly Compliance Report</h6>
+                                <h6><i class="fas fa-shield-alt me-2 text-success"></i>Quarterly Compliance Report</h6>
                                 <p class="text-muted small mb-0">Generate compliance reports every quarter</p>
+                                <small class="text-info">Next run: <?php echo date('M d, Y', strtotime('+3 months')); ?></small>
                             </div>
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="auto-quarterly">
@@ -898,11 +945,40 @@ $current_user = getCurrentUser();
 
                         <div class="automation-item">
                             <div>
-                                <h6>Year-end Tax Preparation</h6>
+                                <h6><i class="fas fa-file-invoice me-2 text-warning"></i>Year-end Tax Preparation</h6>
                                 <p class="text-muted small mb-0">Prepare all tax documents at year-end</p>
+                                <small class="text-info">Next run: <?php echo date('M d, Y', strtotime('+1 year')); ?></small>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="auto-yearend" checked>
+                                <input class="form-check-input" type="checkbox" id="auto-yearend">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Summary -->
+                    <div class="section-header mt-5">
+                        <h4><i class="fas fa-info-circle me-2"></i>Settings Summary</h4>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Current Configuration:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-calendar-alt me-2 text-muted"></i>Default Period: <span id="summary-period">Loading...</span></li>
+                                        <li><i class="fas fa-file-export me-2 text-muted"></i>Default Format: <span id="summary-format">Loading...</span></li>
+                                        <li><i class="fas fa-building me-2 text-muted"></i>Company: <span id="summary-company">Loading...</span></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Automation Status:</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-calendar-alt me-2 text-muted"></i>Monthly Reports: <span id="summary-monthly">Loading...</span></li>
+                                        <li><i class="fas fa-shield-alt me-2 text-muted"></i>Quarterly Reports: <span id="summary-quarterly">Loading...</span></li>
+                                        <li><i class="fas fa-file-invoice me-2 text-muted"></i>Year-end Reports: <span id="summary-yearend">Loading...</span></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>

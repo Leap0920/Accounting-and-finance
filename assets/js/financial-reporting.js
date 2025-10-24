@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load recent tax reports
     loadRecentTaxReports();
+    
+    // Load report settings
+    loadReportSettings();
 });
 
 /**
@@ -2109,18 +2112,329 @@ function logAuditActionToDB(action, objectType, objectId, additionalInfo = {}) {
 }
 
 /**
+ * Load report settings
+ */
+function loadReportSettings() {
+    $.ajax({
+        url: 'api/report-settings.php',
+        method: 'GET',
+        data: { action: 'get_settings' },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                populateSettingsForm(response.settings);
+            } else {
+                console.error('Error loading settings:', response.message);
+                showSettingsError('Failed to load settings');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading settings:', error);
+            showSettingsError('Connection error while loading settings');
+        }
+    });
+}
+
+/**
+ * Populate settings form with loaded data
+ */
+function populateSettingsForm(settings) {
+    // Basic settings
+    if (settings.default_period) {
+        document.getElementById('default-period').value = settings.default_period.value;
+    }
+    if (settings.default_format) {
+        document.getElementById('default-format').value = settings.default_format.value;
+    }
+    if (settings.company_name) {
+        document.getElementById('company-name').value = settings.company_name.value;
+    }
+    if (settings.fiscal_year_end) {
+        document.getElementById('fiscal-year-end').value = settings.fiscal_year_end.value;
+    }
+    if (settings.footer_text) {
+        document.getElementById('footer-text').value = settings.footer_text.value;
+    }
+    
+    // Automated reports
+    if (settings.auto_monthly) {
+        document.getElementById('auto-monthly').checked = settings.auto_monthly.value;
+    }
+    if (settings.auto_quarterly) {
+        document.getElementById('auto-quarterly').checked = settings.auto_quarterly.value;
+    }
+    if (settings.auto_yearend) {
+        document.getElementById('auto-yearend').checked = settings.auto_yearend.value;
+    }
+    
+    // Additional settings
+    if (settings.email_notifications) {
+        const emailToggle = document.getElementById('email-notifications');
+        if (emailToggle) {
+            emailToggle.checked = settings.email_notifications.value;
+        }
+    }
+    if (settings.report_retention_days) {
+        const retentionInput = document.getElementById('report-retention-days');
+        if (retentionInput) {
+            retentionInput.value = settings.report_retention_days.value;
+        }
+    }
+    
+    // Update settings summary
+    updateSettingsSummary(settings);
+}
+
+/**
  * Save settings
  */
 function saveSettings() {
-    const period = document.getElementById('default-period').value;
-    const format = document.getElementById('default-format').value;
-    const companyName = document.getElementById('company-name').value;
-    const fiscalYearEnd = document.getElementById('fiscal-year-end').value;
-    const footerText = document.getElementById('footer-text').value;
+    const saveBtn = document.getElementById('saveSettingsBtn');
+    const originalText = saveBtn.innerHTML;
     
-    // In real implementation, this would save to database
-    alert('Settings saved successfully!\n\nDefault Period: ' + period + '\nDefault Format: ' + format);
+    // Show loading state
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
     
-    // Log to audit trail
-    logAuditAction('Update Settings', 'Report Configuration');
+    // Collect all settings
+    const settings = {
+        default_period: document.getElementById('default-period').value,
+        default_format: document.getElementById('default-format').value,
+        company_name: document.getElementById('company-name').value,
+        fiscal_year_end: document.getElementById('fiscal-year-end').value,
+        footer_text: document.getElementById('footer-text').value,
+        auto_monthly: document.getElementById('auto-monthly').checked,
+        auto_quarterly: document.getElementById('auto-quarterly').checked,
+        auto_yearend: document.getElementById('auto-yearend').checked,
+        email_notifications: document.getElementById('email-notifications')?.checked || true,
+        report_retention_days: document.getElementById('report-retention-days')?.value || 365
+    };
+    
+    // Validate settings
+    if (!validateSettings(settings)) {
+        resetSaveButton(saveBtn, originalText);
+        return;
+    }
+    
+    $.ajax({
+        url: 'api/report-settings.php',
+        method: 'POST',
+        data: { 
+            action: 'save_settings',
+            settings: settings
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Show success state
+                saveBtn.innerHTML = '<i class="fas fa-check me-2"></i>Saved!';
+                saveBtn.classList.remove('btn-primary');
+                saveBtn.classList.add('btn-success');
+                
+                // Show success notification
+                showSettingsSuccess('Settings saved successfully!');
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.classList.remove('btn-success');
+                    saveBtn.classList.add('btn-primary');
+                }, 2000);
+                
+                // Log to audit trail
+                logAuditAction('Update Settings', 'Report Configuration', settings);
+                
+            } else {
+                showSettingsError('Failed to save settings: ' + response.message);
+                resetSaveButton(saveBtn, originalText);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error saving settings:', error);
+            showSettingsError('Connection error while saving settings');
+            resetSaveButton(saveBtn, originalText);
+        }
+    });
+}
+
+/**
+ * Validate settings
+ */
+function validateSettings(settings) {
+    // Validate company name
+    if (!settings.company_name || settings.company_name.trim().length < 2) {
+        showSettingsError('Company name must be at least 2 characters long');
+        return false;
+    }
+    
+    // Validate fiscal year end
+    if (!settings.fiscal_year_end) {
+        showSettingsError('Fiscal year end date is required');
+        return false;
+    }
+    
+    // Validate retention days
+    if (settings.report_retention_days < 30 || settings.report_retention_days > 3650) {
+        showSettingsError('Report retention days must be between 30 and 3650');
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Reset settings to defaults
+ */
+function resetSettings() {
+    if (!confirm('Are you sure you want to reset all settings to defaults? This action cannot be undone.')) {
+        return;
+    }
+    
+    const resetBtn = document.getElementById('resetSettingsBtn');
+    const originalText = resetBtn.innerHTML;
+    
+    // Show loading state
+    resetBtn.disabled = true;
+    resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Resetting...';
+    
+    $.ajax({
+        url: 'api/report-settings.php',
+        method: 'POST',
+        data: { action: 'reset_settings' },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Reload settings
+                loadReportSettings();
+                
+                // Show success state
+                resetBtn.innerHTML = '<i class="fas fa-check me-2"></i>Reset!';
+                resetBtn.classList.remove('btn-outline-warning');
+                resetBtn.classList.add('btn-success');
+                
+                // Show success notification
+                showSettingsSuccess('Settings reset to defaults successfully!');
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    resetBtn.disabled = false;
+                    resetBtn.innerHTML = originalText;
+                    resetBtn.classList.remove('btn-success');
+                    resetBtn.classList.add('btn-outline-warning');
+                }, 2000);
+                
+                // Log to audit trail
+                logAuditAction('Reset Settings', 'Report Configuration');
+                
+            } else {
+                showSettingsError('Failed to reset settings: ' + response.message);
+                resetSaveButton(resetBtn, originalText);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error resetting settings:', error);
+            showSettingsError('Connection error while resetting settings');
+            resetSaveButton(resetBtn, originalText);
+        }
+    });
+}
+
+/**
+ * Reset save button to original state
+ */
+function resetSaveButton(button, originalText) {
+    button.disabled = false;
+    button.innerHTML = originalText;
+    button.classList.remove('btn-success', 'btn-danger');
+    button.classList.add('btn-primary');
+}
+
+/**
+ * Show settings success message
+ */
+function showSettingsSuccess(message) {
+    const alertHtml = `
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Remove existing alerts
+    document.querySelectorAll('.alert').forEach(alert => alert.remove());
+    
+    // Add new alert
+    const settingsContainer = document.querySelector('.settings-container');
+    settingsContainer.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 5000);
+}
+
+/**
+ * Show settings error message
+ */
+function showSettingsError(message) {
+    const alertHtml = `
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Remove existing alerts
+    document.querySelectorAll('.alert').forEach(alert => alert.remove());
+    
+    // Add new alert
+    const settingsContainer = document.querySelector('.settings-container');
+    settingsContainer.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-dismiss after 8 seconds
+    setTimeout(() => {
+        const alert = document.querySelector('.alert');
+        if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    }, 8000);
+}
+
+/**
+ * Update settings summary
+ */
+function updateSettingsSummary(settings) {
+    // Update basic configuration
+    if (settings.default_period) {
+        document.getElementById('summary-period').textContent = settings.default_period.value;
+    }
+    if (settings.default_format) {
+        document.getElementById('summary-format').textContent = settings.default_format.value;
+    }
+    if (settings.company_name) {
+        document.getElementById('summary-company').textContent = settings.company_name.value;
+    }
+    
+    // Update automation status
+    if (settings.auto_monthly) {
+        const status = settings.auto_monthly.value ? 'Enabled' : 'Disabled';
+        const color = settings.auto_monthly.value ? 'text-success' : 'text-muted';
+        document.getElementById('summary-monthly').innerHTML = `<span class="${color}">${status}</span>`;
+    }
+    if (settings.auto_quarterly) {
+        const status = settings.auto_quarterly.value ? 'Enabled' : 'Disabled';
+        const color = settings.auto_quarterly.value ? 'text-success' : 'text-muted';
+        document.getElementById('summary-quarterly').innerHTML = `<span class="${color}">${status}</span>`;
+    }
+    if (settings.auto_yearend) {
+        const status = settings.auto_yearend.value ? 'Enabled' : 'Disabled';
+        const color = settings.auto_yearend.value ? 'text-success' : 'text-muted';
+        document.getElementById('summary-yearend').innerHTML = `<span class="${color}">${status}</span>`;
+    }
 }

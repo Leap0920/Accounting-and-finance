@@ -1159,3 +1159,56 @@ body {
 .section-header p {
     margin-bottom: 0;
 }
+
+/* Enhanced Settings Styles */
+.settings-card small {
+    margin-top: 5px;
+    display: block;
+}
+
+.automation-item {
+    background: var(--card-bg);
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.automation-item:hover {
+    border-color: var(--primary-teal);
+    box-shadow: 0 2px 8px rgba(10, 61, 61, 0.1);
+}
+
+.automation-item h6 {
+    margin-bottom: 5px;
+    color: var(--text-dark);
+}
+
+.automation-item small {
+    color: var(--text-muted);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-teal);
+    border-color: var(--primary-teal);
+}
+
+/* Settings Summary */
+.card {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.card-body ul li {
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.card-body ul li:last-child {
+    border-bottom: none;
+}
