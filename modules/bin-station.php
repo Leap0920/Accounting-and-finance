@@ -17,7 +17,7 @@ $current_user = getCurrentUser();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bin Station - Compliance Reports</title>
+    <title>Bin Station - Deleted Items Management</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -162,7 +162,7 @@ $current_user = getCurrentUser();
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <h2><i class="fas fa-trash-alt me-3"></i>Bin Station</h2>
-                    <p class="text-muted mb-0">Manage deleted compliance reports. Restore accidentally deleted reports or permanently remove them.</p>
+                    <p class="text-muted mb-0">Manage all deleted items across the system. Restore accidentally deleted items or permanently remove them.</p>
                 </div>
                 <div class="col-md-4 text-end">
                     <button class="btn btn-outline-primary" onclick="refreshBin()">
@@ -226,7 +226,7 @@ $current_user = getCurrentUser();
         <div class="card">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Deleted Compliance Reports</h4>
+                    <h4 class="mb-0">Deleted Items</h4>
                     <div class="d-flex gap-2">
                         <button class="btn btn-outline-success" onclick="restoreAll()">
                             <i class="fas fa-undo me-2"></i>Restore All
@@ -266,7 +266,7 @@ $current_user = getCurrentUser();
             $.ajax({
                 url: 'api/compliance-reports.php',
                 method: 'GET',
-                data: { action: 'get_bin_reports' },
+                data: { action: 'get_all_bin_items' },
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
@@ -285,43 +285,43 @@ $current_user = getCurrentUser();
         /**
          * Update bin display
          */
-        function updateBinDisplay(reports) {
+        function updateBinDisplay(items) {
             const container = document.getElementById('binItems');
             
-            if (!reports || reports.length === 0) {
+            if (!items || items.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-5">
                         <i class="fas fa-trash-alt fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">Bin is Empty</h5>
-                        <p class="text-muted">No deleted compliance reports found.</p>
+                        <p class="text-muted">No deleted items found.</p>
                     </div>
                 `;
                 return;
             }
-
+            
             let html = '';
-            reports.forEach(report => {
-                const deletedDate = new Date(report.deleted_at).toLocaleString();
-                const reportTypeLabel = getReportTypeLabel(report.report_type);
-                const period = `${formatDate(report.period_start)} to ${formatDate(report.period_end)}`;
+            items.forEach(item => {
+                const deletedDate = new Date(item.deleted_at).toLocaleString();
+                const itemTypeLabel = getItemTypeLabel(item.item_type);
+                const itemIcon = getItemTypeIcon(item.item_type);
                 
                 html += `
                     <div class="bin-item">
                         <div class="row align-items-center">
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center">
-                                    <i class="fas ${getReportTypeIcon(report.report_type)} me-2 text-primary"></i>
+                                    <i class="fas ${itemIcon} me-2 text-primary"></i>
                                     <div>
-                                        <strong>${reportTypeLabel}</strong>
-                                        <br><small class="text-muted">Score: ${report.compliance_score || 'N/A'}%</small>
+                                        <strong>${itemTypeLabel}</strong>
+                                        <br><small class="text-muted">${item.title || 'Item'}</small>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
-                                <small class="text-muted">${period}</small>
+                                <small class="text-muted">${item.period_start ? formatDate(item.period_start) : 'N/A'}</small>
                             </div>
                             <div class="col-md-2">
-                                <small class="text-muted">${formatDateTime(report.generated_date)}</small>
+                                <small class="text-muted">${item.score ? item.score + '%' : 'N/A'}</small>
                             </div>
                             <div class="col-md-2">
                                 <span class="badge bg-danger">
@@ -331,10 +331,10 @@ $current_user = getCurrentUser();
                             </div>
                             <div class="col-md-3">
                                 <div class="d-flex gap-1">
-                                    <button class="btn btn-sm btn-success" onclick="restoreReport(${report.id})" title="Restore Report">
+                                    <button class="btn btn-sm btn-success" onclick="restoreItem('${item.item_type}', ${item.id})" title="Restore Item">
                                         <i class="fas fa-undo"></i> Restore
                                     </button>
-                                    <button class="btn btn-sm btn-danger" onclick="permanentDeleteReport(${report.id})" title="Permanently Delete">
+                                    <button class="btn btn-sm btn-danger" onclick="permanentDeleteItem('${item.item_type}', ${item.id})" title="Permanently Delete">
                                         <i class="fas fa-trash"></i> Delete
                                     </button>
                                 </div>
@@ -343,7 +343,7 @@ $current_user = getCurrentUser();
                     </div>
                 `;
             });
-
+            
             container.innerHTML = html;
         }
 
@@ -431,24 +431,90 @@ $current_user = getCurrentUser();
          * Restore all reports
          */
         function restoreAll() {
-            if (!confirm('Are you sure you want to restore all deleted compliance reports?')) {
+            if (!confirm('Are you sure you want to restore ALL deleted items? This will move all items back to their active state.')) {
                 return;
             }
 
-            // This would need to be implemented in the API
-            showNotification('Restore all feature coming soon!', 'info');
+            // Show loading state
+            const button = event.target;
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Restoring...';
+            button.disabled = true;
+
+            $.ajax({
+                url: 'api/compliance-reports.php',
+                method: 'POST',
+                data: { 
+                    action: 'restore_all_items'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification(`Successfully restored ${response.restored_count} items!`, 'success');
+                        loadBinData(); // Refresh bin
+                        
+                        // Show any errors if they occurred
+                        if (response.errors && response.errors.length > 0) {
+                            console.warn('Some items failed to restore:', response.errors);
+                        }
+                    } else {
+                        showNotification('Restore all failed: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Restore all failed: ' + error, 'error');
+                },
+                complete: function() {
+                    // Reset button state
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                }
+            });
         }
 
         /**
          * Empty bin (permanently delete all)
          */
         function emptyBin() {
-            if (!confirm('Are you sure you want to permanently delete ALL reports in the bin? This action cannot be undone.')) {
+            if (!confirm('WARNING: Are you sure you want to PERMANENTLY DELETE ALL items in the bin? This action cannot be undone and will permanently remove all deleted items.')) {
                 return;
             }
 
-            // This would need to be implemented in the API
-            showNotification('Empty bin feature coming soon!', 'info');
+            // Double confirmation for safety
+            if (!confirm('This is your final warning. Click OK to permanently delete ALL items in the bin. This cannot be undone.')) {
+                return;
+            }
+
+            // Show loading state
+            const button = event.target;
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+            button.disabled = true;
+
+            $.ajax({
+                url: 'api/compliance-reports.php',
+                method: 'POST',
+                data: { 
+                    action: 'empty_bin'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification(`Successfully permanently deleted ${response.deleted_count} items!`, 'success');
+                        loadBinData(); // Refresh bin
+                    } else {
+                        showNotification('Empty bin failed: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Empty bin failed: ' + error, 'error');
+                },
+                complete: function() {
+                    // Reset button state
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                }
+            });
         }
 
         /**
@@ -501,6 +567,99 @@ $current_user = getCurrentUser();
         }
 
         // Helper functions
+        function getItemTypeLabel(type) {
+            const labels = {
+                'compliance_report': 'Compliance Report',
+                'transaction': 'Transaction',
+                'journal_entry': 'Journal Entry',
+                'expense': 'Expense',
+                'payroll': 'Payroll Record'
+            };
+            return labels[type] || 'Unknown Item';
+        }
+        
+        function getItemTypeIcon(type) {
+            const icons = {
+                'compliance_report': 'fa-chart-line',
+                'transaction': 'fa-exchange-alt',
+                'journal_entry': 'fa-book',
+                'expense': 'fa-receipt',
+                'payroll': 'fa-users'
+            };
+            return icons[type] || 'fa-file';
+        }
+        
+        function restoreItem(itemType, itemId) {
+            if (itemType === 'compliance_report') {
+                restoreReport(itemId);
+            } else {
+                showNotification('Restore functionality for ' + itemType + ' not yet implemented.', 'info');
+            }
+        }
+        
+        function permanentDeleteItem(itemType, itemId) {
+            if (itemType === 'compliance_report') {
+                permanentDeleteReport(itemId);
+            } else {
+                showNotification('Permanent delete functionality for ' + itemType + ' not yet implemented.', 'info');
+            }
+        }
+        
+        function restoreReport(reportId) {
+            if (!confirm('Are you sure you want to restore this report? It will be moved back to active compliance reports.')) {
+                return;
+            }
+            $.ajax({
+                url: 'api/compliance-reports.php',
+                method: 'POST',
+                data: { action: 'restore_report', report_id: reportId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Report restored successfully!', 'success');
+                        loadBinData();
+                    } else {
+                        showNotification('Restore failed: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Restore failed: ' + error, 'error');
+                }
+            });
+        }
+        
+        function permanentDeleteReport(reportId) {
+            if (!confirm('WARNING: Are you sure you want to permanently delete this report? This action cannot be undone.')) {
+                return;
+            }
+            $.ajax({
+                url: 'api/compliance-reports.php',
+                method: 'POST',
+                data: { action: 'permanent_delete_report', report_id: reportId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('Report permanently deleted!', 'success');
+                        loadBinData();
+                    } else {
+                        showNotification('Permanent delete failed: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Permanent delete failed: ' + error, 'error');
+                }
+            });
+        }
+        
+        function refreshBin() {
+            loadBinData();
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Simple notification - you can enhance this
+            alert(message);
+        }
+        
         function getReportTypeLabel(type) {
             const labels = {
                 'gaap': 'GAAP Compliance',

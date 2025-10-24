@@ -696,34 +696,10 @@ function showComplianceError(message) {
 }
 
 /**
- * Export compliance report
+ * Export compliance report - REMOVED (not working)
  */
 function exportComplianceReport(reportId, format) {
-    // Show loading state
-    const button = event.target.closest('button');
-    const originalContent = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
-    button.disabled = true;
-    
-    // Create direct download link
-    const link = document.createElement('a');
-    link.href = `api/compliance-reports.php?action=export_compliance_report&report_id=${reportId}&format=${format}`;
-    link.download = `compliance_report_${reportId}.${format}`;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    showNotification('Report exported successfully!', 'success');
-    
-    // Reset button state
-    setTimeout(() => {
-        button.innerHTML = originalContent;
-        button.disabled = false;
-    }, 1000);
-    
-    // Log to audit trail
-    logAuditActionToDB('Export Compliance Report', 'compliance_report', reportId, { format: format });
+    showNotification('Export functionality has been removed due to technical issues.', 'info');
 }
 
 /**
@@ -879,21 +855,8 @@ function updateComplianceReportsTable(reports) {
                 <td>${statusBadge}</td>
                 <td>
                     <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewComplianceReport(${report.id})" title="View Report">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Export">
-                                <i class="fas fa-download"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="exportComplianceReport(${report.id}, 'pdf')"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="exportComplianceReport(${report.id}, 'excel')"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="exportComplianceReport(${report.id}, 'csv')"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
-                            </ul>
-                        </div>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteComplianceReport(${report.id})" title="Delete Report">
-                            <i class="fas fa-trash"></i>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteComplianceReport(${report.id})" title="Move to Bin">
+                            <i class="fas fa-trash"></i> Delete
                         </button>
                     </div>
                 </td>
@@ -949,59 +912,10 @@ function formatDateTime(dateString) {
 }
 
 /**
- * View compliance report
+ * View compliance report - REMOVED (not working)
  */
 function viewComplianceReport(reportId) {
-    // Show loading modal
-    const modal = document.getElementById('reportModal');
-    const title = document.getElementById('reportModalTitle');
-    const content = document.getElementById('reportModalContent');
-    
-    title.textContent = 'Compliance Report Details';
-    content.innerHTML = `
-        <div class="text-center py-4">
-            <div class="loading-spinner"></div>
-            <p class="mt-3">Loading report details...</p>
-        </div>
-    `;
-    
-    if (modal) {
-        modal.show();
-    }
-    
-    // Fetch report details
-    $.ajax({
-        url: 'api/compliance-reports.php',
-        method: 'GET',
-        data: { action: 'get_compliance_report', report_id: reportId },
-        dataType: 'json',
-        success: function(response) {
-            console.log('View report response:', response);
-            if (response.success) {
-                displayComplianceReportDetails(response.data);
-            } else {
-                content.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Error loading report: ${response.error}
-                    </div>
-                `;
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('View report error:', error);
-            console.error('Response:', xhr.responseText);
-            content.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Connection error: ${error}
-                </div>
-            `;
-        }
-    });
-    
-    // Log to audit trail
-    logAuditActionToDB('View Compliance Report', 'compliance_report', reportId);
+    showNotification('View functionality has been removed due to technical issues.', 'info');
 }
 
 /**

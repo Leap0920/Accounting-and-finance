@@ -64,16 +64,20 @@ try {
             exportAuditLog();
             break;
         
-        case 'get_bin_reports':
-            getBinReports();
+        case 'get_all_bin_items':
+            getAllBinItems();
             break;
         
         case 'restore_report':
             restoreReport();
             break;
         
-        case 'permanent_delete_report':
-            permanentDeleteReport();
+        case 'restore_all_items':
+            restoreAllItems();
+            break;
+        
+        case 'empty_bin':
+            emptyBin();
             break;
         
         default:
@@ -905,15 +909,25 @@ function exportAuditLog() {
 }
 
 /**
- * Get reports in bin (soft deleted)
+ * Get all deleted items from bin (compliance reports, transactions, etc.)
  */
-function getBinReports() {
+function getAllBinItems() {
     global $conn;
     
+    $binItems = [];
+    
+    // Get deleted compliance reports
     $stmt = $conn->prepare("
         SELECT 
-            cr.*,
-            u.full_name as generated_by_name
+            'compliance_report' as item_type,
+            cr.id,
+            cr.report_type as title,
+            cr.period_start,
+            cr.period_end,
+            cr.deleted_at,
+            u.full_name as deleted_by_name,
+            cr.compliance_score as score,
+            cr.status
         FROM compliance_reports cr
         LEFT JOIN users u ON cr.generated_by = u.id
         WHERE cr.deleted_at IS NOT NULL
@@ -923,15 +937,24 @@ function getBinReports() {
     $stmt->execute();
     $result = $stmt->get_result();
     
-    $reports = [];
     while ($row = $result->fetch_assoc()) {
-        $reports[] = $row;
+        $binItems[] = $row;
     }
+    
+    // Add other deleted item types here in the future
+    // Example: deleted transactions, deleted journal entries, etc.
     
     echo json_encode([
         'success' => true,
-        'data' => $reports
+        'data' => $binItems
     ]);
+}
+
+/**
+ * Get reports in bin (soft deleted) - DEPRECATED, use getAllBinItems
+ */
+function getBinReports() {
+    getAllBinItems();
 }
 
 /**
@@ -971,38 +994,82 @@ function restoreReport() {
 }
 
 /**
- * Permanently delete report from bin
+ * Restore all items from bin
  */
-function permanentDeleteReport() {
+function restoreAllItems() {
     global $conn, $current_user;
     
-    $reportId = $_POST['report_id'] ?? '';
-    
-    if (empty($reportId)) {
-        throw new Exception('Report ID is required');
-    }
-    
-    // Check if report exists and is deleted
-    $stmt = $conn->prepare("SELECT id FROM compliance_reports WHERE id = ? AND deleted_at IS NOT NULL");
-    $stmt->bind_param('i', $reportId);
+    // Get all deleted compliance reports
+    $stmt = $conn->prepare("SELECT id FROM compliance_reports WHERE deleted_at IS NOT NULL");
     $stmt->execute();
     $result = $stmt->get_result();
     
-    if ($result->num_rows === 0) {
-        throw new Exception('Report not found in bin');
+    $restoredCount = 0;
+    $errors = [];
+    
+    while ($row = $result->fetch_assoc()) {
+        try {
+            // Restore each report
+            $restoreStmt = $conn->prepare("UPDATE compliance_reports SET deleted_at = NULL WHERE id = ?");
+            $restoreStmt->bind_param('i', $row['id']);
+            $restoreStmt->execute();
+            
+            if ($restoreStmt->affected_rows > 0) {
+                $restoredCount++;
+                
+                // Log audit action
+                logAuditActionToDB('Restore All - Compliance Report', 'compliance_report', $row['id']);
+            }
+        } catch (Exception $e) {
+            $errors[] = "Failed to restore report ID {$row['id']}: " . $e->getMessage();
+        }
     }
     
-    // Permanently delete the report
-    $stmt = $conn->prepare("DELETE FROM compliance_reports WHERE id = ?");
-    $stmt->bind_param('i', $reportId);
-    $stmt->execute();
-    
-    // Log audit action
-    logAuditActionToDB('Permanent Delete Compliance Report', 'compliance_report', $reportId);
+    // Log bulk restore action
+    logAuditActionToDB('Restore All Items', 'bin_operation', null, [
+        'restored_count' => $restoredCount,
+        'errors' => $errors
+    ]);
     
     echo json_encode([
         'success' => true,
-        'message' => 'Report permanently deleted'
+        'message' => "Successfully restored {$restoredCount} items",
+        'restored_count' => $restoredCount,
+        'errors' => $errors
+    ]);
+}
+
+/**
+ * Empty bin (permanently delete all items)
+ */
+function emptyBin() {
+    global $conn, $current_user;
+    
+    // Get all deleted compliance reports for logging
+    $stmt = $conn->prepare("SELECT id, report_type FROM compliance_reports WHERE deleted_at IS NOT NULL");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $deletedItems = [];
+    while ($row = $result->fetch_assoc()) {
+        $deletedItems[] = $row;
+    }
+    
+    // Permanently delete all compliance reports in bin
+    $deleteStmt = $conn->prepare("DELETE FROM compliance_reports WHERE deleted_at IS NOT NULL");
+    $deleteStmt->execute();
+    $deletedCount = $deleteStmt->affected_rows;
+    
+    // Log bulk delete action
+    logAuditActionToDB('Empty Bin - Permanent Delete All', 'bin_operation', null, [
+        'deleted_count' => $deletedCount,
+        'deleted_items' => $deletedItems
+    ]);
+    
+    echo json_encode([
+        'success' => true,
+        'message' => "Successfully permanently deleted {$deletedCount} items",
+        'deleted_count' => $deletedCount
     ]);
 }
 
