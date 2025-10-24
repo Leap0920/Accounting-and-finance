@@ -115,6 +115,78 @@ $current_user = getCurrentUser();
             <div class="tab-pane fade show active" id="financial-reports" role="tabpanel">
                 <div class="section-header">
                     <h4>Standard Financial Reports</h4>
+                    <div class="text-muted small">
+                        <i class="fas fa-database me-1"></i>Connected to MySQL Database | 
+                        <i class="fas fa-calendar me-1"></i>Current Period: <?php echo date('F Y'); ?> |
+                        <i class="fas fa-chart-line me-1"></i>Real-time Data
+                    </div>
+                </div>
+
+                <!-- Quick Stats Dashboard -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card stat-card-primary">
+                            <div class="stat-icon">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3><?php 
+                                    $result = $conn->query("SELECT COUNT(*) as count FROM journal_entries WHERE status = 'posted'");
+                                    echo number_format($result->fetch_assoc()['count']);
+                                ?></h3>
+                                <p>Posted Transactions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-card-success">
+                            <div class="stat-icon">
+                                <i class="fas fa-list-alt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3><?php 
+                                    $result = $conn->query("SELECT COUNT(*) as count FROM accounts WHERE is_active = 1");
+                                    echo number_format($result->fetch_assoc()['count']);
+                                ?></h3>
+                                <p>Active Accounts</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-card-info">
+                            <div class="stat-icon">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3><?php 
+                                    $result = $conn->query("
+                                        SELECT SUM(debit) as total_debits, SUM(credit) as total_credits
+                                        FROM journal_lines jl
+                                        INNER JOIN journal_entries je ON jl.journal_entry_id = je.id
+                                        WHERE je.status = 'posted'
+                                    ");
+                                    $balance = $result->fetch_assoc();
+                                    $is_balanced = abs($balance['total_debits'] - $balance['total_credits']) < 0.01;
+                                    echo $is_balanced ? '✓' : '⚠';
+                                ?></h3>
+                                <p><?php echo $is_balanced ? 'Books Balanced' : 'Books Unbalanced'; ?></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-card-warning">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3><?php 
+                                    $result = $conn->query("SELECT COUNT(*) as count FROM fiscal_periods WHERE status = 'open'");
+                                    echo number_format($result->fetch_assoc()['count']);
+                                ?></h3>
+                                <p>Open Periods</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="report-cards-grid">
@@ -125,6 +197,49 @@ $current_user = getCurrentUser();
                         </div>
                         <h5>Balance Sheet</h5>
                         <p class="report-description">Assets, Liabilities, and Equity</p>
+                        <div class="report-preview">
+                            <small class="text-muted">
+                                <strong>Amounts:</strong><br>
+                                <?php 
+                                // Get asset total
+                                $result = $conn->query("
+                                    SELECT COALESCE(SUM(jl.debit - jl.credit), 0) as total_assets
+                                    FROM accounts a
+                                    INNER JOIN account_types at ON a.type_id = at.id
+                                    LEFT JOIN journal_lines jl ON a.id = jl.account_id
+                                    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+                                    WHERE a.is_active = 1 AND at.category = 'asset' AND je.status = 'posted'
+                                ");
+                                $assets = $result->fetch_assoc()['total_assets'];
+                                
+                                // Get liability total
+                                $result = $conn->query("
+                                    SELECT COALESCE(SUM(jl.debit - jl.credit), 0) as total_liabilities
+                                    FROM accounts a
+                                    INNER JOIN account_types at ON a.type_id = at.id
+                                    LEFT JOIN journal_lines jl ON a.id = jl.account_id
+                                    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+                                    WHERE a.is_active = 1 AND at.category = 'liability' AND je.status = 'posted'
+                                ");
+                                $liabilities = abs($result->fetch_assoc()['total_liabilities']);
+                                
+                                // Get equity total
+                                $result = $conn->query("
+                                    SELECT COALESCE(SUM(jl.debit - jl.credit), 0) as total_equity
+                                    FROM accounts a
+                                    INNER JOIN account_types at ON a.type_id = at.id
+                                    LEFT JOIN journal_lines jl ON a.id = jl.account_id
+                                    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+                                    WHERE a.is_active = 1 AND at.category = 'equity' AND je.status = 'posted'
+                                ");
+                                $equity = abs($result->fetch_assoc()['total_equity']);
+                                
+                                echo "Assets: ₱" . number_format($assets, 0) . "<br>";
+                                echo "Liabilities: ₱" . number_format($liabilities, 0) . "<br>";
+                                echo "Equity: ₱" . number_format($equity, 0);
+                                ?>
+                            </small>
+                        </div>
                         <button class="btn btn-generate" onclick="openReportModal('balance-sheet')">GENERATE</button>
                     </div>
 
@@ -135,6 +250,40 @@ $current_user = getCurrentUser();
                         </div>
                         <h5>Income Statement</h5>
                         <p class="report-description">Revenue, expenses, and Net income</p>
+                        <div class="report-preview">
+                            <small class="text-muted">
+                                <strong>Amounts:</strong><br>
+                                <?php 
+                                // Get revenue total
+                                $result = $conn->query("
+                                    SELECT COALESCE(SUM(jl.credit - jl.debit), 0) as total_revenue
+                                    FROM accounts a
+                                    INNER JOIN account_types at ON a.type_id = at.id
+                                    LEFT JOIN journal_lines jl ON a.id = jl.account_id
+                                    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+                                    WHERE a.is_active = 1 AND at.category = 'revenue' AND je.status = 'posted'
+                                ");
+                                $revenue = $result->fetch_assoc()['total_revenue'];
+                                
+                                // Get expense total
+                                $result = $conn->query("
+                                    SELECT COALESCE(SUM(jl.debit - jl.credit), 0) as total_expenses
+                                    FROM accounts a
+                                    INNER JOIN account_types at ON a.type_id = at.id
+                                    LEFT JOIN journal_lines jl ON a.id = jl.account_id
+                                    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+                                    WHERE a.is_active = 1 AND at.category = 'expense' AND je.status = 'posted'
+                                ");
+                                $expenses = $result->fetch_assoc()['total_expenses'];
+                                
+                                $net_income = $revenue - $expenses;
+                                
+                                echo "Revenue: ₱" . number_format($revenue, 0) . "<br>";
+                                echo "Expenses: ₱" . number_format($expenses, 0) . "<br>";
+                                echo "Net Income: ₱" . number_format($net_income, 0);
+                                ?>
+                            </small>
+                        </div>
                         <button class="btn btn-generate" onclick="openReportModal('income-statement')">GENERATE</button>
                     </div>
 
@@ -145,6 +294,29 @@ $current_user = getCurrentUser();
                         </div>
                         <h5>Cash Flow Statement</h5>
                         <p class="report-description">Operating, Investing, and Financing Activities</p>
+                        <div class="report-preview">
+                            <small class="text-muted">
+                                <strong>Amounts:</strong><br>
+                                <?php 
+                                // Get cash accounts balance
+                                $result = $conn->query("
+                                    SELECT COALESCE(SUM(jl.debit - jl.credit), 0) as cash_balance
+                                    FROM accounts a
+                                    INNER JOIN account_types at ON a.type_id = at.id
+                                    LEFT JOIN journal_lines jl ON a.id = jl.account_id
+                                    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+                                    WHERE a.is_active = 1 AND at.category = 'asset' 
+                                    AND (a.name LIKE '%cash%' OR a.name LIKE '%bank%') AND je.status = 'posted'
+                                ");
+                                $cash_balance = $result->fetch_assoc()['cash_balance'];
+                                
+                                echo "Cash Balance: ₱" . number_format($cash_balance, 0) . "<br>";
+                                echo "Operating: Revenue - Expenses<br>";
+                                echo "Investing: Asset purchases<br>";
+                                echo "Financing: Loans & Equity";
+                                ?>
+                            </small>
+                        </div>
                         <button class="btn btn-generate" onclick="openReportModal('cash-flow')">GENERATE</button>
                     </div>
 
@@ -155,6 +327,28 @@ $current_user = getCurrentUser();
                         </div>
                         <h5>Trial Balance</h5>
                         <p class="report-description">Account Balances and Totals</p>
+                        <div class="report-preview">
+                            <small class="text-muted">
+                                <strong>Amounts:</strong><br>
+                                <?php 
+                                // Get trial balance totals
+                                $result = $conn->query("
+                                    SELECT 
+                                        SUM(jl.debit) as total_debits,
+                                        SUM(jl.credit) as total_credits
+                                    FROM journal_lines jl
+                                    INNER JOIN journal_entries je ON jl.journal_entry_id = je.id
+                                    WHERE je.status = 'posted'
+                                ");
+                                $totals = $result->fetch_assoc();
+                                $is_balanced = abs($totals['total_debits'] - $totals['total_credits']) < 0.01;
+                                
+                                echo "Total Debits: ₱" . number_format($totals['total_debits'], 0) . "<br>";
+                                echo "Total Credits: ₱" . number_format($totals['total_credits'], 0) . "<br>";
+                                echo "Status: " . ($is_balanced ? "✓ Balanced" : "⚠ Unbalanced");
+                                ?>
+                            </small>
+                        </div>
                         <button class="btn btn-generate" onclick="openReportModal('trial-balance')">GENERATE</button>
                     </div>
                 </div>
