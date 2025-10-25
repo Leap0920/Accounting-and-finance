@@ -30,6 +30,25 @@ if (!$isAdmin) {
                 <h2><i class="fas fa-database me-2"></i>Database Migration Management</h2>
                 <p class="text-muted">Manage database schema and migrations</p>
                 
+                <!-- Database Setup Instructions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle me-2"></i>Database Setup Instructions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-lightbulb me-2"></i>First Time Setup</h6>
+                            <p>If you're setting up the database for the first time, follow these steps:</p>
+                            <ol>
+                                <li><strong>Import Base Schema:</strong> Run the <code>database/schema.sql</code> file in your MySQL database</li>
+                                <li><strong>Run Migrations:</strong> Use the "Run Migrations" button below to add additional features</li>
+                                <li><strong>Verify Setup:</strong> Check the migration status to ensure everything is working</li>
+                            </ol>
+                            <p class="mb-0"><strong>Note:</strong> The migration system adds features on top of the base schema. Always import schema.sql first!</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Migration Status -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -43,6 +62,10 @@ if (!$isAdmin) {
                             echo '<div class="alert alert-danger">';
                             echo '<i class="fas fa-exclamation-triangle me-2"></i>';
                             echo 'Error: ' . htmlspecialchars($status['error']);
+                            if (isset($status['instructions'])) {
+                                echo '<br><br><strong>Instructions:</strong><br>';
+                                echo '<pre>' . htmlspecialchars($status['instructions']) . '</pre>';
+                            }
                             echo '</div>';
                         } else {
                             $healthCheck = $status['health_check'];

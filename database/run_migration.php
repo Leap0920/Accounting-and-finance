@@ -36,7 +36,7 @@ try {
             break;
             
         default:
-            throw new Exception('Invalid action');
+            throw new Exception('Invalid action: ' . $action);
     }
 } catch (Exception $e) {
     http_response_code(500);

@@ -43,9 +43,26 @@ class DatabaseMigration {
     }
     
     /**
+     * Check if database is completely empty
+     */
+    private function isDatabaseEmpty() {
+        $result = $this->conn->query("SHOW TABLES");
+        return $result->num_rows === 0;
+    }
+    
+    /**
      * Run all pending migrations
      */
     public function migrate() {
+        // Check if database is completely empty
+        if ($this->isDatabaseEmpty()) {
+            return [
+                'success' => false,
+                'error' => 'Database is empty. Please run schema.sql first to create the base database structure.',
+                'instructions' => '1. Import schema.sql into your database first\n2. Then run migrations to add additional features'
+            ];
+        }
+        
         if (!$this->needsMigration()) {
             return [
                 'success' => true,
@@ -255,30 +272,42 @@ class DatabaseMigration {
     public function checkDatabaseHealth() {
         $issues = [];
         
-        // Check required tables
+        // Check required tables based on schema.sql
         $requiredTables = [
-            'users', 'accounts', 'journal_types', 'journal_entries', 
-            'journal_lines', 'compliance_reports', 'tax_reports', 'report_settings'
+            'users', 'roles', 'user_roles', 'employee_refs', 'accounts', 
+            'journal_types', 'journal_entries', 'journal_lines', 'fiscal_periods',
+            'expense_categories', 'expense_claims', 'compliance_reports', 
+            'payments', 'bank_accounts', 'salary_components', 'payslips', 
+            'payroll_runs', 'loans', 'loan_types', 'account_types', 
+            'account_balances', 'payroll_periods', 'loan_payments', 
+            'audit_logs', 'integration_logs'
         ];
         
         foreach ($requiredTables as $table) {
             $result = $this->conn->query("SHOW TABLES LIKE '$table'");
-            if ($result->num_rows == 0) {
+            if ($result === false) {
+                $issues[] = "Error checking table: $table";
+            } elseif ($result->num_rows == 0) {
                 $issues[] = "Missing table: $table";
             }
         }
         
-        // Check required columns
+        // Check required columns only for tables that exist
         $requiredColumns = [
-            'compliance_reports' => ['deleted_at'],
-            'journal_entries' => ['deleted_at', 'deleted_by', 'restored_at', 'restored_by']
+            // No additional columns required beyond what's in schema.sql
         ];
         
         foreach ($requiredColumns as $table => $columns) {
-            foreach ($columns as $column) {
-                $result = $this->conn->query("SHOW COLUMNS FROM $table LIKE '$column'");
-                if ($result->num_rows == 0) {
-                    $issues[] = "Missing column: $table.$column";
+            // First check if table exists
+            $tableCheck = $this->conn->query("SHOW TABLES LIKE '$table'");
+            if ($tableCheck && $tableCheck->num_rows > 0) {
+                foreach ($columns as $column) {
+                    $result = $this->conn->query("SHOW COLUMNS FROM $table LIKE '$column'");
+                    if ($result === false) {
+                        $issues[] = "Error checking column: $table.$column";
+                    } elseif ($result->num_rows == 0) {
+                        $issues[] = "Missing column: $table.$column";
+                    }
                 }
             }
         }
