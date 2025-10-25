@@ -568,7 +568,8 @@ $current_user = getCurrentUser();
                     <i class="fas fa-table me-2" style="color: var(--primary-teal);"></i>Filtered Results
                 </h2>
                 <p class="section-subtitle-simple" id="results-summary">Showing filtered results</p>
-                        </div>
+                <span class="badge bg-light text-dark" id="filter-status">No filters applied</span>
+            </div>
 
             <!-- Action Buttons -->
             <div class="results-actions-simple mb-3">

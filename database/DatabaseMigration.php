@@ -107,7 +107,9 @@ class DatabaseMigration {
             INDEX idx_version (version)
         )";
         
-        $this->conn->query($sql);
+        if (!$this->conn->query($sql)) {
+            throw new Exception("Failed to create migrations table: " . $this->conn->error);
+        }
     }
     
     /**
@@ -159,11 +161,20 @@ class DatabaseMigration {
             // Execute migration SQL
             $this->executeMigrationSQL($migration['sql']);
             
-            // Record migration
-            $stmt = $this->conn->prepare("INSERT INTO database_migrations (version, description) VALUES (?, ?)");
-            $stmt->bind_param('ss', $migration['version'], $migration['description']);
-            $stmt->execute();
+            // Record migration - ensure table exists first
+            $this->createMigrationsTable();
             
+            $stmt = $this->conn->prepare("INSERT INTO database_migrations (version, description) VALUES (?, ?)");
+            if ($stmt === false) {
+                throw new Exception("Failed to prepare migration record statement: " . $this->conn->error);
+            }
+            
+            $stmt->bind_param('ss', $migration['version'], $migration['description']);
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to execute migration record: " . $stmt->error);
+            }
+            
+            $stmt->close();
             $this->conn->commit();
         } catch (Exception $e) {
             $this->conn->rollback();
@@ -180,9 +191,14 @@ class DatabaseMigration {
         foreach ($statements as $statement) {
             $statement = trim($statement);
             if (!empty($statement)) {
-                $this->conn->query($statement);
-                if ($this->conn->error) {
-                    throw new Exception("SQL Error: " . $this->conn->error);
+                // Skip comments and empty statements
+                if (strpos($statement, '--') === 0) {
+                    continue;
+                }
+                
+                $result = $this->conn->query($statement);
+                if ($result === false) {
+                    throw new Exception("SQL Error executing statement: " . $this->conn->error . "\nStatement: " . $statement);
                 }
             }
         }
@@ -205,13 +221,13 @@ class DatabaseMigration {
     private function getSoftDeleteSQL() {
         return "
         -- Add soft delete columns to compliance_reports
-        ALTER TABLE compliance_reports ADD COLUMN IF NOT EXISTS deleted_at DATETIME NULL;
+        ALTER TABLE compliance_reports ADD COLUMN deleted_at DATETIME NULL;
         
         -- Add soft delete columns to journal_entries
-        ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS deleted_at DATETIME NULL;
-        ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS deleted_by INT NULL;
-        ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS restored_at DATETIME NULL;
-        ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS restored_by INT NULL;
+        ALTER TABLE journal_entries ADD COLUMN deleted_at DATETIME NULL;
+        ALTER TABLE journal_entries ADD COLUMN deleted_by INT NULL;
+        ALTER TABLE journal_entries ADD COLUMN restored_at DATETIME NULL;
+        ALTER TABLE journal_entries ADD COLUMN restored_by INT NULL;
         
         -- Update journal_entries status enum to include 'deleted'
         ALTER TABLE journal_entries MODIFY COLUMN status ENUM('draft','posted','reversed','voided','deleted') DEFAULT 'draft';

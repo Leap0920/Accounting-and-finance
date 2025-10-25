@@ -9,6 +9,7 @@ let currentReportType = null;
 let reportModal = null;
 let filteredData = null;
 let showMoreDetails = false;
+let isFiltering = false; // Flag to prevent multiple simultaneous filter requests
 
 /**
  * Initialize on page load
@@ -731,6 +732,14 @@ function printRegulatoryReport() {
  * Apply filters to financial data
  */
 function applyFilters() {
+    // Prevent multiple simultaneous requests
+    if (isFiltering) {
+        console.log('Filter request already in progress, ignoring...');
+        return;
+    }
+    
+    isFiltering = true; // Set flag
+    
     const dateFrom = document.getElementById('filter-date-from').value;
     const dateTo = document.getElementById('filter-date-to').value;
     const subsystem = document.getElementById('filter-subsystem').value;
@@ -746,8 +755,10 @@ function applyFilters() {
     tbody.innerHTML = `
         <tr>
             <td colspan="7" class="text-center text-muted py-3">
-                <div class="loading-spinner"></div>
-                <p class="mt-2">Applying filters...</p>
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                Applying filters...
             </td>
         </tr>
     `;
@@ -781,18 +792,40 @@ function applyFilters() {
         timeout: 10000, // 10 second timeout
         success: function(response) {
             console.log('AJAX Success Response:', response);
-            if (response.success) {
-                if (response.data && response.data.length > 0) {
-                    filteredData = response.data;
-                    displayFilteredInformation(response.data);
-                    showNotification(response.message, 'success');
-                } else {
-                    showNoResults();
-                    showNotification('No records found matching your criteria', 'warning');
+            
+            try {
+                // Hide loading spinner
+                const tbody = document.getElementById('filtered-results-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '';
                 }
-            } else {
-                showNoResults();
-                showNotification(response.message || 'Error applying filters', 'error');
+                
+                if (response.success) {
+                    if (response.data && response.data.length > 0) {
+                        console.log('Processing', response.data.length, 'records');
+                        filteredData = response.data;
+                        
+                        // Ensure the results section is visible
+                        const resultsSection = document.getElementById('filtered-results');
+                        if (resultsSection) {
+                            resultsSection.style.display = 'block';
+                        }
+                        
+                        // Display the data
+                        displayFilteredInformation(response.data);
+                        showNotification(response.message || `Found ${response.data.length} records`, 'success');
+                    } else {
+                        console.log('No data in response');
+                        showNoResults();
+                        showNotification('No records found matching your criteria', 'warning');
+                    }
+                } else {
+                    console.log('Response indicates failure');
+                    showNoResults();
+                    showNotification(response.message || 'Error applying filters', 'error');
+                }
+            } finally {
+                isFiltering = false; // Reset flag
             }
         },
         error: function(xhr, status, error) {
@@ -800,46 +833,50 @@ function applyFilters() {
             console.error('Status:', status);
             console.error('Response:', xhr.responseText);
             
-            // Handle timeout
-            if (status === 'timeout') {
-                console.log('Request timed out, using mock data...');
-                try {
-                    const mockData = generateMockFilteredData(dateFrom, dateTo, subsystem, accountType, customSearch);
-                    if (mockData && mockData.length > 0) {
-                        filteredData = mockData;
-                        displayFilteredInformation(mockData);
-                        showNotification('Request timed out. Using sample data.', 'warning');
-                    } else {
+            try {
+                // Handle timeout
+                if (status === 'timeout') {
+                    console.log('Request timed out, using mock data...');
+                    try {
+                        const mockData = generateMockFilteredData(dateFrom, dateTo, subsystem, accountType, customSearch);
+                        if (mockData && mockData.length > 0) {
+                            filteredData = mockData;
+                            displayFilteredInformation(mockData);
+                            showNotification('Request timed out. Using sample data.', 'warning');
+                        } else {
+                            showNoResults();
+                            showNotification('Request timed out. No data available.', 'warning');
+                        }
+                    } catch (mockError) {
+                        console.error('Mock data error:', mockError);
                         showNoResults();
-                        showNotification('Request timed out. No data available.', 'warning');
+                        showNotification('Request timed out. Please try again.', 'error');
                     }
-                } catch (mockError) {
-                    console.error('Mock data error:', mockError);
-                    showNoResults();
-                    showNotification('Request timed out. Please try again.', 'error');
                 }
-            }
-            // If it's a 404 or connection error, try mock data as fallback
-            else if (xhr.status === 404 || xhr.status === 0) {
-                console.log('Using mock data as fallback...');
-                try {
-                    const mockData = generateMockFilteredData(dateFrom, dateTo, subsystem, accountType, customSearch);
-                    if (mockData && mockData.length > 0) {
-                        filteredData = mockData;
-                        displayFilteredInformation(mockData);
-                        showNotification('Using sample data (database not available)', 'warning');
-                    } else {
+                // If it's a 404 or connection error, try mock data as fallback
+                else if (xhr.status === 404 || xhr.status === 0) {
+                    console.log('Using mock data as fallback...');
+                    try {
+                        const mockData = generateMockFilteredData(dateFrom, dateTo, subsystem, accountType, customSearch);
+                        if (mockData && mockData.length > 0) {
+                            filteredData = mockData;
+                            displayFilteredInformation(mockData);
+                            showNotification('Using sample data (database not available)', 'warning');
+                        } else {
+                            showNoResults();
+                            showNotification('No data available. Please populate the database first.', 'warning');
+                        }
+                    } catch (mockError) {
+                        console.error('Mock data error:', mockError);
                         showNoResults();
                         showNotification('No data available. Please populate the database first.', 'warning');
                     }
-                } catch (mockError) {
-                    console.error('Mock data error:', mockError);
+                } else {
                     showNoResults();
-                    showNotification('No data available. Please populate the database first.', 'warning');
+                    showNotification('Connection error. Please try again.', 'error');
                 }
-            } else {
-                showNoResults();
-                showNotification('Connection error. Please try again.', 'error');
+            } finally {
+                isFiltering = false; // Reset flag
             }
         }
     });
@@ -926,48 +963,75 @@ function displayFilteredInformation(data) {
     const resultsSummary = document.getElementById('results-summary');
     const filterStatus = document.getElementById('filter-status');
     
+    console.log('displayFilteredInformation called with', data ? data.length : 0, 'records');
+    
     if (!data || data.length === 0) {
+        console.log('No data, showing no results');
         showNoResults();
         return;
     }
     
-    // Update summary
-    resultsSummary.textContent = `Found ${data.length} record${data.length !== 1 ? 's' : ''} matching your criteria`;
-    filterStatus.textContent = `${data.length} result${data.length !== 1 ? 's' : ''} found`;
-    filterStatus.className = 'badge bg-success';
-    
-    let html = '';
-    data.forEach((record, index) => {
-        const rowClass = index % 2 === 0 ? '' : 'table-light';
-        html += `
-            <tr class="${rowClass}">
-                <td>
-                    <span class="badge bg-light text-dark">${formatDate(record.date)}</span>
-                </td>
-                <td>
-                    <code class="text-primary fw-bold">${record.account_code}</code>
-                </td>
-                <td>
-                    <span class="fw-semibold">${record.account_name}</span>
-                </td>
-                <td>
-                    <span class="text-muted">${record.description}</span>
-                </td>
-                <td class="text-end">
-                    ${record.debit > 0 ? `<span class="text-danger fw-bold">${formatCurrency(record.debit)}</span>` : '<span class="text-muted">-</span>'}
-                </td>
-                <td class="text-end">
-                    ${record.credit > 0 ? `<span class="text-success fw-bold">${formatCurrency(record.credit)}</span>` : '<span class="text-muted">-</span>'}
-                </td>
-                <td class="text-end">
-                    <span class="text-primary fw-bold">${formatCurrency(record.balance)}</span>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tbody.innerHTML = html;
-    noResultsMessage.style.display = 'none';
+    try {
+        // Update summary
+        if (resultsSummary) {
+            resultsSummary.textContent = `Found ${data.length} record${data.length !== 1 ? 's' : ''} matching your criteria`;
+        }
+        
+        if (filterStatus) {
+            filterStatus.textContent = `${data.length} result${data.length !== 1 ? 's' : ''} found`;
+            filterStatus.className = 'badge bg-success';
+        }
+        
+        let html = '';
+        data.forEach((record, index) => {
+            const rowClass = index % 2 === 0 ? '' : 'table-light';
+            const dateStr = record.date ? formatDate(record.date) : 'N/A';
+            const accountCode = record.account_code || 'N/A';
+            const accountName = record.account_name || 'N/A';
+            const description = record.description || 'No description';
+            
+            html += `
+                <tr class="${rowClass}">
+                    <td>
+                        <span class="badge bg-light text-dark">${dateStr}</span>
+                    </td>
+                    <td>
+                        <code class="text-primary fw-bold">${accountCode}</code>
+                    </td>
+                    <td>
+                        <span class="fw-semibold">${accountName}</span>
+                    </td>
+                    <td>
+                        <span class="text-muted">${description}</span>
+                    </td>
+                    <td class="text-end">
+                        ${record.debit > 0 ? `<span class="text-danger fw-bold">${formatCurrency(record.debit)}</span>` : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td class="text-end">
+                        ${record.credit > 0 ? `<span class="text-success fw-bold">${formatCurrency(record.credit)}</span>` : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td class="text-end">
+                        <span class="text-primary fw-bold">${formatCurrency(record.balance)}</span>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        if (tbody) {
+            tbody.innerHTML = html;
+        }
+        
+        if (noResultsMessage) {
+            noResultsMessage.style.display = 'none';
+        }
+        
+        console.log('Successfully displayed', data.length, 'records');
+    } catch (error) {
+        console.error('Error displaying filtered information:', error);
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error displaying data: ${error.message}</td></tr>`;
+        }
+    }
 }
 
 /**

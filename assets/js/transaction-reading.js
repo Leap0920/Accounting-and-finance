@@ -13,12 +13,18 @@
      * Initialize when DOM is ready
      */
     document.addEventListener('DOMContentLoaded', function() {
-        // Check if table has data (PHP rendered)
+        // Check if table has actual data rows (not the "no data" message)
         const hasData = document.querySelector('#transactionTable tbody tr:not([colspan])') !== null;
+        const hasNoDataMessage = document.querySelector('#transactionTable tbody tr[colspan]') !== null;
+        
+        console.log('Has data:', hasData);
+        console.log('Has no data message:', hasNoDataMessage);
         
         if (hasData) {
             // Initialize DataTables with existing data
             initDataTable();
+        } else {
+            console.log('No data found, skipping DataTable initialization');
         }
         
         initEventHandlers();
@@ -37,27 +43,38 @@
 
         const table = $('#transactionTable');
         if (table.length && !$.fn.DataTable.isDataTable('#transactionTable')) {
-            dataTable = table.DataTable({
-                responsive: true,
-                pageLength: 25,
-                order: [[1, 'desc']], // Order by date descending
-                language: {
-                    info: "Showing _START_ to _END_ of _TOTAL_ transactions",
-                    infoEmpty: "Showing 0 to 0 of 0 transactions",
-                    infoFiltered: "(filtered from _MAX_ total transactions)",
-                    lengthMenu: "Show _MENU_ transactions per page",
-                    search: "Search transactions:",
-                    zeroRecords: "No matching transactions found",
-                    emptyTable: "No transaction data available"
-                },
-                columnDefs: [
-                    { orderable: false, targets: [9] }, // Actions column not sortable
-                    { type: 'date', targets: [1] }, // Date column
-                    { className: 'text-end', targets: [5, 6] }, // Debit and Credit columns right-aligned
-                    { className: 'text-center', targets: [7] } // Status column centered
-                ],
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip'
-            });
+            // Count actual columns in the table
+            const columnCount = table.find('thead th').length;
+            console.log('Table column count:', columnCount);
+            
+            // Only initialize if we have the expected number of columns
+            if (columnCount === 10) {
+                dataTable = table.DataTable({
+                    responsive: true,
+                    pageLength: 25,
+                    order: [[1, 'desc']], // Order by date descending
+                    language: {
+                        info: "Showing _START_ to _END_ of _TOTAL_ transactions",
+                        infoEmpty: "Showing 0 to 0 of 0 transactions",
+                        infoFiltered: "(filtered from _MAX_ total transactions)",
+                        lengthMenu: "Show _MENU_ transactions per page",
+                        search: "Search transactions:",
+                        zeroRecords: "No matching transactions found",
+                        emptyTable: "No transaction data available"
+                    },
+                    columnDefs: [
+                        { orderable: false, targets: [9] }, // Actions column not sortable
+                        { type: 'date', targets: [1] }, // Date column
+                        { className: 'text-end', targets: [5, 6] }, // Debit and Credit columns right-aligned
+                        { className: 'text-center', targets: [7] } // Status column centered
+                    ],
+                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip'
+                });
+                console.log('DataTable initialized successfully');
+            } else {
+                console.warn('Column count mismatch. Expected 10, found:', columnCount);
+                console.log('Skipping DataTable initialization to prevent errors');
+            }
         }
     }
 
