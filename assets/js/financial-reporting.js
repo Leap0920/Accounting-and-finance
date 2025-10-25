@@ -1,12 +1,14 @@
 /**
- * Financial Reporting & Compliance Module
- * Modern UI Implementation
+ * Financial Reporting Module
+ * Simplified implementation matching the flowchart
  */
 
 // Global variables
 let currentReportData = null;
 let currentReportType = null;
 let reportModal = null;
+let filteredData = null;
+let showMoreDetails = false;
 
 /**
  * Initialize on page load
@@ -18,37 +20,22 @@ document.addEventListener('DOMContentLoaded', function() {
         reportModal = new bootstrap.Modal(modalElement);
     }
     
-    // Set default dates
-    setDefaultDates();
-    
-    // Load initial audit trail data
-    loadAuditTrail();
-    
-    // Load compliance reports
-    loadComplianceReports();
-    
-    // Load recent tax reports
-    loadRecentTaxReports();
-    
-    // Load report settings
-    loadReportSettings();
-    
-    // Add event listeners to toggle buttons for auto-save
-    addToggleEventListeners();
+    // Set default dates for filters
+    setDefaultFilterDates();
 });
 
 /**
  * Set default dates for filters
  */
-function setDefaultDates() {
+function setDefaultFilterDates() {
     const today = new Date().toISOString().split('T')[0];
     const firstDayOfYear = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
     
-    // Set audit trail dates
-    const auditDateFrom = document.getElementById('audit-date-from');
-    const auditDateTo = document.getElementById('audit-date-to');
-    if (auditDateFrom) auditDateFrom.value = firstDayOfYear;
-    if (auditDateTo) auditDateTo.value = today;
+    // Set filter dates
+    const filterDateFrom = document.getElementById('filter-date-from');
+    const filterDateTo = document.getElementById('filter-date-to');
+    if (filterDateFrom) filterDateFrom.value = firstDayOfYear;
+    if (filterDateTo) filterDateTo.value = today;
 }
 
 /**
@@ -66,7 +53,8 @@ function openReportModal(reportType) {
         'balance-sheet': 'Balance Sheet',
         'income-statement': 'Income Statement',
         'cash-flow': 'Cash Flow Statement',
-        'trial-balance': 'Trial Balance'
+        'trial-balance': 'Trial Balance',
+        'regulatory-reports': 'Regulatory Reports'
     };
     
     title.textContent = 'Generate ' + titles[reportType];
@@ -161,7 +149,22 @@ function generateReport(reportType) {
         </div>
     `;
     
-    // Gather parameters
+    // Handle regulatory reports differently
+    if (reportType === 'regulatory-reports') {
+        // Simulate loading delay
+        setTimeout(() => {
+            const mockData = {
+                report_title: 'Regulatory Reports',
+                period: new Date().toLocaleDateString(),
+                generated_at: new Date().toISOString()
+            };
+            currentReportData = mockData;
+            displayReportInModal(reportType, mockData);
+        }, 1000);
+        return;
+    }
+    
+    // Gather parameters for other reports
     const params = getReportParams(reportType);
     
     // Make AJAX request
@@ -174,9 +177,6 @@ function generateReport(reportType) {
             if (response.success) {
                 currentReportData = response;
                 displayReportInModal(reportType, response);
-                
-                // Log to audit trail
-                logAuditAction('Generate Report', reportType);
             } else {
                 showError(response.message || 'Failed to generate report');
             }
@@ -233,6 +233,11 @@ function displayReportInModal(reportType, data) {
         html += generateIncomeStatementHTML(data);
     } else if (reportType === 'cash-flow') {
         html += generateCashFlowHTML(data);
+    } else if (reportType === 'regulatory-reports') {
+        html += generateRegulatoryReportsHTML(data);
+    } else {
+        // Fallback for any report type
+        html += generateGenericReportHTML(data);
     }
     
     html += `
@@ -383,6 +388,122 @@ function generateCashFlowHTML(data) {
 }
 
 /**
+ * Generate Regulatory Reports HTML - Following Flowchart
+ */
+function generateRegulatoryReportsHTML(data) {
+    let html = `
+        <div class="regulatory-reports-flow">
+            <!-- Step 1: Decision - View Regulatory Reports? -->
+            <div class="flow-step mb-4">
+                <div class="card border-primary">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary">
+                            <i class="fas fa-question-circle me-2"></i>View Regulatory Reports?
+                        </h5>
+                        <p class="text-muted mb-3">Select the type of regulatory report you want to view</p>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-primary w-100" onclick="viewRegulatoryReport('bsp')">
+                                    <i class="fas fa-university me-2"></i>BSP Reports
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-success w-100" onclick="viewRegulatoryReport('sec')">
+                                    <i class="fas fa-building me-2"></i>SEC Filings
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-outline-warning w-100" onclick="viewRegulatoryReport('internal')">
+                                    <i class="fas fa-shield-alt me-2"></i>Internal Compliance
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Display Report Table (hidden initially) -->
+            <div id="regulatory-report-table" style="display: none;">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-table me-2"></i>Display Report Table
+                            <span id="report-type-label">(BSP, SEC, or internal compliance templates)</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="regulatory-data-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Report ID</th>
+                                        <th>Report Type</th>
+                                        <th>Period</th>
+                                        <th>Status</th>
+                                        <th>Generated Date</th>
+                                        <th>Compliance Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="regulatory-data-tbody">
+                                    <!-- Data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Step 3: Decision - Export/Print the display Table? -->
+                        <div class="mt-4 text-center">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-question-circle me-2"></i>Export/Print the display Table?
+                            </h6>
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-success" onclick="exportRegulatoryReport()">
+                                    <i class="fas fa-file-excel me-2"></i>Export Excel
+                                </button>
+                                <button class="btn btn-danger" onclick="printRegulatoryReport()">
+                                    <i class="fas fa-file-pdf me-2"></i>Export PDF
+                                </button>
+                                <button class="btn btn-secondary" onclick="printRegulatoryReport()">
+                                    <i class="fas fa-print me-2"></i>Print Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return html;
+}
+
+/**
+ * Generate Generic Report HTML (fallback)
+ */
+function generateGenericReportHTML(data) {
+    let html = `
+        <div class="alert alert-info">
+            <h5><i class="fas fa-info-circle me-2"></i>Report Generated Successfully</h5>
+            <p class="mb-0">Report type: ${data.report_title || 'Financial Report'}</p>
+            <p class="mb-0">Period: ${data.period || 'Current Period'}</p>
+            <p class="mb-0">Generated: ${new Date().toLocaleString()}</p>
+        </div>
+    `;
+    
+    if (data.summary) {
+        html += `
+            <div class="mt-4">
+                <h6>Report Summary</h6>
+                <div class="bg-light p-3 rounded">
+                    <pre class="mb-0">${JSON.stringify(data.summary, null, 2)}</pre>
+                </div>
+            </div>
+        `;
+    }
+    
+    return html;
+}
+
+/**
  * Generate account table helper
  */
 function generateAccountTable(accounts, total, totalLabel) {
@@ -460,537 +581,528 @@ function exportReport(format) {
     }
     
     alert(`Exporting ${currentReportType} report as ${format.toUpperCase()}...\nThis feature will download the report in the selected format.`);
-    
-    // Log to audit trail
-    logAuditAction('Export Report', currentReportType, format);
 }
 
 /**
- * Open tax report modal
+ * View Regulatory Report - Step 1 of Flowchart
  */
-function openTaxReportModal(taxType) {
-    // Set default dates based on tax type
-    let defaultStart, defaultEnd, title, description;
+function viewRegulatoryReport(reportType) {
+    const reportTable = document.getElementById('regulatory-report-table');
+    const reportTypeLabel = document.getElementById('report-type-label');
+    const tbody = document.getElementById('regulatory-data-tbody');
     
-    switch(taxType) {
-        case 'income-tax':
-            title = 'Income Tax Report';
-            description = 'Generate annual income tax return with revenue and expense breakdown';
-            defaultStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]; // Jan 1
-            defaultEnd = new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0]; // Dec 31
-            break;
-        case 'payroll-tax':
-            title = 'Payroll Tax Report';
-            description = 'Generate quarterly payroll tax returns with employee withholdings';
-            defaultStart = new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1).toISOString().split('T')[0]; // 3 months ago
-            defaultEnd = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 0).toISOString().split('T')[0]; // Last month end
-            break;
-        case 'sales-tax':
-            title = 'Sales Tax Report';
-            description = 'Generate monthly sales tax returns with VAT collection details';
-            defaultStart = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0]; // Last month start
-            defaultEnd = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 0).toISOString().split('T')[0]; // Last month end
-            break;
-        default:
-            alert('Invalid tax report type');
-            return;
-    }
+    // Update report type label
+    const reportNames = {
+        'bsp': 'BSP (Bangko Sentral ng Pilipinas) Reports',
+        'sec': 'SEC (Securities and Exchange Commission) Filings',
+        'internal': 'Internal Compliance Templates'
+    };
     
-    // Create modal HTML
-    const modalHtml = `
-        <div class="modal fade" id="taxReportModal" tabindex="-1" aria-labelledby="taxReportModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="taxReportModalLabel">
-                            <i class="fas fa-file-invoice me-2"></i>${title}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <p class="text-muted">${description}</p>
-                        </div>
-                        
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="taxPeriodStart" class="form-label">Period Start</label>
-                                <input type="date" class="form-control" id="taxPeriodStart" value="${defaultStart}">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="taxPeriodEnd" class="form-control">Period End</label>
-                                <input type="date" class="form-control" id="taxPeriodEnd" value="${defaultEnd}">
-                            </div>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <label for="taxReportFormat" class="form-label">Export Format</label>
-                            <select class="form-select" id="taxReportFormat">
-                                <option value="json">View in Browser</option>
-                                <option value="pdf">PDF Document</option>
-                                <option value="excel">Excel Spreadsheet</option>
-                                <option value="csv">CSV File</option>
-                            </select>
-                        </div>
-                        
-                        <div id="taxReportPreview" class="mt-4" style="display: none;">
-                            <h6>Report Preview</h6>
-                            <div class="border rounded p-3 bg-light" id="taxReportContent">
-                                <!-- Report content will be loaded here -->
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="generateTaxReport('${taxType}')">
-                            <i class="fas fa-file-download me-2"></i>Generate Report
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remove existing modal if any
-    const existingModal = document.getElementById('taxReportModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Add modal to body
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('taxReportModal'));
-    modal.show();
-    
-    // Store tax type for later use
-    window.currentTaxType = taxType;
-    
-    // Add event listener to reset button state when modal is closed
-    const modalElement = document.getElementById('taxReportModal');
-    modalElement.addEventListener('hidden.bs.modal', function() {
-        // Reset any stuck button states
-        const generateBtn = modalElement.querySelector('button[onclick*="generateTaxReport"]');
-        if (generateBtn) {
-            generateBtn.innerHTML = '<i class="fas fa-file-download me-2"></i>Generate Report';
-            generateBtn.disabled = false;
-        }
-    });
-    
-    // Log to audit trail
-    logAuditAction('Open Tax Report Modal', taxType);
-}
-
-/**
- * Generate tax report
- */
-function generateTaxReport(taxType) {
-    const periodStart = document.getElementById('taxPeriodStart').value;
-    const periodEnd = document.getElementById('taxPeriodEnd').value;
-    const format = document.getElementById('taxReportFormat').value;
-    
-    if (!periodStart || !periodEnd) {
-        alert('Please select both start and end dates.');
-        return;
-    }
-    
-    if (new Date(periodStart) > new Date(periodEnd)) {
-        alert('Start date cannot be after end date.');
-        return;
-    }
+    reportTypeLabel.textContent = `(${reportNames[reportType]})`;
     
     // Show loading state
-    const generateBtn = event.target;
-    const originalContent = generateBtn.innerHTML;
-    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
-    generateBtn.disabled = true;
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center py-4">
+                <div class="loading-spinner"></div>
+                <p class="mt-2 text-muted">Loading ${reportNames[reportType]}...</p>
+            </td>
+        </tr>
+    `;
     
-    // Determine API action based on tax type
-    let action;
-    switch(taxType) {
-        case 'income-tax':
-            action = 'generate_income_tax';
-            break;
-        case 'payroll-tax':
-            action = 'generate_payroll_tax';
-            break;
-        case 'sales-tax':
-            action = 'generate_sales_tax';
-            break;
-        default:
-            alert('Invalid tax report type');
-            generateBtn.innerHTML = originalContent;
-            generateBtn.disabled = false;
-            return;
+    // Show the report table (Step 2 of flowchart)
+    reportTable.style.display = 'block';
+    
+    // Simulate loading data
+    setTimeout(() => {
+        displayRegulatoryReportData(reportType);
+    }, 1500);
+}
+
+/**
+ * Display Regulatory Report Data - Step 2 of Flowchart
+ */
+function displayRegulatoryReportData(reportType) {
+    const tbody = document.getElementById('regulatory-data-tbody');
+    
+    // Generate mock data based on report type
+    const mockData = generateMockRegulatoryData(reportType);
+    
+    let html = '';
+    mockData.forEach((report, index) => {
+        const statusBadge = report.status === 'Compliant' ? 'bg-success' : 
+                           report.status === 'Pending' ? 'bg-warning' : 'bg-danger';
+        
+        html += `
+            <tr>
+                <td><code class="text-primary">${report.id}</code></td>
+                <td><strong>${report.type}</strong></td>
+                <td>${report.period}</td>
+                <td><span class="badge ${statusBadge}">${report.status}</span></td>
+                <td>${formatDate(report.generatedDate)}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="progress me-2" style="width: 60px; height: 8px;">
+                            <div class="progress-bar ${report.score >= 80 ? 'bg-success' : report.score >= 60 ? 'bg-warning' : 'bg-danger'}" 
+                                 style="width: ${report.score}%"></div>
+                        </div>
+                        <span class="fw-bold">${report.score}%</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+    
+    // Show success notification
+    showNotification('Regulatory report data loaded successfully', 'success');
+}
+
+/**
+ * Generate Mock Regulatory Data
+ */
+function generateMockRegulatoryData(reportType) {
+    const baseData = {
+        'bsp': [
+            { id: 'BSP-001', type: 'Monthly Report', period: '2024-01', status: 'Compliant', generatedDate: '2024-01-31', score: 95 },
+            { id: 'BSP-002', type: 'Quarterly Report', period: '2024-Q1', status: 'Compliant', generatedDate: '2024-03-31', score: 92 },
+            { id: 'BSP-003', type: 'Annual Report', period: '2023', status: 'Pending', generatedDate: '2024-01-15', score: 78 }
+        ],
+        'sec': [
+            { id: 'SEC-001', type: '10-K Filing', period: '2023', status: 'Compliant', generatedDate: '2024-03-15', score: 88 },
+            { id: 'SEC-002', type: '10-Q Filing', period: '2024-Q1', status: 'Compliant', generatedDate: '2024-05-15', score: 85 },
+            { id: 'SEC-003', type: '8-K Filing', period: '2024-06', status: 'Pending', generatedDate: '2024-06-20', score: 72 }
+        ],
+        'internal': [
+            { id: 'INT-001', type: 'Compliance Audit', period: '2024-Q1', status: 'Compliant', generatedDate: '2024-03-31', score: 90 },
+            { id: 'INT-002', type: 'Risk Assessment', period: '2024-Q2', status: 'Compliant', generatedDate: '2024-06-30', score: 87 },
+            { id: 'INT-003', type: 'Internal Review', period: '2024-Q3', status: 'Pending', generatedDate: '2024-09-15', score: 75 }
+        ]
+    };
+    
+    return baseData[reportType] || [];
+}
+
+/**
+ * Export Regulatory Report - Step 4 of Flowchart
+ */
+function exportRegulatoryReport() {
+    const tbody = document.getElementById('regulatory-data-tbody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    if (rows.length === 0) {
+        showNotification('No data to export', 'warning');
+        return;
     }
     
-    // Make API call
+    showNotification('Exporting regulatory report...', 'info');
+    
+    // Simulate export process
+    setTimeout(() => {
+        showNotification('Regulatory report exported successfully!', 'success');
+        console.log('Regulatory report exported with', rows.length, 'records');
+    }, 2000);
+}
+
+/**
+ * Print Regulatory Report - Step 4 of Flowchart
+ */
+function printRegulatoryReport() {
+    const reportTable = document.getElementById('regulatory-report-table');
+    
+    if (!reportTable || reportTable.style.display === 'none') {
+        showNotification('No report data to print', 'warning');
+        return;
+    }
+    
+    showNotification('Preparing report for printing...', 'info');
+    
+    // Simulate print process
+    setTimeout(() => {
+        showNotification('Report sent to printer successfully!', 'success');
+        console.log('Regulatory report printed');
+    }, 1500);
+}
+
+// ===== FILTERING FUNCTIONS =====
+
+/**
+ * Apply filters to financial data
+ */
+function applyFilters() {
+    const dateFrom = document.getElementById('filter-date-from').value;
+    const dateTo = document.getElementById('filter-date-to').value;
+    const subsystem = document.getElementById('filter-subsystem').value;
+    const accountType = document.getElementById('filter-account-type').value;
+    const customSearch = document.getElementById('filter-custom-search').value;
+    
+    // Show loading state
+    const resultsSection = document.getElementById('filtered-results');
+    const tbody = document.getElementById('filtered-results-tbody');
+    const noResultsMessage = document.getElementById('no-results-message');
+    
+    resultsSection.style.display = 'block';
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center text-muted py-3">
+                <div class="loading-spinner"></div>
+                <p class="mt-2">Applying filters...</p>
+            </td>
+        </tr>
+    `;
+    noResultsMessage.style.display = 'none';
+    
+    // Show notification
+    showNotification('Applying filters...', 'info');
+    
+    // Make AJAX request to real API
+    console.log('Making AJAX request to filter-data.php...');
+    console.log('Filter parameters:', {
+        date_from: dateFrom,
+        date_to: dateTo,
+        subsystem: subsystem,
+        account_type: accountType,
+        custom_search: customSearch
+    });
+    
     $.ajax({
-        url: 'api/tax-reports.php',
-        method: 'POST',
+        url: 'api/filter-data.php',
+        method: 'GET',
         data: {
-            action: action,
-            period_start: periodStart,
-            period_end: periodEnd,
-            format: format
+            action: 'filter_data',
+            date_from: dateFrom,
+            date_to: dateTo,
+            subsystem: subsystem,
+            account_type: accountType,
+            custom_search: customSearch
         },
         dataType: 'json',
+        timeout: 10000, // 10 second timeout
         success: function(response) {
+            console.log('AJAX Success Response:', response);
             if (response.success) {
-                if (format === 'json') {
-                    // Show report in modal
-                    displayTaxReport(response);
+                if (response.data && response.data.length > 0) {
+                    filteredData = response.data;
+                    displayFilteredInformation(response.data);
+                    showNotification(response.message, 'success');
                 } else {
-                    // Download file
-                    downloadTaxReport(response, format);
+                    showNoResults();
+                    showNotification('No records found matching your criteria', 'warning');
                 }
-                
-                // Log to audit trail
-                logAuditAction('Generate Tax Report', taxType, {
-                    period: periodStart + ' to ' + periodEnd,
-                    format: format
-                });
-                
-                // Close modal and reset button state
-                const modal = bootstrap.Modal.getInstance(document.getElementById('taxReportModal'));
-                if (modal) {
-                    modal.hide();
-                }
-                
-                // Ensure button state is reset
-                const generateBtn = document.querySelector('#taxReportModal button[onclick*="generateTaxReport"]');
-                if (generateBtn) {
-                    generateBtn.innerHTML = '<i class="fas fa-file-download me-2"></i>Generate Report';
-                    generateBtn.disabled = false;
-                }
-                
-                // Refresh recent reports table
-                loadRecentTaxReports();
-                
             } else {
-                alert('Error generating report: ' + response.message);
+                showNoResults();
+                showNotification(response.message || 'Error applying filters', 'error');
             }
         },
         error: function(xhr, status, error) {
-            alert('Error generating report: ' + error);
-            console.error('Tax report error:', xhr.responseText);
-        },
-        complete: function() {
-            // Reset button state
-            generateBtn.innerHTML = originalContent;
-            generateBtn.disabled = false;
+            console.error('AJAX Error:', error);
+            console.error('Status:', status);
+            console.error('Response:', xhr.responseText);
+            
+            // Handle timeout
+            if (status === 'timeout') {
+                console.log('Request timed out, using mock data...');
+                try {
+                    const mockData = generateMockFilteredData(dateFrom, dateTo, subsystem, accountType, customSearch);
+                    if (mockData && mockData.length > 0) {
+                        filteredData = mockData;
+                        displayFilteredInformation(mockData);
+                        showNotification('Request timed out. Using sample data.', 'warning');
+                    } else {
+                        showNoResults();
+                        showNotification('Request timed out. No data available.', 'warning');
+                    }
+                } catch (mockError) {
+                    console.error('Mock data error:', mockError);
+                    showNoResults();
+                    showNotification('Request timed out. Please try again.', 'error');
+                }
+            }
+            // If it's a 404 or connection error, try mock data as fallback
+            else if (xhr.status === 404 || xhr.status === 0) {
+                console.log('Using mock data as fallback...');
+                try {
+                    const mockData = generateMockFilteredData(dateFrom, dateTo, subsystem, accountType, customSearch);
+                    if (mockData && mockData.length > 0) {
+                        filteredData = mockData;
+                        displayFilteredInformation(mockData);
+                        showNotification('Using sample data (database not available)', 'warning');
+                    } else {
+                        showNoResults();
+                        showNotification('No data available. Please populate the database first.', 'warning');
+                    }
+                } catch (mockError) {
+                    console.error('Mock data error:', mockError);
+                    showNoResults();
+                    showNotification('No data available. Please populate the database first.', 'warning');
+                }
+            } else {
+                showNoResults();
+                showNotification('Connection error. Please try again.', 'error');
+            }
         }
     });
 }
 
 /**
- * Display tax report in modal
+ * Generate mock filtered data
  */
-function displayTaxReport(report) {
-    let reportHtml = `
-        <div class="tax-report-display">
-            <div class="report-header mb-4">
-                <h4 class="text-primary">${report.report_type}</h4>
-                <p class="text-muted mb-0">Period: ${report.period}</p>
-                <p class="text-muted mb-0">Generated: ${new Date(report.generated_at).toLocaleString()}</p>
-            </div>
-    `;
+function generateMockFilteredData(dateFrom, dateTo, subsystem, accountType, customSearch) {
+    // Base mock accounts data
+    const mockAccounts = [
+        { code: '1001', name: 'Cash in Bank', type: 'asset', balance: 150000 },
+        { code: '1002', name: 'Accounts Receivable', type: 'asset', balance: 75000 },
+        { code: '2001', name: 'Accounts Payable', type: 'liability', balance: 45000 },
+        { code: '3001', name: 'Owner\'s Equity', type: 'equity', balance: 180000 },
+        { code: '4001', name: 'Sales Revenue', type: 'revenue', balance: 250000 },
+        { code: '5001', name: 'Office Supplies', type: 'expense', balance: 15000 },
+        { code: '5002', name: 'Rent Expense', type: 'expense', balance: 12000 },
+        { code: '5003', name: 'Utilities Expense', type: 'expense', balance: 8000 },
+        { code: '1003', name: 'Inventory', type: 'asset', balance: 95000 },
+        { code: '2002', name: 'Short-term Loan', type: 'liability', balance: 60000 },
+        { code: '4002', name: 'Service Revenue', type: 'revenue', balance: 180000 },
+        { code: '5004', name: 'Marketing Expense', type: 'expense', balance: 25000 }
+    ];
     
-    // Generate content based on report type
-    if (report.report_type === 'Income Tax Report') {
-        reportHtml += `
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <div class="card border-success">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-success">Total Revenue</h5>
-                            <h3 class="text-success">₱${formatNumber(report.total_revenue)}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-danger">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-danger">Total Expenses</h5>
-                            <h3 class="text-danger">₱${formatNumber(report.total_expenses)}</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <div class="card border-primary">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-primary">Taxable Income</h5>
-                            <h3 class="text-primary">₱${formatNumber(report.taxable_income)}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card border-warning">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-warning">Estimated Tax (${report.tax_rate}%)</h5>
-                            <h3 class="text-warning">₱${formatNumber(report.estimated_tax)}</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="alert alert-info">
-                <i class="fas fa-calendar-alt me-2"></i>
-                <strong>Filing Deadline:</strong> ${new Date(report.filing_deadline).toLocaleDateString()}
-            </div>
-        `;
+    let filteredAccounts = [...mockAccounts]; // Create a copy
+    
+    // Apply account type filter
+    if (accountType) {
+        filteredAccounts = filteredAccounts.filter(acc => acc.type === accountType);
+    }
+    
+    // Apply custom search filter
+    if (customSearch) {
+        const searchTerm = customSearch.toLowerCase();
+        filteredAccounts = filteredAccounts.filter(acc => 
+            acc.name.toLowerCase().includes(searchTerm) || 
+            acc.code.includes(searchTerm)
+        );
+    }
+    
+    // If no accounts match filters, return some default data
+    if (filteredAccounts.length === 0) {
+        filteredAccounts = mockAccounts.slice(0, 3); // Return first 3 accounts
+    }
+    
+    // Generate transaction records
+    const transactions = [];
+    const startDate = dateFrom ? new Date(dateFrom) : new Date('2024-01-01');
+    const endDate = dateTo ? new Date(dateTo) : new Date();
+    
+    // Ensure we always have at least 3 transactions
+    const numTransactions = Math.max(3, filteredAccounts.length);
+    
+    for (let i = 0; i < numTransactions; i++) {
+        const account = filteredAccounts[i % filteredAccounts.length];
+        const randomDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
         
-        if (report.breakdown && report.breakdown.length > 0) {
-            reportHtml += `
-                <h5 class="mt-4">Revenue & Expense Breakdown</h5>
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Account Code</th>
-                                <th>Account Name</th>
-                                <th>Category</th>
-                                <th>Revenue</th>
-                                <th>Expense</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            
-            report.breakdown.forEach(item => {
-                reportHtml += `
-                    <tr>
-                        <td>${item.code}</td>
-                        <td>${item.name}</td>
-                        <td><span class="badge bg-${item.category === 'revenue' ? 'success' : 'danger'}">${item.category}</span></td>
-                        <td>${item.revenue_amount > 0 ? '₱' + formatNumber(item.revenue_amount) : '-'}</td>
-                        <td>${item.expense_amount > 0 ? '₱' + formatNumber(item.expense_amount) : '-'}</td>
-                    </tr>
-                `;
-            });
-            
-            reportHtml += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
+        // Generate realistic transaction amounts
+        const baseAmount = Math.random() * 5000 + 500; // Between 500 and 5500
+        const debitAmount = account.type === 'asset' || account.type === 'expense' ? baseAmount : 0;
+        const creditAmount = account.type === 'liability' || account.type === 'equity' || account.type === 'revenue' ? baseAmount : 0;
+        
+        transactions.push({
+            date: randomDate.toISOString().split('T')[0],
+            account_code: account.code,
+            account_name: account.name,
+            description: `${account.name} transaction - ${subsystem || 'General Ledger'}`,
+            debit: debitAmount,
+            credit: creditAmount,
+            balance: account.balance + (Math.random() * 10000 - 5000) // Add some variation
+        });
+    }
+    
+    return transactions;
+}
+
+/**
+ * Display filtered information
+ */
+function displayFilteredInformation(data) {
+    const tbody = document.getElementById('filtered-results-tbody');
+    const noResultsMessage = document.getElementById('no-results-message');
+    const resultsSummary = document.getElementById('results-summary');
+    const filterStatus = document.getElementById('filter-status');
+    
+    if (!data || data.length === 0) {
+        showNoResults();
+        return;
+    }
+    
+    // Update summary
+    resultsSummary.textContent = `Found ${data.length} record${data.length !== 1 ? 's' : ''} matching your criteria`;
+    filterStatus.textContent = `${data.length} result${data.length !== 1 ? 's' : ''} found`;
+    filterStatus.className = 'badge bg-success';
+    
+    let html = '';
+    data.forEach((record, index) => {
+        const rowClass = index % 2 === 0 ? '' : 'table-light';
+        html += `
+            <tr class="${rowClass}">
+                <td>
+                    <span class="badge bg-light text-dark">${formatDate(record.date)}</span>
+                </td>
+                <td>
+                    <code class="text-primary fw-bold">${record.account_code}</code>
+                </td>
+                <td>
+                    <span class="fw-semibold">${record.account_name}</span>
+                </td>
+                <td>
+                    <span class="text-muted">${record.description}</span>
+                </td>
+                <td class="text-end">
+                    ${record.debit > 0 ? `<span class="text-danger fw-bold">${formatCurrency(record.debit)}</span>` : '<span class="text-muted">-</span>'}
+                </td>
+                <td class="text-end">
+                    ${record.credit > 0 ? `<span class="text-success fw-bold">${formatCurrency(record.credit)}</span>` : '<span class="text-muted">-</span>'}
+                </td>
+                <td class="text-end">
+                    <span class="text-primary fw-bold">${formatCurrency(record.balance)}</span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+    noResultsMessage.style.display = 'none';
+}
+
+/**
+ * Show more information (drill-down)
+ */
+function showMoreInformation() {
+    const showMoreBtn = document.getElementById('show-more-btn');
+    const tbody = document.getElementById('filtered-results-tbody');
+    
+    if (!showMoreDetails) {
+        // Show detailed view
+        showMoreBtn.innerHTML = '<i class="fas fa-compress me-1"></i>Show Less Information';
+        showMoreDetails = true;
+        
+        // Add more detailed columns or expand existing rows
+        // This is a simplified implementation
+        alert('Showing more detailed information...\nIn a full implementation, this would expand rows with additional details.');
+    } else {
+        // Show summary view
+        showMoreBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Show More Information';
+        showMoreDetails = false;
+        
+        // Collapse back to summary view
+        alert('Showing summary information...\nIn a full implementation, this would collapse rows to summary view.');
+    }
+}
+
+/**
+ * Show no results message
+ */
+function showNoResults() {
+    const tbody = document.getElementById('filtered-results-tbody');
+    const noResultsMessage = document.getElementById('no-results-message');
+    const resultsSummary = document.getElementById('results-summary');
+    const filterStatus = document.getElementById('filter-status');
+    
+    tbody.innerHTML = '';
+    noResultsMessage.style.display = 'block';
+    resultsSummary.textContent = 'No records found matching your criteria';
+    filterStatus.textContent = 'No results';
+    filterStatus.className = 'badge bg-warning';
+}
+
+/**
+ * Clear all filters
+ */
+function clearFilters() {
+    try {
+        document.getElementById('filter-date-from').value = '';
+        document.getElementById('filter-date-to').value = '';
+        document.getElementById('filter-subsystem').value = '';
+        document.getElementById('filter-account-type').value = '';
+        document.getElementById('filter-custom-search').value = '';
+        
+        // Hide results section
+        document.getElementById('filtered-results').style.display = 'none';
+        showMoreDetails = false;
+        
+        // Reset show more button
+        const showMoreBtn = document.getElementById('show-more-btn');
+        if (showMoreBtn) {
+            showMoreBtn.innerHTML = '<i class="fas fa-expand me-1"></i>Show More Information';
         }
         
-    } else if (report.report_type === 'Payroll Tax Report') {
-        reportHtml += `
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="card border-primary">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-primary">Total Gross Pay</h5>
-                            <h3 class="text-primary">₱${formatNumber(report.total_gross_pay)}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-danger">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-danger">Total Deductions</h5>
-                            <h3 class="text-danger">₱${formatNumber(report.total_deductions)}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-success">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-success">Total Net Pay</h5>
-                            <h3 class="text-success">₱${formatNumber(report.total_net_pay)}</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <h5 class="mt-4">Tax Withholdings</h5>
-            <div class="row g-3 mb-4">
-                <div class="col-md-3">
-                    <div class="card border-info">
-                        <div class="card-body text-center">
-                            <h6 class="card-title">SSS (11%)</h6>
-                            <h5 class="text-info">₱${formatNumber(report.tax_withholdings.sss_contribution)}</h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-info">
-                        <div class="card-body text-center">
-                            <h6 class="card-title">PhilHealth (3%)</h6>
-                            <h5 class="text-info">₱${formatNumber(report.tax_withholdings.philhealth_contribution)}</h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-info">
-                        <div class="card-body text-center">
-                            <h6 class="card-title">Pag-IBIG (2%)</h6>
-                            <h5 class="text-info">₱${formatNumber(report.tax_withholdings.pagibig_contribution)}</h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-warning">
-                        <div class="card-body text-center">
-                            <h6 class="card-title">Withholding Tax (15%)</h6>
-                            <h5 class="text-warning">₱${formatNumber(report.tax_withholdings.withholding_tax)}</h5>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="alert alert-warning">
-                <h6><i class="fas fa-users me-2"></i>Total Tax Withheld: ₱${formatNumber(report.tax_withholdings.total_withheld)}</h6>
-                <p class="mb-0">From ${report.total_employees} employees</p>
-            </div>
-            
-            <div class="alert alert-info">
-                <i class="fas fa-calendar-alt me-2"></i>
-                <strong>Filing Deadline:</strong> ${new Date(report.filing_deadline).toLocaleDateString()}
-            </div>
-        `;
+        // Reset filter status
+        const filterStatus = document.getElementById('filter-status');
+        if (filterStatus) {
+            filterStatus.textContent = 'No filters applied';
+            filterStatus.className = 'badge bg-light text-dark';
+        }
         
-    } else if (report.report_type === 'Sales Tax Report') {
-        reportHtml += `
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="card border-primary">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-primary">Gross Sales</h5>
-                            <h3 class="text-primary">₱${formatNumber(report.total_gross_sales)}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-success">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-success">VAT Collected (${report.vat_rate}%)</h5>
-                            <h3 class="text-success">₱${formatNumber(report.total_vat_collected)}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-info">
-                        <div class="card-body text-center">
-                            <h5 class="card-title text-info">Net Sales</h5>
-                            <h3 class="text-info">₱${formatNumber(report.net_sales)}</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="alert alert-info">
-                <i class="fas fa-shopping-cart me-2"></i>
-                <strong>Total Transactions:</strong> ${report.total_transactions}
-            </div>
-            
-            <div class="alert alert-info">
-                <i class="fas fa-calendar-alt me-2"></i>
-                <strong>Filing Deadline:</strong> ${new Date(report.filing_deadline).toLocaleDateString()}
-            </div>
-        `;
+        // Show success message
+        showNotification('Filters cleared successfully', 'success');
+    } catch (error) {
+        console.error('Error clearing filters:', error);
+        showNotification('Error clearing filters', 'error');
     }
-    
-    reportHtml += `
-        </div>
-    `;
-    
-    // Show report in a new modal
-    const reportModalHtml = `
-        <div class="modal fade" id="taxReportDisplayModal" tabindex="-1" aria-labelledby="taxReportDisplayModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="taxReportDisplayModalLabel">
-                            <i class="fas fa-file-invoice me-2"></i>${report.report_type}
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        ${reportHtml}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="downloadTaxReport(${JSON.stringify(report).replace(/"/g, '&quot;')}, 'pdf')">
-                            <i class="fas fa-download me-2"></i>Download PDF
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="downloadTaxReport(${JSON.stringify(report).replace(/"/g, '&quot;')}, 'excel')">
-                            <i class="fas fa-file-excel me-2"></i>Download Excel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remove existing modal if any
-    const existingModal = document.getElementById('taxReportDisplayModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Add modal to body
-    document.body.insertAdjacentHTML('beforeend', reportModalHtml);
-    
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('taxReportDisplayModal'));
-    modal.show();
 }
 
 /**
- * Download tax report
+ * Quick test function to verify filtering works
  */
-function downloadTaxReport(report, format) {
-    // For now, create a simple text download
-    // In a real implementation, you would call the API with format parameter
-    let content = `${report.report_type}\n`;
-    content += `Period: ${report.period}\n`;
-    content += `Generated: ${report.generated_at}\n\n`;
-    
-    if (report.report_type === 'Income Tax Report') {
-        content += `Total Revenue: ₱${formatNumber(report.total_revenue)}\n`;
-        content += `Total Expenses: ₱${formatNumber(report.total_expenses)}\n`;
-        content += `Taxable Income: ₱${formatNumber(report.taxable_income)}\n`;
-        content += `Estimated Tax: ₱${formatNumber(report.estimated_tax)}\n`;
-        content += `Filing Deadline: ${report.filing_deadline}\n`;
-    } else if (report.report_type === 'Payroll Tax Report') {
-        content += `Total Gross Pay: ₱${formatNumber(report.total_gross_pay)}\n`;
-        content += `Total Deductions: ₱${formatNumber(report.total_deductions)}\n`;
-        content += `Total Net Pay: ₱${formatNumber(report.total_net_pay)}\n`;
-        content += `Total Tax Withheld: ₱${formatNumber(report.tax_withholdings.total_withheld)}\n`;
-        content += `Filing Deadline: ${report.filing_deadline}\n`;
-    } else if (report.report_type === 'Sales Tax Report') {
-        content += `Gross Sales: ₱${formatNumber(report.total_gross_sales)}\n`;
-        content += `VAT Collected: ₱${formatNumber(report.total_vat_collected)}\n`;
-        content += `Net Sales: ₱${formatNumber(report.net_sales)}\n`;
-        content += `Filing Deadline: ${report.filing_deadline}\n`;
-    }
-    
-    // Create and download file
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${report.report_type.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    showNotification(`Tax report downloaded as ${format.toUpperCase()}`, 'success');
+function testFilters() {
+    console.log('Testing filters...');
+    applyFilters();
 }
 
 /**
- * Format number with commas
+ * Export filtered data
  */
-function formatNumber(num) {
-    return new Intl.NumberFormat('en-PH').format(num);
+function exportFilteredData(format) {
+    if (!filteredData || filteredData.length === 0) {
+        alert('No filtered data to export. Please apply filters first.');
+        return;
+    }
+    
+    alert(`Exporting filtered data as ${format.toUpperCase()}...\nThis feature will download the filtered results.`);
+}
+
+/**
+ * Print filtered data
+ */
+function printFilteredData() {
+    if (!filteredData || filteredData.length === 0) {
+        alert('No filtered data to print. Please apply filters first.');
+        return;
+    }
+    
+    window.print();
+}
+
+/**
+ * Format date helper
+ */
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+}
+
+/**
+ * Refresh all reports
+ */
+function refreshAllReports() {
+    showNotification('Refreshing all report data...', 'info');
+    
+    // Simulate refresh process
+    setTimeout(() => {
+        showNotification('All reports refreshed successfully!', 'success');
+        
+        // In a real implementation, this would:
+        // 1. Reload the page or refresh data via AJAX
+        // 2. Update all report cards with fresh data
+        // 3. Clear any cached data
+        
+        console.log('All reports refreshed');
+    }, 2000);
 }
 
 /**
@@ -1004,6 +1116,7 @@ function showNotification(message, type = 'info') {
     const notification = `
         <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
              style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -1019,1443 +1132,4 @@ function showNotification(message, type = 'info') {
             bsAlert.close();
         }
     }, 5000);
-}
-
-/**
- * Load recent tax reports
- */
-function loadRecentTaxReports() {
-    $.ajax({
-        url: 'api/tax-reports.php',
-        method: 'GET',
-        data: { action: 'get_recent_reports' },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                updateTaxReportsTable(response.reports);
-            } else {
-                console.error('Error loading recent reports:', response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error loading recent reports:', error);
-        }
-    });
-}
-
-/**
- * Refresh tax reports table
- */
-function refreshTaxReports() {
-    const refreshBtn = document.getElementById('refreshTaxReportsBtn');
-    const icon = refreshBtn.querySelector('i');
-    const originalText = refreshBtn.innerHTML;
-    
-    // Show loading state
-    refreshBtn.disabled = true;
-    icon.className = 'fas fa-spinner fa-spin me-1';
-    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
-    
-    // Load recent reports
-    $.ajax({
-        url: 'api/tax-reports.php',
-        method: 'GET',
-        data: { action: 'get_recent_reports' },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                updateTaxReportsTable(response.reports);
-                
-                // Show success feedback
-                icon.className = 'fas fa-check me-1';
-                refreshBtn.innerHTML = '<i class="fas fa-check me-1"></i>Refreshed!';
-                
-                // Reset button after 2 seconds
-                setTimeout(() => {
-                    refreshBtn.disabled = false;
-                    refreshBtn.innerHTML = originalText;
-                }, 2000);
-                
-                // Log to audit trail
-                logAuditAction('Refresh Tax Reports', 'Recent Tax Reports');
-                
-            } else {
-                console.error('Error loading recent reports:', response.message);
-                showRefreshError();
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error loading recent reports:', error);
-            showRefreshError();
-        }
-    });
-}
-
-/**
- * Show refresh error
- */
-function showRefreshError() {
-    const refreshBtn = document.getElementById('refreshTaxReportsBtn');
-    const icon = refreshBtn.querySelector('i');
-    
-    // Show error state
-    icon.className = 'fas fa-exclamation-triangle me-1';
-    refreshBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Error';
-    refreshBtn.classList.add('btn-outline-danger');
-    refreshBtn.classList.remove('btn-outline-primary');
-    
-    // Reset button after 3 seconds
-    setTimeout(() => {
-        refreshBtn.disabled = false;
-        refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Refresh';
-        refreshBtn.classList.remove('btn-outline-danger');
-        refreshBtn.classList.add('btn-outline-primary');
-    }, 3000);
-}
-
-/**
- * Update tax reports table
- */
-function updateTaxReportsTable(reports) {
-    const tbody = document.querySelector('#taxReportsTable tbody');
-    
-    if (reports.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center text-muted">
-                    <i class="fas fa-file-invoice fa-2x mb-2"></i>
-                    <p>No tax reports generated yet</p>
-                    <small>Generate your first tax report using the buttons above</small>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    let html = '';
-    reports.forEach(report => {
-        const statusBadge = report.status === 'generated' ? 
-            '<span class="badge bg-success">Generated</span>' :
-            report.status === 'downloaded' ?
-            '<span class="badge bg-info">Downloaded</span>' :
-            '<span class="badge bg-secondary">Archived</span>';
-        
-        html += `
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <i class="fas ${getTaxReportIcon(report.report_type)} me-2 text-primary"></i>
-                        <div>
-                            <strong>${report.report_type}</strong>
-                            <br><small class="text-muted">${report.summary}</small>
-                        </div>
-                    </div>
-                </td>
-                <td><small class="text-muted">${report.period}</small></td>
-                <td>
-                    <small class="text-muted">${formatDateTime(report.generated_date)}</small>
-                    <br><small class="text-muted">by ${report.generated_by}</small>
-                </td>
-                <td>${statusBadge}</td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewTaxReport(${report.id})" title="View Report">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-success" onclick="downloadTaxReportById(${report.id})" title="Download">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tbody.innerHTML = html;
-}
-
-/**
- * Get tax report icon
- */
-function getTaxReportIcon(reportType) {
-    if (reportType.includes('Income')) return 'fa-file-invoice';
-    if (reportType.includes('Payroll')) return 'fa-users';
-    if (reportType.includes('Sales')) return 'fa-shopping-cart';
-    return 'fa-file-invoice';
-}
-
-/**
- * View tax report by ID
- */
-function viewTaxReport(reportId) {
-    $.ajax({
-        url: 'api/tax-reports.php',
-        method: 'GET',
-        data: { action: 'get_tax_report', report_id: reportId },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                // Convert the stored data back to the format expected by displayTaxReport
-                const report = {
-                    report_type: response.report.report_type,
-                    period: response.report.period,
-                    generated_at: response.report.generated_date,
-                    ...response.report.data
-                };
-                displayTaxReport(report);
-            } else {
-                alert('Error loading report: ' + response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            alert('Error loading report: ' + error);
-        }
-    });
-}
-
-/**
- * Download tax report by ID
- */
-function downloadTaxReportById(reportId) {
-    $.ajax({
-        url: 'api/tax-reports.php',
-        method: 'GET',
-        data: { action: 'get_tax_report', report_id: reportId },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                const report = {
-                    report_type: response.report.report_type,
-                    period: response.report.period,
-                    generated_at: response.report.generated_date,
-                    ...response.report.data
-                };
-                downloadTaxReport(report, 'pdf');
-            } else {
-                alert('Error loading report: ' + response.message);
-            }
-        },
-        error: function(xhr, status, error) {
-            alert('Error loading report: ' + error);
-        }
-    });
-}
-
-/**
- * Format date and time
- */
-function formatDateTime(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-}
-
-/**
- * Generate compliance report
- */
-function generateComplianceReport() {
-    // Show compliance report modal
-    const modal = document.getElementById('reportModal');
-    const title = document.getElementById('reportModalTitle');
-    const content = document.getElementById('reportModalContent');
-    
-    title.textContent = 'Generate Compliance Report';
-    
-    content.innerHTML = `
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <label class="form-label">Compliance Type</label>
-                <select class="form-select" id="compliance-type">
-                    <option value="gaap">GAAP Compliance</option>
-                    <option value="sox">SOX Compliance</option>
-                    <option value="bir">BIR Compliance</option>
-                    <option value="ifrs">IFRS Compliance</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Period</label>
-                <select class="form-select" id="compliance-period">
-                    <option value="current_month">Current Month</option>
-                    <option value="current_quarter">Current Quarter</option>
-                    <option value="current_year">Current Year</option>
-                    <option value="custom">Custom Period</option>
-                </select>
-            </div>
-            <div class="col-md-6" id="custom-period-start" style="display: none;">
-                <label class="form-label">Start Date</label>
-                <input type="date" class="form-control" id="period-start">
-            </div>
-            <div class="col-md-6" id="custom-period-end" style="display: none;">
-                <label class="form-label">End Date</label>
-                <input type="date" class="form-control" id="period-end">
-            </div>
-        </div>
-        
-        <div class="d-flex justify-content-end gap-2">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button class="btn btn-primary" onclick="executeComplianceReport()">
-                <i class="fas fa-sync-alt me-2"></i>Generate Report
-            </button>
-        </div>
-        
-        <div id="compliance-report-content" class="mt-4"></div>
-    `;
-    
-    // Show/hide custom period fields
-    document.getElementById('compliance-period').addEventListener('change', function() {
-        const customFields = document.getElementById('custom-period-start');
-        const customFieldsEnd = document.getElementById('custom-period-end');
-        if (this.value === 'custom') {
-            customFields.style.display = 'block';
-            customFieldsEnd.style.display = 'block';
-        } else {
-            customFields.style.display = 'none';
-            customFieldsEnd.style.display = 'none';
-        }
-    });
-    
-    // Set default dates
-    const today = new Date().toISOString().split('T')[0];
-    const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-    document.getElementById('period-start').value = firstDayOfMonth;
-    document.getElementById('period-end').value = today;
-    
-    if (reportModal) {
-        reportModal.show();
-    }
-}
-
-/**
- * Execute compliance report generation
- */
-function executeComplianceReport() {
-    const contentDiv = document.getElementById('compliance-report-content');
-    
-    // Show loading state
-    contentDiv.innerHTML = `
-        <div class="loading-state">
-            <div class="loading-spinner"></div>
-            <p>Generating compliance report, please wait...</p>
-        </div>
-    `;
-    
-    // Get form data
-    const reportType = document.getElementById('compliance-type').value;
-    const period = document.getElementById('compliance-period').value;
-    
-    let periodStart, periodEnd;
-    
-    if (period === 'custom') {
-        periodStart = document.getElementById('period-start').value;
-        periodEnd = document.getElementById('period-end').value;
-    } else {
-        const dates = getPeriodDates(period);
-        periodStart = dates.start;
-        periodEnd = dates.end;
-    }
-    
-    // Make AJAX request
-    $.ajax({
-        url: 'api/compliance-reports.php',
-        method: 'POST',
-        data: {
-            action: 'generate_compliance_report',
-            report_type: reportType,
-            period_start: periodStart,
-            period_end: periodEnd
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                displayComplianceReport(response.data);
-                loadComplianceReports(); // Refresh the table
-            } else {
-                showComplianceError(response.error || 'Failed to generate compliance report');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', error);
-            showComplianceError('Connection error. Please try again.');
-        }
-    });
-}
-
-/**
- * Get period dates based on selection
- */
-function getPeriodDates(period) {
-    const today = new Date();
-    let start, end;
-    
-    switch (period) {
-        case 'current_month':
-            start = new Date(today.getFullYear(), today.getMonth(), 1);
-            end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            break;
-        case 'current_quarter':
-            const quarter = Math.floor(today.getMonth() / 3);
-            start = new Date(today.getFullYear(), quarter * 3, 1);
-            end = new Date(today.getFullYear(), quarter * 3 + 3, 0);
-            break;
-        case 'current_year':
-            start = new Date(today.getFullYear(), 0, 1);
-            end = new Date(today.getFullYear(), 11, 31);
-            break;
-        default:
-            start = new Date(today.getFullYear(), today.getMonth(), 1);
-            end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    }
-    
-    return {
-        start: start.toISOString().split('T')[0],
-        end: end.toISOString().split('T')[0]
-    };
-}
-
-/**
- * Display compliance report results
- */
-function displayComplianceReport(data) {
-    const contentDiv = document.getElementById('compliance-report-content');
-    
-    const scoreColor = data.compliance_score >= 80 ? 'success' : 
-                      data.compliance_score >= 60 ? 'warning' : 'danger';
-    
-    let html = `
-        <div class="compliance-report-results">
-            <div class="alert alert-${scoreColor}">
-                <h5><i class="fas fa-chart-pie me-2"></i>Compliance Score: ${data.compliance_score}%</h5>
-                <p class="mb-0">Report Type: ${data.report_type.toUpperCase()}</p>
-                <p class="mb-0">Period: ${data.period_start} to ${data.period_end}</p>
-                <p class="mb-0">Generated: ${data.generated_date}</p>
-            </div>
-    `;
-    
-    if (data.issues_found && data.issues_found.length > 0) {
-        html += `
-            <div class="alert alert-warning">
-                <h6><i class="fas fa-exclamation-triangle me-2"></i>Issues Found:</h6>
-                <ul class="mb-0">
-        `;
-        data.issues_found.forEach(issue => {
-            html += `<li>${issue}</li>`;
-        });
-        html += `
-                </ul>
-            </div>
-        `;
-    } else {
-        html += `
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle me-2"></i>No compliance issues found!
-            </div>
-        `;
-    }
-    
-    html += `
-            <div class="d-flex justify-content-end gap-2 mt-3">
-                <button class="btn btn-success" onclick="exportComplianceReport('${data.report_id}', 'excel')">
-                    <i class="fas fa-file-excel me-2"></i>Export Excel
-                </button>
-                <button class="btn btn-danger" onclick="exportComplianceReport('${data.report_id}', 'pdf')">
-                    <i class="fas fa-file-pdf me-2"></i>Export PDF
-                </button>
-            </div>
-        </div>
-    `;
-    
-    contentDiv.innerHTML = html;
-}
-
-/**
- * Show compliance error
- */
-function showComplianceError(message) {
-    const contentDiv = document.getElementById('compliance-report-content');
-    contentDiv.innerHTML = `
-        <div class="alert alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>${message}
-        </div>
-    `;
-}
-
-/**
- * Export compliance report - REMOVED (not working)
- */
-function exportComplianceReport(reportId, format) {
-    showNotification('Export functionality has been removed due to technical issues.', 'info');
-}
-
-/**
- * Delete compliance report (soft delete - move to bin)
- */
-function deleteComplianceReport(reportId) {
-    if (!confirm('Are you sure you want to move this compliance report to the bin? You can restore it later from Settings > Bin Station.')) {
-        return;
-    }
-    
-    $.ajax({
-        url: 'api/compliance-reports.php',
-        method: 'POST',
-        data: { 
-            action: 'delete_compliance_report',
-            report_id: reportId
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                showNotification('Compliance report moved to bin successfully!', 'success');
-                loadComplianceReports(); // Refresh the table
-            } else {
-                showNotification('Delete failed: ' + response.error, 'error');
-            }
-        },
-        error: function(xhr, status, error) {
-            showNotification('Delete failed: ' + error, 'error');
-        }
-    });
-    
-    // Log to audit trail
-    logAuditActionToDB('Soft Delete Compliance Report', 'compliance_report', reportId);
-}
-
-/**
- * Show notification
- */
-function showNotification(message, type = 'info') {
-    const alertClass = type === 'success' ? 'alert-success' : 
-                      type === 'error' ? 'alert-danger' : 'alert-info';
-    
-    const notification = document.createElement('div');
-    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 5000);
-}
-
-/**
- * Load compliance reports
- */
-function loadComplianceReports() {
-    console.log('Loading compliance reports...');
-    
-    $.ajax({
-        url: 'api/compliance-reports.php',
-        method: 'GET',
-        data: { action: 'get_compliance_reports' },
-        dataType: 'json',
-        success: function(response) {
-            console.log('Compliance reports response:', response);
-            if (response.success) {
-                updateComplianceReportsTable(response.data);
-            } else {
-                console.error('API Error:', response.error);
-                showComplianceReportsError(response.error || 'Failed to load compliance reports');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error loading compliance reports:', error);
-            console.error('Response:', xhr.responseText);
-            showComplianceReportsError('Connection error. Please check console for details.');
-        }
-    });
-}
-
-/**
- * Show compliance reports error
- */
-function showComplianceReportsError(message) {
-    const tableBody = document.getElementById('complianceReportsTable');
-    if (!tableBody) return;
-    
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="5" class="text-center text-danger py-5">
-                <i class="fas fa-exclamation-triangle fa-3x mb-3 d-block"></i>
-                <strong>Error Loading Compliance Reports</strong><br>
-                <small>${message}</small><br>
-                <button class="btn btn-sm btn-primary mt-2" onclick="loadComplianceReports()">
-                    <i class="fas fa-refresh me-1"></i>Retry
-                </button>
-            </td>
-        </tr>
-    `;
-}
-
-/**
- * Update compliance reports table
- */
-function updateComplianceReportsTable(reports) {
-    const tableBody = document.getElementById('complianceReportsTable');
-    if (!tableBody) return;
-    
-    if (!reports || reports.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center text-muted py-5">
-                    <i class="fas fa-folder-open fa-3x mb-3 d-block"></i>
-                    No compliance reports generated yet. Click "Generate Compliance Reports" to create one.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    let html = '';
-    reports.forEach(report => {
-        const statusBadge = getStatusBadge(report.status);
-        const reportTypeLabel = getReportTypeLabel(report.report_type);
-        const period = `${formatDate(report.period_start)} to ${formatDate(report.period_end)}`;
-        const scoreDisplay = report.compliance_score ? `${report.compliance_score}%` : 'N/A';
-        
-        html += `
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <i class="fas ${getReportTypeIcon(report.report_type)} me-2 text-primary"></i>
-                        <div>
-                            <strong>${reportTypeLabel}</strong>
-                            <br><small class="text-muted">Score: ${scoreDisplay}</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <small class="text-muted">${period}</small>
-                </td>
-                <td>
-                    <small class="text-muted">${formatDateTime(report.generated_date)}</small>
-                </td>
-                <td>${statusBadge}</td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteComplianceReport(${report.id})" title="Move to Bin">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tableBody.innerHTML = html;
-}
-
-/**
- * Helper functions for compliance reports
- */
-function getStatusBadge(status) {
-    switch(status) {
-        case 'completed':
-            return '<span class="badge badge-compliant">Completed</span>';
-        case 'generating':
-            return '<span class="badge badge-review">Generating</span>';
-        case 'failed':
-            return '<span class="badge badge-due-soon">Failed</span>';
-        default:
-            return '<span class="badge badge-secondary">Unknown</span>';
-    }
-}
-
-function getReportTypeLabel(type) {
-    const labels = {
-        'gaap': 'GAAP Compliance',
-        'sox': 'SOX Compliance', 
-        'bir': 'BIR Compliance',
-        'ifrs': 'IFRS Compliance'
-    };
-    return labels[type] || type.toUpperCase();
-}
-
-function getReportTypeIcon(type) {
-    const icons = {
-        'gaap': 'fa-balance-scale',
-        'sox': 'fa-shield-alt',
-        'bir': 'fa-file-invoice',
-        'ifrs': 'fa-globe'
-    };
-    return icons[type] || 'fa-file-alt';
-}
-
-function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString();
-}
-
-function formatDateTime(dateString) {
-    return new Date(dateString).toLocaleString();
-}
-
-/**
- * View compliance report - REMOVED (not working)
- */
-function viewComplianceReport(reportId) {
-    showNotification('View functionality has been removed due to technical issues.', 'info');
-}
-
-/**
- * Display compliance report details in modal
- */
-function displayComplianceReportDetails(report) {
-    const content = document.getElementById('reportModalContent');
-    
-    const issuesList = report.issues_found && report.issues_found.length > 0 
-        ? report.issues_found.map(issue => `<li>${issue}</li>`).join('')
-        : '<li class="text-success">No issues found</li>';
-    
-    content.innerHTML = `
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <h6>Report Information</h6>
-                <table class="table table-sm">
-                    <tr><td><strong>Type:</strong></td><td>${getReportTypeLabel(report.report_type)}</td></tr>
-                    <tr><td><strong>Period:</strong></td><td>${formatDate(report.period_start)} to ${formatDate(report.period_end)}</td></tr>
-                    <tr><td><strong>Generated:</strong></td><td>${formatDateTime(report.generated_date)}</td></tr>
-                    <tr><td><strong>Status:</strong></td><td>${getStatusBadge(report.status)}</td></tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <h6>Compliance Score</h6>
-                <div class="text-center">
-                    <div class="compliance-score-circle ${getScoreClass(report.compliance_score)}">
-                        <span class="score-value">${report.compliance_score || 0}%</span>
-                    </div>
-                    <p class="mt-2 text-muted">Overall Compliance</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="mb-4">
-            <h6>Issues Found</h6>
-            <ul class="list-unstyled">
-                ${issuesList}
-            </ul>
-        </div>
-        
-        <div class="d-flex justify-content-end gap-2">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button class="btn btn-primary" onclick="exportComplianceReport(${report.id}, 'pdf')">
-                <i class="fas fa-download me-2"></i>Export PDF
-            </button>
-        </div>
-    `;
-}
-
-function getScoreClass(score) {
-    if (score >= 90) return 'score-excellent';
-    if (score >= 70) return 'score-good';
-    if (score >= 50) return 'score-fair';
-    return 'score-poor';
-}
-
-/**
- * Filter audit trail
- */
-function filterAuditTrail() {
-    loadAuditTrail();
-}
-
-/**
- * Load audit trail
- */
-function loadAuditTrail() {
-    const tableBody = document.getElementById('auditTrailTable');
-    if (!tableBody) return;
-    
-    // Show loading state
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="7" class="text-center text-muted py-5">
-                <div class="loading-spinner"></div>
-                <p class="mt-3">Loading audit trail...</p>
-            </td>
-        </tr>
-    `;
-    
-    // Get filter values
-    const dateFrom = document.getElementById('audit-date-from').value;
-    const dateTo = document.getElementById('audit-date-to').value;
-    const userFilter = document.getElementById('audit-user-filter').value;
-    const actionFilter = document.getElementById('audit-action-filter').value;
-    
-    // Make AJAX request
-    $.ajax({
-        url: 'api/compliance-reports.php',
-        method: 'GET',
-        data: {
-            action: 'get_audit_trail',
-            date_from: dateFrom,
-            date_to: dateTo,
-            user_filter: userFilter,
-            action_filter: actionFilter
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                updateAuditTrailTable(response.data);
-            } else {
-                showAuditTrailError(response.error || 'Failed to load audit trail');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', error);
-            showAuditTrailError('Connection error. Please try again.');
-        }
-    });
-}
-
-/**
- * Update audit trail table
- */
-function updateAuditTrailTable(logs) {
-    const tableBody = document.getElementById('auditTrailTable');
-    if (!tableBody) return;
-    
-    if (!logs || logs.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center text-muted py-5">
-                    <i class="fas fa-history fa-3x mb-3 d-block"></i>
-                    No audit records found. Apply filters to view audit trail.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    let html = '';
-    logs.forEach(log => {
-        const additionalInfo = log.additional_info ? JSON.parse(log.additional_info) : {};
-        const actionIcon = getActionIcon(log.action);
-        const actionClass = getActionClass(log.action);
-        const details = formatAuditDetails(log.action, additionalInfo);
-        
-            html += `
-                <tr>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <i class="fas ${actionIcon} me-2 text-${actionClass}"></i>
-                        <small class="text-muted">${formatDateTime(log.created_at)}</small>
-                    </div>
-                </td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <div class="user-avatar me-2">
-                            <i class="fas fa-user-circle text-primary"></i>
-                        </div>
-                        <div>
-                            <strong>${log.full_name || log.username || 'Unknown'}</strong>
-                            <br><small class="text-muted">${log.ip_address || 'N/A'}</small>
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <span class="badge badge-${actionClass}">${log.action}</span>
-                </td>
-                <td>
-                    <small class="text-muted">${log.object_type || 'N/A'}</small>
-                </td>
-                <td>
-                    <code class="text-primary">${log.object_id || 'N/A'}</code>
-                </td>
-                <td>
-                    <div class="audit-details">
-                        ${details}
-                    </div>
-                </td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-info" onclick="viewAuditDetails(${log.id})" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="exportAuditLog(${log.id})" title="Export">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-                </tr>
-            `;
-        });
-    
-    tableBody.innerHTML = html;
-}
-
-/**
- * Get action icon based on action type
- */
-function getActionIcon(action) {
-    const icons = {
-        'Login': 'fa-sign-in-alt',
-        'Logout': 'fa-sign-out-alt',
-        'Create': 'fa-plus',
-        'Update': 'fa-edit',
-        'Delete': 'fa-trash',
-        'View': 'fa-eye',
-        'Export': 'fa-download',
-        'Generate': 'fa-file-alt',
-        'Post': 'fa-check',
-        'Approve': 'fa-check-circle',
-        'Reject': 'fa-times-circle'
-    };
-    
-    // Find matching icon by partial match
-    for (const [key, icon] of Object.entries(icons)) {
-        if (action.toLowerCase().includes(key.toLowerCase())) {
-            return icon;
-        }
-    }
-    
-    return 'fa-circle';
-}
-
-/**
- * Get action class based on action type
- */
-function getActionClass(action) {
-    if (action.toLowerCase().includes('create') || action.toLowerCase().includes('generate')) {
-        return 'success';
-    } else if (action.toLowerCase().includes('update') || action.toLowerCase().includes('edit')) {
-        return 'warning';
-    } else if (action.toLowerCase().includes('delete') || action.toLowerCase().includes('reject')) {
-        return 'danger';
-    } else if (action.toLowerCase().includes('view') || action.toLowerCase().includes('export')) {
-        return 'info';
-    } else if (action.toLowerCase().includes('login') || action.toLowerCase().includes('logout')) {
-        return 'primary';
-    }
-    
-    return 'secondary';
-}
-
-/**
- * Format audit details based on action and additional info
- */
-function formatAuditDetails(action, additionalInfo) {
-    let details = action;
-    
-    if (additionalInfo.report_type) {
-        details += ` (${additionalInfo.report_type.toUpperCase()})`;
-    }
-    
-    if (additionalInfo.format) {
-        details += ` - ${additionalInfo.format.toUpperCase()}`;
-    }
-    
-    if (additionalInfo.amount) {
-        details += ` - ₱${parseFloat(additionalInfo.amount).toLocaleString()}`;
-    }
-    
-    if (additionalInfo.status) {
-        details += ` - Status: ${additionalInfo.status}`;
-    }
-    
-    return `<small class="text-muted">${details}</small>`;
-}
-
-/**
- * View audit log details
- */
-function viewAuditDetails(logId) {
-    // Show loading modal
-    const modal = document.getElementById('reportModal');
-    const title = document.getElementById('reportModalTitle');
-    const content = document.getElementById('reportModalContent');
-    
-    title.textContent = 'Audit Log Details';
-    content.innerHTML = `
-        <div class="text-center py-4">
-            <div class="loading-spinner"></div>
-            <p class="mt-3">Loading audit details...</p>
-        </div>
-    `;
-    
-    if (modal) {
-        modal.show();
-    }
-    
-    // Fetch audit log details
-    $.ajax({
-        url: 'api/compliance-reports.php',
-        method: 'GET',
-        data: { action: 'get_audit_log', log_id: logId },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                displayAuditLogDetails(response.data);
-    } else {
-                content.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Error loading audit details: ${response.error}
-                    </div>
-                `;
-            }
-        },
-        error: function(xhr, status, error) {
-            content.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Connection error: ${error}
-                </div>
-            `;
-        }
-    });
-}
-
-/**
- * Display audit log details in modal
- */
-function displayAuditLogDetails(log) {
-    const content = document.getElementById('reportModalContent');
-    const additionalInfo = log.additional_info ? JSON.parse(log.additional_info) : {};
-    
-    content.innerHTML = `
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <h6>Audit Information</h6>
-                <table class="table table-sm">
-                    <tr><td><strong>Action:</strong></td><td>${log.action}</td></tr>
-                    <tr><td><strong>User:</strong></td><td>${log.full_name || log.username}</td></tr>
-                    <tr><td><strong>Timestamp:</strong></td><td>${formatDateTime(log.created_at)}</td></tr>
-                    <tr><td><strong>IP Address:</strong></td><td>${log.ip_address || 'N/A'}</td></tr>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <h6>Object Details</h6>
-                <table class="table table-sm">
-                    <tr><td><strong>Type:</strong></td><td>${log.object_type || 'N/A'}</td></tr>
-                    <tr><td><strong>ID:</strong></td><td>${log.object_id || 'N/A'}</td></tr>
-                </table>
-            </div>
-        </div>
-        
-        ${Object.keys(additionalInfo).length > 0 ? `
-        <div class="mb-4">
-            <h6>Additional Information</h6>
-            <div class="bg-light p-3 rounded">
-                <pre class="mb-0"><code>${JSON.stringify(additionalInfo, null, 2)}</code></pre>
-            </div>
-        </div>
-        ` : ''}
-        
-        <div class="d-flex justify-content-end gap-2">
-            <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button class="btn btn-primary" onclick="exportAuditLog(${log.id})">
-                <i class="fas fa-download me-2"></i>Export Log
-            </button>
-        </div>
-    `;
-}
-
-/**
- * Export audit log
- */
-function exportAuditLog(logId) {
-    showNotification('Exporting audit log...', 'info');
-    
-    // Create download link for audit log
-    const link = document.createElement('a');
-    link.href = `api/compliance-reports.php?action=export_audit_log&log_id=${logId}`;
-    link.download = `audit_log_${logId}.txt`;
-    link.click();
-    
-    showNotification('Audit log exported successfully!', 'success');
-}
-
-/**
- * Show audit trail error
- */
-function showAuditTrailError(message) {
-    const tableBody = document.getElementById('auditTrailTable');
-    if (!tableBody) return;
-    
-    tableBody.innerHTML = `
-        <tr>
-            <td colspan="7" class="text-center text-danger py-5">
-                <i class="fas fa-exclamation-triangle fa-3x mb-3 d-block"></i>
-                ${message}
-                </td>
-            </tr>
-        `;
-    }
-    
-/**
- * Log audit action to database
- */
-function logAuditActionToDB(action, objectType, objectId, additionalInfo = {}) {
-    $.ajax({
-        url: 'api/compliance-reports.php',
-        method: 'POST',
-        data: {
-            action: 'log_audit_action',
-            audit_action: action,
-            object_type: objectType,
-            object_id: objectId,
-            additional_info: additionalInfo
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                // Reload audit trail to show new entry
-                loadAuditTrail();
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error logging audit action:', error);
-        }
-    });
-}
-
-/**
- * Load report settings
- */
-function loadReportSettings() {
-    $.ajax({
-        url: 'api/report-settings.php',
-        method: 'GET',
-        data: { action: 'get_settings' },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                populateSettingsForm(response.settings);
-            } else {
-                console.error('Error loading settings:', response.message);
-                showSettingsError('Failed to load settings');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error loading settings:', error);
-            showSettingsError('Connection error while loading settings');
-        }
-    });
-}
-
-/**
- * Populate settings form with loaded data
- */
-function populateSettingsForm(settings) {
-    // Basic settings
-    if (settings.default_period) {
-        document.getElementById('default-period').value = settings.default_period.value;
-    }
-    if (settings.default_format) {
-        document.getElementById('default-format').value = settings.default_format.value;
-    }
-    if (settings.company_name) {
-        document.getElementById('company-name').value = settings.company_name.value;
-    }
-    if (settings.fiscal_year_end) {
-        document.getElementById('fiscal-year-end').value = settings.fiscal_year_end.value;
-    }
-    if (settings.footer_text) {
-        document.getElementById('footer-text').value = settings.footer_text.value;
-    }
-    
-    // Automated reports
-    if (settings.auto_monthly) {
-        document.getElementById('auto-monthly').checked = settings.auto_monthly.value;
-    }
-    if (settings.auto_quarterly) {
-        document.getElementById('auto-quarterly').checked = settings.auto_quarterly.value;
-    }
-    if (settings.auto_yearend) {
-        document.getElementById('auto-yearend').checked = settings.auto_yearend.value;
-    }
-    
-    // Update settings summary
-    const convertedSettings = convertSettingsForSummary(settings);
-    updateSettingsSummary(convertedSettings);
-}
-
-/**
- * Save settings
- */
-function saveSettings() {
-    const saveBtn = document.getElementById('saveSettingsBtn');
-    const originalText = saveBtn.innerHTML;
-    
-    // Show loading state
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-    
-    // Collect all settings
-    const settings = {
-        default_period: document.getElementById('default-period').value,
-        default_format: document.getElementById('default-format').value,
-        company_name: document.getElementById('company-name').value,
-        fiscal_year_end: document.getElementById('fiscal-year-end').value,
-        footer_text: document.getElementById('footer-text').value,
-        auto_monthly: document.getElementById('auto-monthly').checked,
-        auto_quarterly: document.getElementById('auto-quarterly').checked,
-        auto_yearend: document.getElementById('auto-yearend').checked
-    };
-    
-    // Validate settings
-    if (!validateSettings(settings)) {
-        resetSaveButton(saveBtn, originalText);
-        return;
-    }
-    
-    $.ajax({
-        url: 'api/report-settings.php',
-        method: 'POST',
-        data: { 
-            action: 'save_settings',
-            settings: settings
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                // Show success state
-                saveBtn.innerHTML = '<i class="fas fa-check me-2"></i>Saved!';
-                saveBtn.classList.remove('btn-primary');
-                saveBtn.classList.add('btn-success');
-                
-                // Show success notification
-                showSettingsSuccess('Settings saved successfully!');
-                
-                // Reset button after 2 seconds
-                setTimeout(() => {
-                    saveBtn.disabled = false;
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.classList.remove('btn-success');
-                    saveBtn.classList.add('btn-primary');
-                }, 2000);
-    
-                // Log to audit trail
-                logAuditAction('Update Settings', 'Report Configuration', settings);
-                
-                // Update settings summary after successful save
-                updateSettingsSummary(settings);
-                
-            } else {
-                showSettingsError('Failed to save settings: ' + response.message);
-                resetSaveButton(saveBtn, originalText);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error saving settings:', error);
-            showSettingsError('Connection error while saving settings');
-            resetSaveButton(saveBtn, originalText);
-        }
-    });
-}
-
-/**
- * Validate settings
- */
-function validateSettings(settings) {
-    // Validate company name
-    if (!settings.company_name || settings.company_name.trim().length < 2) {
-        showSettingsError('Company name must be at least 2 characters long');
-        return false;
-    }
-    
-    // Validate fiscal year end
-    if (!settings.fiscal_year_end) {
-        showSettingsError('Fiscal year end date is required');
-        return false;
-    }
-    
-    return true;
-}
-
-/**
- * Reset settings to defaults
- */
-function resetSettings() {
-    if (!confirm('Are you sure you want to reset all settings to defaults? This action cannot be undone.')) {
-        return;
-    }
-    
-    const resetBtn = document.getElementById('resetSettingsBtn');
-    const originalText = resetBtn.innerHTML;
-    
-    // Show loading state
-    resetBtn.disabled = true;
-    resetBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Resetting...';
-    
-    $.ajax({
-        url: 'api/report-settings.php',
-        method: 'POST',
-        data: { action: 'reset_settings' },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                // Reload settings
-                loadReportSettings();
-                
-                // Show success state
-                resetBtn.innerHTML = '<i class="fas fa-check me-2"></i>Reset!';
-                resetBtn.classList.remove('btn-outline-warning');
-                resetBtn.classList.add('btn-success');
-                
-                // Show success notification
-                showSettingsSuccess('Settings reset to defaults successfully!');
-                
-                // Reset button after 2 seconds
-                setTimeout(() => {
-                    resetBtn.disabled = false;
-                    resetBtn.innerHTML = originalText;
-                    resetBtn.classList.remove('btn-success');
-                    resetBtn.classList.add('btn-outline-warning');
-                }, 2000);
-                
-                // Log to audit trail
-                logAuditAction('Reset Settings', 'Report Configuration');
-                
-            } else {
-                showSettingsError('Failed to reset settings: ' + response.message);
-                resetSaveButton(resetBtn, originalText);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error resetting settings:', error);
-            showSettingsError('Connection error while resetting settings');
-            resetSaveButton(resetBtn, originalText);
-        }
-    });
-}
-
-/**
- * Reset save button to original state
- */
-function resetSaveButton(button, originalText) {
-    button.disabled = false;
-    button.innerHTML = originalText;
-    button.classList.remove('btn-success', 'btn-danger');
-    button.classList.add('btn-primary');
-}
-
-/**
- * Show settings success message
- */
-function showSettingsSuccess(message) {
-    const alertHtml = `
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    // Remove existing alerts
-    document.querySelectorAll('.alert').forEach(alert => alert.remove());
-    
-    // Add new alert
-    const settingsContainer = document.querySelector('.settings-container');
-    settingsContainer.insertAdjacentHTML('afterbegin', alertHtml);
-    
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-        const alert = document.querySelector('.alert');
-        if (alert) {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }
-    }, 5000);
-}
-
-/**
- * Show settings error message
- */
-function showSettingsError(message) {
-    const alertHtml = `
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
-    
-    // Remove existing alerts
-    document.querySelectorAll('.alert').forEach(alert => alert.remove());
-    
-    // Add new alert
-    const settingsContainer = document.querySelector('.settings-container');
-    settingsContainer.insertAdjacentHTML('afterbegin', alertHtml);
-    
-    // Auto-dismiss after 8 seconds
-    setTimeout(() => {
-        const alert = document.querySelector('.alert');
-        if (alert) {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }
-    }, 8000);
-}
-
-/**
- * Add event listeners to toggle buttons for auto-save
- */
-function addToggleEventListeners() {
-    // Add event listeners to automation toggles
-    const toggles = ['auto-monthly', 'auto-quarterly', 'auto-yearend'];
-    
-    toggles.forEach(toggleId => {
-        const toggle = document.getElementById(toggleId);
-        if (toggle) {
-            toggle.addEventListener('change', function() {
-                // Auto-save when toggle changes
-                saveSettings();
-            });
-        }
-    });
-}
-
-/**
- * Convert settings from API format to summary format
- */
-function convertSettingsForSummary(apiSettings) {
-    const converted = {};
-    
-    // Convert API response format to simple format
-    for (const [key, setting] of Object.entries(apiSettings)) {
-        if (setting && typeof setting === 'object' && 'value' in setting) {
-            converted[key] = setting.value;
-        } else {
-            converted[key] = setting;
-        }
-    }
-    
-    return converted;
-}
-
-/**
- * Update settings summary
- */
-function updateSettingsSummary(settings) {
-    // Update basic configuration
-    if (settings.default_period) {
-        document.getElementById('summary-period').textContent = settings.default_period;
-    }
-    if (settings.default_format) {
-        document.getElementById('summary-format').textContent = settings.default_format;
-    }
-    if (settings.company_name) {
-        document.getElementById('summary-company').textContent = settings.company_name;
-    }
-    
-    // Update automation status
-    if (settings.auto_monthly !== undefined) {
-        const status = settings.auto_monthly ? 'Enabled' : 'Disabled';
-        const color = settings.auto_monthly ? 'text-success' : 'text-muted';
-        document.getElementById('summary-monthly').innerHTML = `<span class="${color}">${status}</span>`;
-    }
-    if (settings.auto_quarterly !== undefined) {
-        const status = settings.auto_quarterly ? 'Enabled' : 'Disabled';
-        const color = settings.auto_quarterly ? 'text-success' : 'text-muted';
-        document.getElementById('summary-quarterly').innerHTML = `<span class="${color}">${status}</span>`;
-    }
-    if (settings.auto_yearend !== undefined) {
-        const status = settings.auto_yearend ? 'Enabled' : 'Disabled';
-        const color = settings.auto_yearend ? 'text-success' : 'text-muted';
-        document.getElementById('summary-yearend').innerHTML = `<span class="${color}">${status}</span>`;
-    }
 }

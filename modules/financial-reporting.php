@@ -149,143 +149,78 @@ $current_user = getCurrentUser();
         </div>
     </nav>
     
-    <!-- Page Header -->
-    <div class="page-header-simple">
-        <div class="container-fluid">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <h2><i class="fas fa-chart-line me-3"></i>Financial Reporting & Compliance</h2>
-                </div>
-                <a href="../core/dashboard.php" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                </a>
-            </div>
-        </div>
-    </div>
-    
     <!-- Main Content -->
     <main class="container-fluid py-4">
-        <!-- Modern Tab Navigation -->
-        <div class="modern-tabs-container">
-            <ul class="nav nav-pills modern-nav-tabs" id="reportTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="financial-reports-tab" data-bs-toggle="pill" data-bs-target="#financial-reports" type="button" role="tab">
-                        <i class="fas fa-file-invoice-dollar me-2"></i>FINANCIAL REPORTS
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="compliance-tab" data-bs-toggle="pill" data-bs-target="#compliance" type="button" role="tab">
-                        <i class="fas fa-check-circle me-2"></i>COMPLIANCE
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tax-reports-tab" data-bs-toggle="pill" data-bs-target="#tax-reports" type="button" role="tab">
-                        <i class="fas fa-file-invoice me-2"></i>TAX REPORTS
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="audit-trail-tab" data-bs-toggle="pill" data-bs-target="#audit-trail" type="button" role="tab">
-                        <i class="fas fa-history me-2"></i>AUDIT TRAIL
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="report-settings-tab" data-bs-toggle="pill" data-bs-target="#report-settings" type="button" role="tab">
-                        <i class="fas fa-cog me-2"></i>REPORT SETTINGS
-                    </button>
-                </li>
-            </ul>
+        <!-- Beautiful Page Header -->
+        <div class="beautiful-page-header mb-5">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="header-content">
+                            <h1 class="page-title-beautiful">
+                                <i class="fas fa-chart-line me-3"></i>
+                                Financial Reporting & Compliance
+                            </h1>
+                            <p class="page-subtitle-beautiful">
+                                Generate comprehensive financial reports and analyze your business performance
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <div class="header-info-card">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Database Status</div>
+                                    <div class="info-value status-connected">Connected</div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Current Period</div>
+                                    <div class="info-value"><?php echo date('F Y'); ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions mt-3">
+                    <a href="../core/dashboard.php" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
         </div>
 
-        <div class="tab-content mt-4" id="reportTabsContent">
-            <!-- FINANCIAL REPORTS TAB -->
-            <div class="tab-pane fade show active" id="financial-reports" role="tabpanel">
-                <div class="section-header">
-                    <h4>Standard Financial Reports</h4>
-                    <div class="text-muted small">
-                        <i class="fas fa-database me-1"></i>Connected to MySQL Database | 
-                        <i class="fas fa-calendar me-1"></i>Current Period: <?php echo date('F Y'); ?> |
-                        <i class="fas fa-chart-line me-1"></i>Real-time Data
-                    </div>
+        <!-- Reports Section -->
+        <div class="reports-section">
+            <div class="section-header-simple mb-4">
+                <h2 class="section-title-simple">Financial Reports</h2>
+                <p class="section-subtitle-simple">Select a report type to generate detailed financial analysis</p>
                 </div>
 
-                <!-- Quick Stats Dashboard -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="stat-card stat-card-primary">
-                            <div class="stat-icon">
-                                <i class="fas fa-file-invoice-dollar"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3><?php 
-                                    $result = $conn->query("SELECT COUNT(*) as count FROM journal_entries WHERE status = 'posted'");
-                                    echo number_format($result->fetch_assoc()['count']);
-                                ?></h3>
-                                <p>Posted Transactions</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card stat-card-success">
-                            <div class="stat-icon">
-                                <i class="fas fa-list-alt"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3><?php 
-                                    $result = $conn->query("SELECT COUNT(*) as count FROM accounts WHERE is_active = 1");
-                                    echo number_format($result->fetch_assoc()['count']);
-                                ?></h3>
-                                <p>Active Accounts</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card stat-card-info">
-                            <div class="stat-icon">
+
+            <!-- Report Cards Grid -->
+            <div class="row g-4 mb-5">
+                <!-- Balance Sheet Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="report-card-modern h-100">
+                        <div class="card-header-modern">
+                            <div class="report-icon">
                                 <i class="fas fa-balance-scale"></i>
                             </div>
-                            <div class="stat-content">
-                                <h3><?php 
-                                    $result = $conn->query("
-                                        SELECT SUM(debit) as total_debits, SUM(credit) as total_credits
-                                        FROM journal_lines jl
-                                        INNER JOIN journal_entries je ON jl.journal_entry_id = je.id
-                                        WHERE je.status = 'posted'
-                                    ");
-                                    $balance = $result->fetch_assoc();
-                                    $is_balanced = abs($balance['total_debits'] - $balance['total_credits']) < 0.01;
-                                    echo $is_balanced ? '✓' : '⚠';
-                                ?></h3>
-                                <p><?php echo $is_balanced ? 'Books Balanced' : 'Books Unbalanced'; ?></p>
+                            <div class="report-meta">
+                                <h5 class="report-title">Balance Sheet</h5>
+                                <p class="report-subtitle">Assets, Liabilities, and Equity</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card stat-card-warning">
-                            <div class="stat-icon">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3><?php 
-                                    $result = $conn->query("SELECT COUNT(*) as count FROM fiscal_periods WHERE status = 'open'");
-                                    echo number_format($result->fetch_assoc()['count']);
-                                ?></h3>
-                                <p>Open Periods</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="report-cards-grid">
-                    <!-- Balance Sheet Card -->
-                    <div class="report-card">
-                        <div class="report-card-icon">
-                            <i class="fas fa-balance-scale"></i>
-                        </div>
-                        <h5>Balance Sheet</h5>
-                        <p class="report-description">Assets, Liabilities, and Equity</p>
-                        <div class="report-preview">
-                            <small class="text-muted">
-                                <strong>Amounts:</strong><br>
+                        <div class="card-body-modern">
+                            <div class="report-summary">
                                 <?php 
                                 // Get asset total
                                 $result = $conn->query("
@@ -319,26 +254,43 @@ $current_user = getCurrentUser();
                                     WHERE a.is_active = 1 AND at.category = 'equity' AND je.status = 'posted'
                                 ");
                                 $equity = abs($result->fetch_assoc()['total_equity']);
-                                
-                                echo "Assets: ₱" . number_format($assets, 0) . "<br>";
-                                echo "Liabilities: ₱" . number_format($liabilities, 0) . "<br>";
-                                echo "Equity: ₱" . number_format($equity, 0);
                                 ?>
-                            </small>
+                                <div class="summary-item">
+                                    <span class="summary-label">Assets</span>
+                                    <span class="summary-value text-primary">₱<?php echo number_format($assets, 0); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Liabilities</span>
+                                    <span class="summary-value text-warning">₱<?php echo number_format($liabilities, 0); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Equity</span>
+                                    <span class="summary-value text-success">₱<?php echo number_format($equity, 0); ?></span>
+                                </div>
+                            </div>
                         </div>
-                        <button class="btn btn-generate" onclick="openReportModal('balance-sheet')">GENERATE</button>
+                        <div class="card-footer-modern">
+                            <button class="btn btn-primary btn-generate-modern" onclick="openReportModal('balance-sheet')">
+                                <i class="fas fa-file-alt me-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </div>
                     </div>
 
                     <!-- Income Statement Card -->
-                    <div class="report-card">
-                        <div class="report-card-icon">
+                <div class="col-lg-4 col-md-6">
+                    <div class="report-card-modern h-100">
+                        <div class="card-header-modern">
+                            <div class="report-icon">
                             <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="report-meta">
+                                <h5 class="report-title">Income Statement</h5>
+                                <p class="report-subtitle">Revenue, expenses, and Net income</p>
+                            </div>
                         </div>
-                        <h5>Income Statement</h5>
-                        <p class="report-description">Revenue, expenses, and Net income</p>
-                        <div class="report-preview">
-                            <small class="text-muted">
-                                <strong>Amounts:</strong><br>
+                        <div class="card-body-modern">
+                            <div class="report-summary">
                                 <?php 
                                 // Get revenue total
                                 $result = $conn->query("
@@ -363,26 +315,43 @@ $current_user = getCurrentUser();
                                 $expenses = $result->fetch_assoc()['total_expenses'];
                                 
                                 $net_income = $revenue - $expenses;
-                                
-                                echo "Revenue: ₱" . number_format($revenue, 0) . "<br>";
-                                echo "Expenses: ₱" . number_format($expenses, 0) . "<br>";
-                                echo "Net Income: ₱" . number_format($net_income, 0);
                                 ?>
-                            </small>
+                                <div class="summary-item">
+                                    <span class="summary-label">Revenue</span>
+                                    <span class="summary-value text-success">₱<?php echo number_format($revenue, 0); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Expenses</span>
+                                    <span class="summary-value text-danger">₱<?php echo number_format($expenses, 0); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Net Income</span>
+                                    <span class="summary-value <?php echo $net_income >= 0 ? 'text-success' : 'text-danger'; ?>">₱<?php echo number_format($net_income, 0); ?></span>
+                                </div>
+                            </div>
                         </div>
-                        <button class="btn btn-generate" onclick="openReportModal('income-statement')">GENERATE</button>
+                        <div class="card-footer-modern">
+                            <button class="btn btn-primary btn-generate-modern" onclick="openReportModal('income-statement')">
+                                <i class="fas fa-file-alt me-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </div>
                     </div>
 
                     <!-- Cash Flow Statement Card -->
-                    <div class="report-card">
-                        <div class="report-card-icon">
+                <div class="col-lg-4 col-md-6">
+                    <div class="report-card-modern h-100">
+                        <div class="card-header-modern">
+                            <div class="report-icon">
                             <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="report-meta">
+                                <h5 class="report-title">Cash Flow Statement</h5>
+                                <p class="report-subtitle">Operating, Investing, and Financing Activities</p>
+                            </div>
                         </div>
-                        <h5>Cash Flow Statement</h5>
-                        <p class="report-description">Operating, Investing, and Financing Activities</p>
-                        <div class="report-preview">
-                            <small class="text-muted">
-                                <strong>Amounts:</strong><br>
+                        <div class="card-body-modern">
+                            <div class="report-summary">
                                 <?php 
                                 // Get cash accounts balance
                                 $result = $conn->query("
@@ -395,27 +364,43 @@ $current_user = getCurrentUser();
                                     AND (a.name LIKE '%cash%' OR a.name LIKE '%bank%') AND je.status = 'posted'
                                 ");
                                 $cash_balance = $result->fetch_assoc()['cash_balance'];
-                                
-                                echo "Cash Balance: ₱" . number_format($cash_balance, 0) . "<br>";
-                                echo "Operating: Revenue - Expenses<br>";
-                                echo "Investing: Asset purchases<br>";
-                                echo "Financing: Loans & Equity";
                                 ?>
-                            </small>
+                                <div class="summary-item">
+                                    <span class="summary-label">Cash Balance</span>
+                                    <span class="summary-value text-info">₱<?php echo number_format($cash_balance, 0); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Operating</span>
+                                    <span class="summary-value text-muted">Revenue - Expenses</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Investing</span>
+                                    <span class="summary-value text-muted">Asset purchases</span>
+                                </div>
+                            </div>
                         </div>
-                        <button class="btn btn-generate" onclick="openReportModal('cash-flow')">GENERATE</button>
+                        <div class="card-footer-modern">
+                            <button class="btn btn-primary btn-generate-modern" onclick="openReportModal('cash-flow')">
+                                <i class="fas fa-file-alt me-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </div>
                     </div>
 
                     <!-- Trial Balance Card -->
-                    <div class="report-card">
-                        <div class="report-card-icon">
+                <div class="col-lg-4 col-md-6">
+                    <div class="report-card-modern h-100">
+                        <div class="card-header-modern">
+                            <div class="report-icon">
                             <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="report-meta">
+                                <h5 class="report-title">Trial Balance</h5>
+                                <p class="report-subtitle">Account Balances and Totals</p>
+                            </div>
                         </div>
-                        <h5>Trial Balance</h5>
-                        <p class="report-description">Account Balances and Totals</p>
-                        <div class="report-preview">
-                            <small class="text-muted">
-                                <strong>Amounts:</strong><br>
+                        <div class="card-body-modern">
+                            <div class="report-summary">
                                 <?php 
                                 // Get trial balance totals
                                 $result = $conn->query("
@@ -428,534 +413,215 @@ $current_user = getCurrentUser();
                                 ");
                                 $totals = $result->fetch_assoc();
                                 $is_balanced = abs($totals['total_debits'] - $totals['total_credits']) < 0.01;
-                                
-                                echo "Total Debits: ₱" . number_format($totals['total_debits'], 0) . "<br>";
-                                echo "Total Credits: ₱" . number_format($totals['total_credits'], 0) . "<br>";
-                                echo "Status: " . ($is_balanced ? "✓ Balanced" : "⚠ Unbalanced");
                                 ?>
-                            </small>
+                                <div class="summary-item">
+                                    <span class="summary-label">Total Debits</span>
+                                    <span class="summary-value text-danger">₱<?php echo number_format($totals['total_debits'], 0); ?></span>
                         </div>
-                        <button class="btn btn-generate" onclick="openReportModal('trial-balance')">GENERATE</button>
+                                <div class="summary-item">
+                                    <span class="summary-label">Total Credits</span>
+                                    <span class="summary-value text-success">₱<?php echo number_format($totals['total_credits'], 0); ?></span>
                     </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Status</span>
+                                    <span class="summary-value <?php echo $is_balanced ? 'text-success' : 'text-warning'; ?>">
+                                        <?php echo $is_balanced ? "✓ Balanced" : "⚠ Unbalanced"; ?>
+                                    </span>
                 </div>
             </div>
-
-            <!-- COMPLIANCE TAB -->
-            <div class="tab-pane fade" id="compliance" role="tabpanel">
-                <div class="section-header">
-                    <h4>Regulatory Compliance</h4>
-                </div>
-
-                <!-- Compliance Status Cards -->
-                <div class="compliance-cards-row">
-                    <?php
-                    // Calculate GAAP compliance
-                    $gaapResult = $conn->query("
-                        SELECT 
-                            SUM(jl.debit) as total_debits,
-                            SUM(jl.credit) as total_credits,
-                            COUNT(DISTINCT a.id) as account_count
-                        FROM journal_lines jl
-                        INNER JOIN journal_entries je ON jl.journal_entry_id = je.id
-                        INNER JOIN accounts a ON jl.account_id = a.id
-                        WHERE je.status = 'posted'
-                        AND je.entry_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
-                    ");
-                    $gaapData = $gaapResult->fetch_assoc();
-                    $gaapBalanced = abs($gaapData['total_debits'] - $gaapData['total_credits']) < 0.01;
-                    $gaapStatus = $gaapBalanced && $gaapData['account_count'] > 0 ? 'Compliant' : 'Review Needed';
-                    $gaapBadge = $gaapBalanced && $gaapData['account_count'] > 0 ? 'badge-compliant' : 'badge-review';
-                    ?>
-                    <div class="compliance-status-card">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6>GAAP Compliance</h6>
-                            <span class="badge <?php echo $gaapBadge; ?>"><?php echo $gaapStatus; ?></span>
                         </div>
-                        <small class="text-muted">
-                            <?php echo $gaapBalanced ? 'Books Balanced' : 'Books Unbalanced'; ?> | 
-                            <?php echo $gaapData['account_count']; ?> Accounts
-                        </small>
-                    </div>
-
-                    <?php
-                    // Calculate SOX compliance
-                    $soxResult = $conn->query("
-                        SELECT 
-                            COUNT(*) as total_entries,
-                            SUM(CASE WHEN created_by != posted_by THEN 1 ELSE 0 END) as segregated_entries,
-                            COUNT(DISTINCT al.id) as audit_logs
-                        FROM journal_entries je
-                        LEFT JOIN audit_logs al ON al.object_type = 'journal_entry' 
-                            AND al.object_id = je.id
-                        WHERE je.status = 'posted'
-                        AND je.entry_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
-                    ");
-                    $soxData = $soxResult->fetch_assoc();
-                    $soxSegregation = $soxData['total_entries'] > 0 ? 
-                        ($soxData['segregated_entries'] / $soxData['total_entries']) * 100 : 0;
-                    $soxStatus = $soxSegregation >= 50 && $soxData['audit_logs'] > 0 ? 'Compliant' : 'Review Needed';
-                    $soxBadge = $soxSegregation >= 50 && $soxData['audit_logs'] > 0 ? 'badge-compliant' : 'badge-review';
-                    ?>
-                    <div class="compliance-status-card">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6>SOX Compliance</h6>
-                            <span class="badge <?php echo $soxBadge; ?>"><?php echo $soxStatus; ?></span>
-                        </div>
-                        <small class="text-muted">
-                            <?php echo number_format($soxSegregation, 1); ?>% Segregation | 
-                            <?php echo $soxData['audit_logs']; ?> Audit Logs
-                        </small>
-                    </div>
-
-                    <?php
-                    // Calculate BIR compliance
-                    $birResult = $conn->query("
-                        SELECT 
-                            COUNT(*) as total_entries,
-                            SUM(CASE WHEN reference_no IS NOT NULL AND reference_no != '' THEN 1 ELSE 0 END) as documented_entries,
-                            COUNT(DISTINCT a.id) as tax_accounts
-                        FROM journal_entries je
-                        LEFT JOIN accounts a ON (a.name LIKE '%tax%' OR a.name LIKE '%VAT%' OR a.name LIKE '%withholding%')
-                            AND a.is_active = 1
-                        WHERE je.status = 'posted'
-                        AND je.entry_date >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
-                    ");
-                    $birData = $birResult->fetch_assoc();
-                    $birDocumentation = $birData['total_entries'] > 0 ? 
-                        ($birData['documented_entries'] / $birData['total_entries']) * 100 : 0;
-                    $birStatus = $birDocumentation >= 80 && $birData['tax_accounts'] > 0 ? 'Compliant' : 'Review Needed';
-                    $birBadge = $birDocumentation >= 80 && $birData['tax_accounts'] > 0 ? 'badge-compliant' : 'badge-review';
-                    ?>
-                    <div class="compliance-status-card">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6>BIR Compliance</h6>
-                            <span class="badge <?php echo $birBadge; ?>"><?php echo $birStatus; ?></span>
-                        </div>
-                        <small class="text-muted">
-                            <?php echo number_format($birDocumentation, 1); ?>% Documented | 
-                            <?php echo $birData['tax_accounts']; ?> Tax Accounts
-                        </small>
-                    </div>
-                </div>
-
-                <!-- Compliance Reports Table -->
-                <div class="section-header mt-5">
-                    <h4>Compliance Reports</h4>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-outline-secondary" onclick="loadComplianceReports()">
-                            <i class="fas fa-refresh me-2"></i>Refresh
-                        </button>
-                    <button class="btn btn-primary" onclick="generateComplianceReport()">
-                        <i class="fas fa-file-alt me-2"></i>Generate Compliance Reports
-                    </button>
-                    </div>
-                </div>
-
-                <div class="table-container">
-                    <table class="table modern-table">
-                        <thead>
-                            <tr>
-                                <th>Report Type</th>
-                                <th>Period</th>
-                                <th>Generated Date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="complianceReportsTable">
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-5">
-                                    <i class="fas fa-folder-open fa-3x mb-3 d-block"></i>
-                                    No compliance reports generated yet. Click "Generate Compliance Reports" to create one.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- TAX REPORTS TAB -->
-            <div class="tab-pane fade" id="tax-reports" role="tabpanel">
-                <div class="section-header">
-                    <h4>Tax Reporting</h4>
-                    <p class="text-muted">Generate comprehensive tax reports for compliance and filing</p>
-                </div>
-
-                <!-- Tax Summary Cards -->
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <div class="card border-warning">
-                            <div class="card-body text-center">
-                                <i class="fas fa-calendar-alt fa-2x text-warning mb-3"></i>
-                                <h6 class="card-title">Income Tax Deadline</h6>
-                                <h5 class="text-warning"><?php echo date('M d, Y', strtotime(date('Y') . '-04-15')); ?></h5>
-                                <small class="text-muted">Annual Filing</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-info">
-                            <div class="card-body text-center">
-                                <i class="fas fa-users fa-2x text-info mb-3"></i>
-                                <h6 class="card-title">Payroll Tax Deadline</h6>
-                                <h5 class="text-info"><?php echo date('M d, Y', strtotime('+1 month')); ?></h5>
-                                <small class="text-muted">Quarterly Filing</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card border-success">
-                            <div class="card-body text-center">
-                                <i class="fas fa-shopping-cart fa-2x text-success mb-3"></i>
-                                <h6 class="card-title">Sales Tax Deadline</h6>
-                                <h5 class="text-success"><?php echo date('M d, Y', strtotime('+20 days')); ?></h5>
-                                <small class="text-muted">Monthly Filing</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="report-cards-grid">
-                    <!-- Income Tax Report -->
-                    <div class="report-card">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="report-card-icon-small">
-                                <i class="fas fa-file-invoice"></i>
-                            </div>
-                            <span class="badge badge-due-soon">Due Soon</span>
-                        </div>
-                        <h5>Income Tax Report</h5>
-                        <div class="report-details">
-                            <p><i class="fas fa-calendar-alt me-2"></i>Annual Income Tax Return</p>
-                            <p><i class="fas fa-clock me-2"></i>Filing Deadline: <?php echo date('M d, Y', strtotime(date('Y') . '-04-15')); ?></p>
-                            <p><i class="fas fa-calculator me-2"></i>Estimated Tax: ₱<?php 
-                                // Calculate estimated tax from current year data
-                                $revenue_sql = "SELECT SUM(jl.credit - jl.debit) as total_revenue FROM journal_lines jl INNER JOIN journal_entries je ON jl.journal_entry_id = je.id INNER JOIN accounts a ON jl.account_id = a.id INNER JOIN account_types at ON a.type_id = at.id WHERE je.entry_date >= '" . date('Y-01-01') . "' AND je.status = 'posted' AND at.category = 'revenue'";
-                                $revenue_result = $conn->query($revenue_sql);
-                                $total_revenue = $revenue_result->fetch_assoc()['total_revenue'] ?? 0;
-                                
-                                $expense_sql = "SELECT SUM(jl.debit - jl.credit) as total_expenses FROM journal_lines jl INNER JOIN journal_entries je ON jl.journal_entry_id = je.id INNER JOIN accounts a ON jl.account_id = a.id INNER JOIN account_types at ON a.type_id = at.id WHERE je.entry_date >= '" . date('Y-01-01') . "' AND je.status = 'posted' AND at.category = 'expense'";
-                                $expense_result = $conn->query($expense_sql);
-                                $total_expenses = $expense_result->fetch_assoc()['total_expenses'] ?? 0;
-                                
-                                $taxable_income = max(0, $total_revenue - $total_expenses);
-                                $estimated_tax = $taxable_income * 0.30;
-                                echo number_format($estimated_tax, 2);
-                            ?></p>
-                        </div>
-                        <button class="btn btn-generate mt-3" onclick="openTaxReportModal('income-tax')">GENERATE</button>
-                    </div>
-
-                    <!-- Payroll Tax Report -->
-                    <div class="report-card">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="report-card-icon-small">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <span class="badge badge-current">Current</span>
-                        </div>
-                        <h5>Payroll Tax Report</h5>
-                        <div class="report-details">
-                            <p><i class="fas fa-calendar-alt me-2"></i>Quarterly Payroll Tax Returns</p>
-                            <p><i class="fas fa-clock me-2"></i>Next Filing: <?php echo date('M d, Y', strtotime('+1 month')); ?></p>
-                            <p><i class="fas fa-money-bill-wave me-2"></i>Total Withheld: ₱<?php 
-                                // Calculate total payroll withholdings
-                                $payroll_sql = "SELECT SUM(total_deductions) as total_withheld FROM payroll_runs WHERE run_at >= '" . date('Y-m-01', strtotime('-3 months')) . "'";
-                                $payroll_result = $conn->query($payroll_sql);
-                                $total_withheld = $payroll_result->fetch_assoc()['total_withheld'] ?? 0;
-                                echo number_format($total_withheld, 2);
-                            ?></p>
-                        </div>
-                        <button class="btn btn-generate mt-3" onclick="openTaxReportModal('payroll-tax')">GENERATE</button>
-                    </div>
-
-                    <!-- Sales Tax Report -->
-                    <div class="report-card">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="report-card-icon-small">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <span class="badge badge-current">Current</span>
-                        </div>
-                        <h5>Sales Tax Report</h5>
-                        <div class="report-details">
-                            <p><i class="fas fa-calendar-alt me-2"></i>Monthly Sales Tax Returns</p>
-                            <p><i class="fas fa-clock me-2"></i>Next Filing: <?php echo date('M d, Y', strtotime('+20 days')); ?></p>
-                            <p><i class="fas fa-receipt me-2"></i>Total Collected: ₱<?php 
-                                // Calculate VAT collected
-                                $vat_sql = "SELECT SUM(jl.credit) as vat_collected FROM journal_lines jl INNER JOIN journal_entries je ON jl.journal_entry_id = je.id INNER JOIN accounts a ON jl.account_id = a.id WHERE je.entry_date >= '" . date('Y-m-01', strtotime('-1 month')) . "' AND je.status = 'posted' AND (a.name LIKE '%VAT%' OR a.name LIKE '%tax%')";
-                                $vat_result = $conn->query($vat_sql);
-                                $vat_collected = $vat_result->fetch_assoc()['vat_collected'] ?? 0;
-                                echo number_format($vat_collected, 2);
-                            ?></p>
-                        </div>
-                        <button class="btn btn-generate mt-3" onclick="openTaxReportModal('sales-tax')">GENERATE</button>
-                    </div>
-                </div>
-
-                <!-- Tax Reports History -->
-                <div class="mt-5">
-                    <div class="section-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5>Recent Tax Reports</h5>
-                                <p class="text-muted">View and download previously generated tax reports</p>
-                            </div>
-                            <button class="btn btn-outline-primary btn-sm" onclick="refreshTaxReports()" id="refreshTaxReportsBtn" title="Refresh Reports">
-                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                        <div class="card-footer-modern">
+                            <button class="btn btn-primary btn-generate-modern" onclick="openReportModal('trial-balance')">
+                                <i class="fas fa-file-alt me-2"></i>Generate Report
                             </button>
                         </div>
                     </div>
-                    
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="taxReportsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Report Type</th>
-                                            <th>Period</th>
-                                            <th>Generated Date</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">
-                                                <i class="fas fa-file-invoice fa-2x mb-2"></i>
-                                                <p>No tax reports generated yet</p>
-                                                <small>Generate your first tax report using the buttons above</small>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                </div>
+
+                <!-- Regulatory Reports Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="report-card-modern h-100">
+                        <div class="card-header-modern">
+                            <div class="report-icon">
+                                <i class="fas fa-shield-alt"></i>
+                    </div>
+                            <div class="report-meta">
+                                <h5 class="report-title">Regulatory Reports</h5>
+                                <p class="report-subtitle">BSP, SEC, or internal compliance templates</p>
                             </div>
+                        </div>
+                        <div class="card-body-modern">
+                            <div class="report-summary">
+                                <div class="summary-item">
+                                    <span class="summary-label">BSP Reports</span>
+                                    <span class="summary-value text-primary">Available</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">SEC Filings</span>
+                                    <span class="summary-value text-success">Available</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Internal Compliance</span>
+                                    <span class="summary-value text-warning">Available</span>
+                    </div>
+                            </div>
+                        </div>
+                        <div class="card-footer-modern">
+                            <button class="btn btn-primary btn-generate-modern" onclick="openReportModal('regulatory-reports')">
+                                <i class="fas fa-file-alt me-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                            </div>
+                        </div>
+
+        <!-- Filtering Section -->
+        <div class="filtering-section-modern">
+            <div class="section-header-simple mb-4">
+                <h2 class="section-title-simple">
+                    <i class="fas fa-filter me-2" style="color: var(--primary-teal);"></i>Data Filtering & Search
+                </h2>
+                <p class="section-subtitle-simple">Filter and search financial data across all reports</p>
+            </div>
+
+            <div class="filtering-card">
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-calendar-alt me-2" style="color: var(--primary-teal);"></i>Date From
+                            </label>
+                            <input type="date" class="form-control form-control-modern" id="filter-date-from">
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-calendar-alt me-2" style="color: var(--primary-teal);"></i>Date To
+                            </label>
+                            <input type="date" class="form-control form-control-modern" id="filter-date-to">
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-cogs me-2" style="color: var(--primary-teal);"></i>Subsystem
+                            </label>
+                            <select class="form-select form-select-modern" id="filter-subsystem">
+                                <option value="">All Subsystems</option>
+                                <option value="general-ledger">General Ledger</option>
+                                <option value="payroll">Payroll</option>
+                                <option value="expense">Expense Tracking</option>
+                                <option value="loan">Loan Accounting</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-tags me-2" style="color: var(--primary-teal);"></i>Account Type
+                            </label>
+                            <select class="form-select form-select-modern" id="filter-account-type">
+                                <option value="">All Types</option>
+                                <option value="asset">Assets</option>
+                                <option value="liability">Liabilities</option>
+                                <option value="equity">Equity</option>
+                                <option value="revenue">Revenue</option>
+                                <option value="expense">Expenses</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-search me-2" style="color: var(--primary-teal);"></i>Custom Search
+                            </label>
+                            <input type="text" class="form-control form-control-modern" id="filter-custom-search" 
+                                   placeholder="Search by account name, description, or reference number...">
+                        </div>
+                    </div>
+                    <div class="col-lg-4 d-flex align-items-end">
+                        <div class="filter-actions">
+                            <button class="btn btn-primary btn-lg me-3 px-4" onclick="applyFilters()">
+                                <i class="fas fa-search me-2"></i>Apply Filters
+                            </button>
+                            <button class="btn btn-outline-secondary btn-lg px-3" onclick="clearFilters()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button class="btn btn-outline-info btn-sm ms-2" onclick="testFilters()" title="Test filtering">
+                                <i class="fas fa-bug"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- AUDIT TRAIL TAB -->
-            <div class="tab-pane fade" id="audit-trail" role="tabpanel">
-                <div class="section-header">
-                    <h4>Audit Trail</h4>
                 </div>
 
-                <!-- Audit Trail Filters -->
-                <div class="audit-filters">
-                    <div class="row g-3">
-                        <div class="col-md-2">
-                            <input type="date" class="form-control" id="audit-date-from" placeholder="mm/dd/yy">
+        <!-- Filtered Results Section -->
+        <div class="filtered-results-modern" id="filtered-results" style="display: none;">
+            <div class="section-header-simple mb-4">
+                <h2 class="section-title-simple">
+                    <i class="fas fa-table me-2" style="color: var(--primary-teal);"></i>Filtered Results
+                </h2>
+                <p class="section-subtitle-simple" id="results-summary">Showing filtered results</p>
                         </div>
-                        <div class="col-md-2">
-                            <input type="date" class="form-control" id="audit-date-to" placeholder="mm/dd/yy">
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="audit-user-filter">
-                                <option>All Users</option>
-                                <?php
-                                $userResult = $conn->query("SELECT DISTINCT username, full_name FROM users WHERE is_active = 1 ORDER BY full_name");
-                                while ($user = $userResult->fetch_assoc()) {
-                                    echo '<option value="' . htmlspecialchars($user['username']) . '">' . htmlspecialchars($user['full_name']) . '</option>';
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="audit-action-filter">
-                                <option>All Actions</option>
-                                <option>Generate Report</option>
-                                <option>Generate Compliance Report</option>
-                                <option>Export Report</option>
-                                <option>View Report</option>
-                                <option>Update Settings</option>
-                                <option>Login</option>
-                                <option>Logout</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Search audit trail..." id="audit-search">
-                                <button class="btn btn-primary" onclick="filterAuditTrail()">
-                                    <i class="fas fa-search"></i>
+
+            <!-- Action Buttons -->
+            <div class="results-actions-simple mb-3">
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="showMoreInformation()" id="show-more-btn">
+                    <i class="fas fa-expand me-1"></i>Show More
+                </button>
+                <button class="btn btn-success btn-sm me-2" onclick="exportFilteredData('excel')">
+                    <i class="fas fa-file-excel me-1"></i>Excel
+                </button>
+                <button class="btn btn-danger btn-sm me-2" onclick="exportFilteredData('pdf')">
+                    <i class="fas fa-file-pdf me-1"></i>PDF
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="printFilteredData()">
+                    <i class="fas fa-print me-1"></i>Print
                                 </button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Audit Trail Table -->
-                <div class="table-container mt-4">
-                    <table class="table modern-table">
+            <div class="results-table-container">
+                <div class="table-responsive">
+                    <table class="table table-modern" id="filtered-results-table">
                         <thead>
                             <tr>
-                                <th>Timestamp</th>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Module</th>
-                                <th>Record ID</th>
-                                <th>Details</th>
-                                <th>IP Address</th>
+                                <th><i class="fas fa-calendar me-1" style="color: var(--primary-teal);"></i>Date</th>
+                                <th><i class="fas fa-hashtag me-1" style="color: var(--primary-teal);"></i>Account Code</th>
+                                <th><i class="fas fa-tag me-1" style="color: var(--primary-teal);"></i>Account Name</th>
+                                <th><i class="fas fa-align-left me-1" style="color: var(--primary-teal);"></i>Description</th>
+                                <th class="text-end"><i class="fas fa-arrow-up me-1" style="color: var(--accent-gold);"></i>Debit</th>
+                                <th class="text-end"><i class="fas fa-arrow-down me-1" style="color: var(--primary-teal);"></i>Credit</th>
+                                <th class="text-end"><i class="fas fa-balance-scale me-1" style="color: var(--primary-teal);"></i>Balance</th>
                             </tr>
                         </thead>
-                        <tbody id="auditTrailTable">
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-5">
-                                    <i class="fas fa-history fa-3x mb-3 d-block"></i>
-                                    No audit records found. Apply filters to view audit trail.
-                                </td>
-                            </tr>
+                        <tbody id="filtered-results-tbody">
+                            <!-- Filtered results will be loaded here -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- REPORT SETTINGS TAB -->
-            <div class="tab-pane fade" id="report-settings" role="tabpanel">
-                <div class="section-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                    <h4>Report Configuration</h4>
-                            <p class="text-muted">Configure default settings for report generation and automation</p>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-warning btn-sm" onclick="resetSettings()" id="resetSettingsBtn">
-                                <i class="fas fa-undo me-1"></i>Reset to Defaults
+            <!-- No Results Message -->
+            <div class="no-results-modern" id="no-results-message" style="display: none;">
+                <div class="text-center py-5">
+                    <div class="no-results-icon mb-4">
+                        <i class="fas fa-search fa-4x text-muted opacity-50"></i>
+                    </div>
+                    <h3 class="text-muted mb-3">No Results Found</h3>
+                    <p class="text-muted mb-4">No records match your current filter criteria. Try adjusting your filters.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button class="btn btn-outline-primary" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>Clear Filters
+                        </button>
+                        <button class="btn btn-primary" onclick="applyFilters()">
+                            <i class="fas fa-search me-1"></i>Try Different Filters
                             </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-container">
-                    <div class="row g-4">
-                        <!-- Basic Settings -->
-                        <div class="col-md-6">
-                            <div class="settings-card">
-                                <label><i class="fas fa-calendar-alt me-2"></i>Default Report Period</label>
-                                <select class="form-select" id="default-period">
-                                    <option value="Monthly">Monthly</option>
-                                    <option value="Quarterly">Quarterly</option>
-                                    <option value="Yearly">Yearly</option>
-                                </select>
-                                <small class="text-muted">Default time period for new reports</small>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="settings-card">
-                                <label><i class="fas fa-file-export me-2"></i>Default Format</label>
-                                <select class="form-select" id="default-format">
-                                    <option value="PDF">PDF</option>
-                                    <option value="Excel">Excel</option>
-                                    <option value="CSV">CSV</option>
-                                </select>
-                                <small class="text-muted">Default export format for reports</small>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="settings-card">
-                                <label><i class="fas fa-building me-2"></i>Company Name</label>
-                                <input type="text" class="form-control" id="company-name" placeholder="Enter company name">
-                                <small class="text-muted">Company name displayed on reports</small>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="settings-card">
-                                <label><i class="fas fa-calendar-check me-2"></i>Fiscal Year End</label>
-                                <input type="date" class="form-control" id="fiscal-year-end">
-                                <small class="text-muted">End date of fiscal year</small>
-                            </div>
-                        </div>
-
-                        <div class="col-md-12">
-                            <div class="settings-card">
-                                <label><i class="fas fa-align-center me-2"></i>Report Footer Text</label>
-                                <textarea class="form-control" id="footer-text" rows="3" placeholder="Enter custom footer text for reports..."></textarea>
-                                <small class="text-muted">Custom text displayed at the bottom of reports</small>
-                            </div>
-                        </div>
-
-                        <!-- Advanced Settings -->
-
-                        <div class="col-md-12">
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary btn-lg" onclick="saveSettings()" id="saveSettingsBtn">
-                                <i class="fas fa-save me-2"></i>Save Settings
-                            </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Automated Reports -->
-                    <div class="section-header mt-5">
-                        <h4><i class="fas fa-robot me-2"></i>Automated Reports</h4>
-                        <p class="text-muted">Configure automatic report generation and delivery</p>
-                    </div>
-
-                    <div class="automated-reports-list">
-                        <div class="automation-item">
-                            <div>
-                                <h6><i class="fas fa-calendar-alt me-2 text-primary"></i>Monthly Financial Summary</h6>
-                                <p class="text-muted small mb-0">Automatically generate and email monthly financial reports</p>
-                                <small class="text-info">Next run: <?php echo date('M d, Y', strtotime('+1 month')); ?></small>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="auto-monthly">
-                            </div>
-                        </div>
-
-                        <div class="automation-item">
-                            <div>
-                                <h6><i class="fas fa-shield-alt me-2 text-success"></i>Quarterly Compliance Report</h6>
-                                <p class="text-muted small mb-0">Generate compliance reports every quarter</p>
-                                <small class="text-info">Next run: <?php echo date('M d, Y', strtotime('+3 months')); ?></small>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="auto-quarterly">
-                            </div>
-                        </div>
-
-                        <div class="automation-item">
-                            <div>
-                                <h6><i class="fas fa-file-invoice me-2 text-warning"></i>Year-end Tax Preparation</h6>
-                                <p class="text-muted small mb-0">Prepare all tax documents at year-end</p>
-                                <small class="text-info">Next run: <?php echo date('M d, Y', strtotime('+1 year')); ?></small>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="auto-yearend">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Settings Summary -->
-                    <div class="section-header mt-5">
-                        <h4><i class="fas fa-info-circle me-2"></i>Settings Summary</h4>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6>Current Configuration:</h6>
-                                    <ul class="list-unstyled">
-                                        <li><i class="fas fa-calendar-alt me-2 text-muted"></i>Default Period: <span id="summary-period">Loading...</span></li>
-                                        <li><i class="fas fa-file-export me-2 text-muted"></i>Default Format: <span id="summary-format">Loading...</span></li>
-                                        <li><i class="fas fa-building me-2 text-muted"></i>Company: <span id="summary-company">Loading...</span></li>
-                                    </ul>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>Automation Status:</h6>
-                                    <ul class="list-unstyled">
-                                        <li><i class="fas fa-calendar-alt me-2 text-muted"></i>Monthly Reports: <span id="summary-monthly">Loading...</span></li>
-                                        <li><i class="fas fa-shield-alt me-2 text-muted"></i>Quarterly Reports: <span id="summary-quarterly">Loading...</span></li>
-                                        <li><i class="fas fa-file-invoice me-2 text-muted"></i>Year-end Reports: <span id="summary-yearend">Loading...</span></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
