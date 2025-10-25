@@ -521,12 +521,12 @@ SET @dec_2025 = (SELECT id FROM fiscal_periods WHERE period_name = 'December 202
 -- INITIAL CAPITAL INVESTMENT (January 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0001', @gj_type, '2025-01-02', 'Initial capital investment', @jan_2025, 'INV-001', 10000000.00, 10000000.00, 'posted', 1, NOW(), 1);
 
 SET @je1 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je1, @cash_bdo, 5000000.00, 0.00, 'Cash deposit - BDO'),
 (@je1, @cash_bpi, 2000000.00, 0.00, 'Cash deposit - BPI'),
 (@je1, @equipment, 1000000.00, 0.00, 'Office equipment purchase'),
@@ -538,12 +538,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- BANK LOAN (January 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0002', @gj_type, '2025-01-05', 'Bank loan proceeds', @jan_2025, 'LOAN-001', 2000000.00, 2000000.00, 'posted', 1, NOW(), 1);
 
 SET @je2 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je2, @cash_metro, 2000000.00, 0.00, 'Loan proceeds'),
 (@je2, @loan_longterm, 0.00, 2000000.00, 'Long-term loan payable');
 
@@ -551,12 +551,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- INVENTORY PURCHASE (January 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0003', @ap_type, '2025-01-10', 'Inventory purchase on account', @jan_2025, 'PO-001', 1500000.00, 1500000.00, 'posted', 1, NOW(), 1);
 
 SET @je3 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je3, @inventory_raw, 800000.00, 0.00, 'Raw materials inventory'),
 (@je3, @inventory_finished, 700000.00, 0.00, 'Finished goods inventory'),
 (@je3, @ap_trade, 0.00, 1500000.00, 'Trade payable');
@@ -565,12 +565,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- SALES REVENUE - CASH (January 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0004', @cr_type, '2025-01-15', 'Cash sales', @jan_2025, 'INV-2501', 800000.00, 800000.00, 'posted', 1, NOW(), 1);
 
 SET @je4 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je4, @cash_bdo, 800000.00, 0.00, 'Cash received'),
 (@je4, @sales_revenue, 0.00, 800000.00, 'Product sales');
 
@@ -578,12 +578,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- COST OF GOODS SOLD (January 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0005', @gj_type, '2025-01-15', 'COGS for sales', @jan_2025, 'INV-2501', 480000.00, 480000.00, 'posted', 1, NOW(), 1);
 
 SET @je5 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je5, @cogs, 480000.00, 0.00, 'Cost of goods sold'),
 (@je5, @inventory_finished, 0.00, 480000.00, 'Inventory reduction');
 
@@ -591,12 +591,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- SERVICE REVENUE - CREDIT (January 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0006', @ar_type, '2025-01-20', 'Service revenue on account', @jan_2025, 'INV-2502', 600000.00, 600000.00, 'posted', 1, NOW(), 1);
 
 SET @je6 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je6, @ar_trade, 600000.00, 0.00, 'Customer receivable'),
 (@je6, @service_revenue, 0.00, 600000.00, 'Service income');
 
@@ -604,12 +604,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- PAYROLL PROCESSING (January 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0007', @pr_type, '2025-01-31', 'January payroll', @jan_2025, 'PR-2501', 500000.00, 500000.00, 'posted', 1, NOW(), 1);
 
 SET @je7 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je7, @salaries_wages, 400000.00, 0.00, 'Employee salaries'),
 (@je7, @employee_benefits, 50000.00, 0.00, 'Employee benefits'),
 (@je7, @payroll_taxes, 50000.00, 0.00, 'Payroll taxes'),
@@ -623,12 +623,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- RENT EXPENSE (January 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0008', @cd_type, '2025-02-01', 'January rent payment', @feb_2025, 'RENT-JAN', 100000.00, 100000.00, 'posted', 1, NOW(), 1);
 
 SET @je8 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je8, @rent_expense, 100000.00, 0.00, 'Office rent'),
 (@je8, @cash_bdo, 0.00, 100000.00, 'Cash paid');
 
@@ -636,12 +636,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- UTILITIES EXPENSE (February 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0009', @cd_type, '2025-02-05', 'Utilities payment', @feb_2025, 'UTIL-FEB', 75000.00, 75000.00, 'posted', 1, NOW(), 1);
 
 SET @je9 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je9, @utilities_expense, 75000.00, 0.00, 'Electricity and water'),
 (@je9, @cash_bdo, 0.00, 75000.00, 'Cash paid');
 
@@ -649,12 +649,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- OFFICE SUPPLIES PURCHASE (February 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0010', @cd_type, '2025-02-10', 'Office supplies', @feb_2025, 'SUP-001', 50000.00, 50000.00, 'posted', 1, NOW(), 1);
 
 SET @je10 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je10, @office_supplies, 50000.00, 0.00, 'Office supplies'),
 (@je10, @cash_bpi, 0.00, 50000.00, 'Cash paid');
 
@@ -662,12 +662,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- MARKETING EXPENSE (February 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0011', @cd_type, '2025-02-15', 'Marketing campaign', @feb_2025, 'MKT-001', 150000.00, 150000.00, 'posted', 1, NOW(), 1);
 
 SET @je11 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je11, @marketing_advertising, 150000.00, 0.00, 'Digital advertising'),
 (@je11, @cash_bdo, 0.00, 150000.00, 'Cash paid');
 
@@ -675,12 +675,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- PROFESSIONAL FEES (February 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0012', @cd_type, '2025-02-20', 'Legal consultation', @feb_2025, 'LEGAL-001', 80000.00, 80000.00, 'posted', 1, NOW(), 1);
 
 SET @je12 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je12, @professional_fees, 80000.00, 0.00, 'Legal fees'),
 (@je12, @cash_bdo, 0.00, 80000.00, 'Cash paid');
 
@@ -688,12 +688,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- INTEREST INCOME (February 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0013', @cr_type, '2025-02-28', 'Bank interest earned', @feb_2025, 'INT-FEB', 10000.00, 10000.00, 'posted', 1, NOW(), 1);
 
 SET @je13 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je13, @cash_bdo, 10000.00, 0.00, 'Interest received'),
 (@je13, @interest_income, 0.00, 10000.00, 'Bank interest income');
 
@@ -701,12 +701,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- LOAN INTEREST PAYMENT (February 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0014', @cd_type, '2025-02-28', 'Loan interest payment', @feb_2025, 'LOAN-INT-FEB', 30000.00, 30000.00, 'posted', 1, NOW(), 1);
 
 SET @je14 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je14, @interest_expense, 30000.00, 0.00, 'Interest on loan'),
 (@je14, @cash_metro, 0.00, 30000.00, 'Cash paid');
 
@@ -714,12 +714,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- DEPRECIATION EXPENSE (February 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0015', @aj_type, '2025-02-28', 'Monthly depreciation', @feb_2025, 'DEP-FEB', 20000.00, 20000.00, 'posted', 1, NOW(), 1);
 
 SET @je15 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je15, @depreciation_expense, 20000.00, 0.00, 'Equipment depreciation'),
 (@je15, @accum_dep_equip, 0.00, 20000.00, 'Accumulated depreciation');
 
@@ -727,12 +727,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- CUSTOMER PAYMENT (March 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0016', @cr_type, '2025-03-05', 'Payment from ABC Corp', @mar_2025, 'CR-1001', 400000.00, 400000.00, 'posted', 1, NOW(), 1);
 
 SET @je16 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je16, @cash_bpi, 400000.00, 0.00, 'Cash received'),
 (@je16, @ar_trade, 0.00, 400000.00, 'AR collection');
 
@@ -740,12 +740,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- EQUIPMENT PURCHASE (March 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0017', @ap_type, '2025-03-10', 'Purchase computers', @mar_2025, 'INV-2001', 250000.00, 250000.00, 'posted', 1, NOW(), 1);
 
 SET @je17 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je17, @equipment, 250000.00, 0.00, 'Equipment purchased'),
 (@je17, @ap_trade, 0.00, 250000.00, 'AP to supplier');
 
@@ -753,12 +753,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- DRAFT ENTRY (March 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, created_by) 
 VALUES ('JE-2025-0018', @gj_type, '2025-03-15', 'Depreciation for March', @mar_2025, 'ADJ-DEP', 20000.00, 20000.00, 'draft', 1);
 
 SET @je18 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je18, @depreciation_expense, 20000.00, 0.00, 'Monthly depreciation'),
 (@je18, @accum_dep_equip, 0.00, 20000.00, 'Accum. depreciation');
 
@@ -766,12 +766,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- TRANSPORTATION EXPENSE (March 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0019', @cd_type, '2025-03-20', 'Fuel and maintenance', @mar_2025, 'TRANS-001', 15000.00, 15000.00, 'posted', 1, NOW(), 1);
 
 SET @je19 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je19, @transportation_travel, 15000.00, 0.00, 'Fuel'),
 (@je19, @cash_hand, 0.00, 15000.00, 'Cash');
 
@@ -779,12 +779,12 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- SERVICE REVENUE - CASH (March 2025)
 -- ========================================
 
-INSERT INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
+INSERT IGNORE INTO journal_entries (journal_no, journal_type_id, entry_date, description, fiscal_period_id, reference_no, total_debit, total_credit, status, posted_by, posted_at, created_by) 
 VALUES ('JE-2025-0020', @cr_type, '2025-03-25', 'Consulting services', @mar_2025, 'INV-5001', 300000.00, 300000.00, 'posted', 1, NOW(), 1);
 
 SET @je20 = LAST_INSERT_ID();
 
-INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
+INSERT IGNORE INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VALUES
 (@je20, @cash_bdo, 300000.00, 0.00, 'Cash received'),
 (@je20, @consulting_revenue, 0.00, 300000.00, 'Consulting revenue');
 
@@ -792,7 +792,7 @@ INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo) VA
 -- 10. COMPREHENSIVE LOANS DATA
 -- ========================================
 
-INSERT INTO loans (loan_no, loan_type_id, borrower_external_no, principal_amount, interest_rate, start_date, term_months, monthly_payment, current_balance, status, created_by, created_at) VALUES
+INSERT IGNORE INTO loans (loan_no, loan_type_id, borrower_external_no, principal_amount, interest_rate, start_date, term_months, monthly_payment, current_balance, status, created_by, created_at) VALUES
 -- Salary Loans
 ('LN-1001', 1, 'EMP001', 50000.00, 0.05, '2024-01-01', 12, 4500.00, 45000.00, 'active', 1, '2024-01-01 09:00:00'),
 ('LN-1003', 1, 'EMP005', 30000.00, 0.05, '2024-02-01', 12, 2700.00, 30000.00, 'active', 1, '2024-02-01 11:15:00'),
@@ -837,7 +837,7 @@ ON DUPLICATE KEY UPDATE principal_amount = VALUES(principal_amount);
 -- 11. LOAN PAYMENTS DATA
 -- ========================================
 
-INSERT INTO loan_payments (loan_id, payment_date, amount, principal_amount, interest_amount, payment_reference, journal_entry_id, created_at) VALUES
+INSERT IGNORE INTO loan_payments (loan_id, payment_date, amount, principal_amount, interest_amount, payment_reference, journal_entry_id, created_at) VALUES
 -- Loan 1 (EMP001 - Salary Loan)
 (1, '2024-02-01', 4500.00, 4000.00, 500.00, 'PAY-2024-02-001', NULL, '2024-02-01 10:00:00'),
 (1, '2024-03-01', 4500.00, 4000.00, 500.00, 'PAY-2024-03-001', NULL, '2024-03-01 10:00:00'),
@@ -893,7 +893,7 @@ ON DUPLICATE KEY UPDATE amount = VALUES(amount);
 -- 12. COMPREHENSIVE EXPENSE CLAIMS
 -- ========================================
 
-INSERT INTO expense_claims (claim_no, employee_external_no, expense_date, category_id, amount, description, status, approved_by, approved_at, payment_id, journal_entry_id, created_at) VALUES
+INSERT IGNORE INTO expense_claims (claim_no, employee_external_no, expense_date, category_id, amount, description, status, approved_by, approved_at, payment_id, journal_entry_id, created_at) VALUES
 -- January 2024 Expenses
 ('EXP001', 'EMP001', '2024-01-10', 1, 2500.00, 'Office supplies for Q1', 'approved', 1, '2024-01-11 09:00:00', NULL, NULL, '2024-01-10 09:00:00'),
 ('EXP002', 'EMP002', '2024-01-15', 2, 1500.00, 'Client meeting transportation', 'approved', 1, '2024-01-16 14:30:00', NULL, NULL, '2024-01-15 14:30:00'),
@@ -942,7 +942,7 @@ ON DUPLICATE KEY UPDATE amount = VALUES(amount);
 -- 13. COMPREHENSIVE PAYMENTS DATA
 -- ========================================
 
-INSERT INTO payments (payment_no, payment_date, payment_type, from_bank_account_id, payee_name, amount, reference_no, memo, status, journal_entry_id, created_by, created_at) VALUES
+INSERT IGNORE INTO payments (payment_no, payment_date, payment_type, from_bank_account_id, payee_name, amount, reference_no, memo, status, journal_entry_id, created_by, created_at) VALUES
 -- January 2024 Salary Payments
 ('PAY001', '2024-01-31', 'bank_transfer', 2, 'Juan Carlos Santos', 20500.00, 'SAL-2024-01-001', 'January salary payment', 'completed', NULL, 1, '2024-01-31 10:00:00'),
 ('PAY002', '2024-01-31', 'bank_transfer', 2, 'Maria Elena Rodriguez', 23000.00, 'SAL-2024-01-002', 'January salary payment', 'completed', NULL, 1, '2024-01-31 10:00:00'),
@@ -984,7 +984,7 @@ ON DUPLICATE KEY UPDATE amount = VALUES(amount);
 -- ========================================
 
 -- Payroll Periods
-INSERT INTO payroll_periods (period_start, period_end, frequency, status, created_at) VALUES
+INSERT IGNORE INTO payroll_periods (period_start, period_end, frequency, status, created_at) VALUES
 ('2024-01-01', '2024-01-31', 'monthly', 'paid', '2024-01-01 00:00:00'),
 ('2024-02-01', '2024-02-29', 'monthly', 'paid', '2024-02-01 00:00:00'),
 ('2024-03-01', '2024-03-31', 'monthly', 'paid', '2024-03-01 00:00:00'),
@@ -997,51 +997,51 @@ INSERT INTO payroll_periods (period_start, period_end, frequency, status, create
 ('2024-10-01', '2024-10-31', 'monthly', 'paid', '2024-10-01 00:00:00'),
 ('2024-11-01', '2024-11-30', 'monthly', 'paid', '2024-11-01 00:00:00'),
 ('2024-12-01', '2024-12-31', 'monthly', 'processing', '2024-12-01 00:00:00'),
-('2025-01-01', '2025-01-31', 'monthly', 'open', '2025-01-01 00:00:00')
+('2025-01-01', '2025-01-31', 'monthly', 'open', '2025-01-01 00:00:00'),
 ON DUPLICATE KEY UPDATE period_start = VALUES(period_start);
 
 -- Payroll Runs
-INSERT INTO payroll_runs (payroll_period_id, run_by_user_id, run_at, total_gross, total_deductions, total_net, status, journal_entry_id, created_at) VALUES
-(1, 1, '2024-01-31 18:00:00', 250000.00, 45000.00, 205000.00, 'completed', NULL, '2024-01-31 18:00:00'),
-(2, 1, '2024-02-29 18:00:00', 255000.00, 46000.00, 209000.00, 'completed', NULL, '2024-02-29 18:00:00'),
-(3, 1, '2024-03-31 18:00:00', 260000.00, 47000.00, 213000.00, 'completed', NULL, '2024-03-31 18:00:00'),
-(4, 1, '2024-04-30 18:00:00', 265000.00, 48000.00, 217000.00, 'completed', NULL, '2024-04-30 18:00:00'),
-(5, 1, '2024-05-31 18:00:00', 270000.00, 49000.00, 221000.00, 'completed', NULL, '2024-05-31 18:00:00'),
-(6, 1, '2024-06-30 18:00:00', 275000.00, 50000.00, 225000.00, 'completed', NULL, '2024-06-30 18:00:00'),
-(7, 1, '2024-07-31 18:00:00', 280000.00, 51000.00, 229000.00, 'completed', NULL, '2024-07-31 18:00:00'),
-(8, 1, '2024-08-31 18:00:00', 285000.00, 52000.00, 233000.00, 'completed', NULL, '2024-08-31 18:00:00'),
-(9, 1, '2024-09-30 18:00:00', 290000.00, 53000.00, 237000.00, 'completed', NULL, '2024-09-30 18:00:00'),
-(10, 1, '2024-10-31 18:00:00', 295000.00, 54000.00, 241000.00, 'completed', NULL, '2024-10-31 18:00:00'),
-(11, 1, '2024-11-30 18:00:00', 300000.00, 55000.00, 245000.00, 'completed', NULL, '2024-11-30 18:00:00'),
-(12, 1, '2024-12-15 10:00:00', 305000.00, 56000.00, 249000.00, 'draft', NULL, '2024-12-15 10:00:00'),
-(13, 1, '2025-01-15 10:00:00', 310000.00, 57000.00, 253000.00, 'draft', NULL, '2025-01-15 10:00:00')
+INSERT IGNORE INTO payroll_runs (payroll_period_id, run_by_user_id, run_at, total_gross, total_deductions, total_net, status, journal_entry_id) VALUES
+(1, 1, '2024-01-31 18:00:00', 250000.00, 45000.00, 205000.00, 'completed', NULL),
+(2, 1, '2024-02-29 18:00:00', 255000.00, 46000.00, 209000.00, 'completed', NULL),
+(3, 1, '2024-03-31 18:00:00', 260000.00, 47000.00, 213000.00, 'completed', NULL),
+(4, 1, '2024-04-30 18:00:00', 265000.00, 48000.00, 217000.00, 'completed', NULL),
+(5, 1, '2024-05-31 18:00:00', 270000.00, 49000.00, 221000.00, 'completed', NULL),
+(6, 1, '2024-06-30 18:00:00', 275000.00, 50000.00, 225000.00, 'completed', NULL),
+(7, 1, '2024-07-31 18:00:00', 280000.00, 51000.00, 229000.00, 'completed', NULL),
+(8, 1, '2024-08-31 18:00:00', 285000.00, 52000.00, 233000.00, 'completed', NULL),
+(9, 1, '2024-09-30 18:00:00', 290000.00, 53000.00, 237000.00, 'completed', NULL),
+(10, 1, '2024-10-31 18:00:00', 295000.00, 54000.00, 241000.00, 'completed', NULL),
+(11, 1, '2024-11-30 18:00:00', 300000.00, 55000.00, 245000.00, 'completed', NULL),
+(12, 1, '2024-12-15 10:00:00', 305000.00, 56000.00, 249000.00, 'draft', NULL),
+(13, 1, '2025-01-15 10:00:00', 310000.00, 57000.00, 253000.00, 'draft', NULL)
 ON DUPLICATE KEY UPDATE total_gross = VALUES(total_gross);
 
 -- Comprehensive Payslips for All Employees
-INSERT INTO payslips (payroll_run_id, employee_external_no, gross_pay, total_deductions, net_pay, payslip_json, created_at) VALUES
+INSERT IGNORE INTO payslips (payroll_run_id, employee_external_no, gross_pay, total_deductions, net_pay, payslip_json) VALUES
 -- January 2024 Payslips
-(1, 'EMP001', 25000.00, 4500.00, 20500.00, '{"basic_salary": 25000, "allowances": 2000, "deductions": 4500}', '2024-01-31 18:00:00'),
-(1, 'EMP002', 28000.00, 5000.00, 23000.00, '{"basic_salary": 28000, "allowances": 2000, "deductions": 5000}', '2024-01-31 18:00:00'),
-(1, 'EMP003', 30000.00, 5500.00, 24500.00, '{"basic_salary": 30000, "allowances": 2000, "deductions": 5500}', '2024-01-31 18:00:00'),
-(1, 'EMP004', 22000.00, 4000.00, 18000.00, '{"basic_salary": 22000, "allowances": 2000, "deductions": 4000}', '2024-01-31 18:00:00'),
-(1, 'EMP005', 32000.00, 6000.00, 26000.00, '{"basic_salary": 32000, "allowances": 2000, "deductions": 6000}', '2024-01-31 18:00:00'),
-(1, 'EMP006', 18000.00, 3500.00, 14500.00, '{"basic_salary": 18000, "allowances": 1500, "deductions": 3500}', '2024-01-31 18:00:00'),
-(1, 'EMP007', 26000.00, 4800.00, 21200.00, '{"basic_salary": 26000, "allowances": 2000, "deductions": 4800}', '2024-01-31 18:00:00'),
-(1, 'EMP008', 24000.00, 4400.00, 19600.00, '{"basic_salary": 24000, "allowances": 2000, "deductions": 4400}', '2024-01-31 18:00:00'),
-(1, 'EMP009', 29000.00, 5200.00, 23800.00, '{"basic_salary": 29000, "allowances": 2000, "deductions": 5200}', '2024-01-31 18:00:00'),
-(1, 'EMP010', 15000.00, 2800.00, 12200.00, '{"basic_salary": 15000, "allowances": 1000, "deductions": 2800}', '2024-01-31 18:00:00'),
+(1, 'EMP001', 25000.00, 4500.00, 20500.00, '{"basic_salary": 25000, "allowances": 2000, "deductions": 4500}'),
+(1, 'EMP002', 28000.00, 5000.00, 23000.00, '{"basic_salary": 28000, "allowances": 2000, "deductions": 5000}'),
+(1, 'EMP003', 30000.00, 5500.00, 24500.00, '{"basic_salary": 30000, "allowances": 2000, "deductions": 5500}'),
+(1, 'EMP004', 22000.00, 4000.00, 18000.00, '{"basic_salary": 22000, "allowances": 2000, "deductions": 4000}'),
+(1, 'EMP005', 32000.00, 6000.00, 26000.00, '{"basic_salary": 32000, "allowances": 2000, "deductions": 6000}'),
+(1, 'EMP006', 18000.00, 3500.00, 14500.00, '{"basic_salary": 18000, "allowances": 1500, "deductions": 3500}'),
+(1, 'EMP007', 26000.00, 4800.00, 21200.00, '{"basic_salary": 26000, "allowances": 2000, "deductions": 4800}'),
+(1, 'EMP008', 24000.00, 4400.00, 19600.00, '{"basic_salary": 24000, "allowances": 2000, "deductions": 4400}'),
+(1, 'EMP009', 29000.00, 5200.00, 23800.00, '{"basic_salary": 29000, "allowances": 2000, "deductions": 5200}'),
+(1, 'EMP010', 15000.00, 2800.00, 12200.00, '{"basic_salary": 15000, "allowances": 1000, "deductions": 2800}'),
 
 -- December 2024 Payslips (Current)
-(12, 'EMP001', 25000.00, 4500.00, 20500.00, '{"basic_salary": 25000, "allowances": 2000, "deductions": 4500, "bonus": 2000}', '2024-12-15 10:00:00'),
-(12, 'EMP002', 28000.00, 5000.00, 23000.00, '{"basic_salary": 28000, "allowances": 2000, "deductions": 5000, "bonus": 2000}', '2024-12-15 10:00:00'),
-(12, 'EMP003', 30000.00, 5500.00, 25500.00, '{"basic_salary": 30000, "allowances": 2000, "deductions": 5500, "bonus": 2000}', '2024-12-15 10:00:00'),
-(12, 'EMP004', 22000.00, 4000.00, 18900.00, '{"basic_salary": 22000, "allowances": 2000, "deductions": 4000, "bonus": 1500}', '2024-12-15 10:00:00'),
-(12, 'EMP005', 32000.00, 6000.00, 27200.00, '{"basic_salary": 32000, "allowances": 2000, "deductions": 6000, "bonus": 2500}', '2024-12-15 10:00:00'),
-(12, 'EMP006', 18000.00, 3500.00, 15600.00, '{"basic_salary": 18000, "allowances": 1500, "deductions": 3500, "bonus": 1000}', '2024-12-15 10:00:00'),
-(12, 'EMP007', 26000.00, 4800.00, 22200.00, '{"basic_salary": 26000, "allowances": 2000, "deductions": 4800, "bonus": 2000}', '2024-12-15 10:00:00'),
-(12, 'EMP008', 24000.00, 4400.00, 20600.00, '{"basic_salary": 24000, "allowances": 2000, "deductions": 4400, "bonus": 1500}', '2024-12-15 10:00:00'),
-(12, 'EMP009', 29000.00, 5200.00, 24700.00, '{"basic_salary": 29000, "allowances": 2000, "deductions": 5200, "bonus": 2000}', '2024-12-15 10:00:00'),
-(12, 'EMP010', 15000.00, 2800.00, 13200.00, '{"basic_salary": 15000, "allowances": 1000, "deductions": 2800, "bonus": 1000}', '2024-12-15 10:00:00')
+(12, 'EMP001', 25000.00, 4500.00, 20500.00, '{"basic_salary": 25000, "allowances": 2000, "deductions": 4500, "bonus": 2000}'),
+(12, 'EMP002', 28000.00, 5000.00, 23000.00, '{"basic_salary": 28000, "allowances": 2000, "deductions": 5000, "bonus": 2000}'),
+(12, 'EMP003', 30000.00, 5500.00, 25500.00, '{"basic_salary": 30000, "allowances": 2000, "deductions": 5500, "bonus": 2000}'),
+(12, 'EMP004', 22000.00, 4000.00, 18900.00, '{"basic_salary": 22000, "allowances": 2000, "deductions": 4000, "bonus": 1500}'),
+(12, 'EMP005', 32000.00, 6000.00, 27200.00, '{"basic_salary": 32000, "allowances": 2000, "deductions": 6000, "bonus": 2500}'),
+(12, 'EMP006', 18000.00, 3500.00, 15600.00, '{"basic_salary": 18000, "allowances": 1500, "deductions": 3500, "bonus": 1000}'),
+(12, 'EMP007', 26000.00, 4800.00, 22200.00, '{"basic_salary": 26000, "allowances": 2000, "deductions": 4800, "bonus": 2000}'),
+(12, 'EMP008', 24000.00, 4400.00, 20600.00, '{"basic_salary": 24000, "allowances": 2000, "deductions": 4400, "bonus": 1500}'),
+(12, 'EMP009', 29000.00, 5200.00, 24700.00, '{"basic_salary": 29000, "allowances": 2000, "deductions": 5200, "bonus": 2000}'),
+(12, 'EMP010', 15000.00, 2800.00, 13200.00, '{"basic_salary": 15000, "allowances": 1000, "deductions": 2800, "bonus": 1000}')
 ON DUPLICATE KEY UPDATE gross_pay = VALUES(gross_pay);
 
 -- ========================================
@@ -1049,7 +1049,7 @@ ON DUPLICATE KEY UPDATE gross_pay = VALUES(gross_pay);
 -- ========================================
 
 -- Integration Logs
-INSERT INTO integration_logs (source_system, endpoint, request_type, payload, response, status, error_message, created_at) VALUES
+INSERT IGNORE INTO integration_logs (source_system, endpoint, request_type, payload, response, status, error_message, created_at) VALUES
 ('HRIS', '/api/employees/sync', 'POST', '{"action":"sync","date":"2024-12-01"}', '{"status":"success","records_processed":25}', 'success', NULL, '2024-12-01 08:00:00'),
 ('HRIS', '/api/payroll/export', 'GET', '{"period":"2024-12","format":"csv"}', '{"status":"success","file_path":"/exports/payroll_2024_12.csv"}', 'success', NULL, '2024-12-15 17:30:00'),
 ('BANK_API', '/api/transactions/sync', 'POST', '{"account":"BDO","date":"2024-12-15"}', '{"status":"success","transactions":50}', 'success', NULL, '2024-12-15 18:00:00'),
@@ -1063,7 +1063,7 @@ INSERT INTO integration_logs (source_system, endpoint, request_type, payload, re
 ON DUPLICATE KEY UPDATE status = VALUES(status);
 
 -- Audit Logs
-INSERT INTO audit_logs (user_id, ip_address, action, object_type, object_id, old_values, new_values, additional_info, created_at) VALUES
+INSERT IGNORE INTO audit_logs (user_id, ip_address, action, object_type, object_id, old_values, new_values, additional_info, created_at) VALUES
 (1, '192.168.1.100', 'Create Journal Entry', 'journal_entry', 'JE-2025-0001', NULL, '{"amount":10000000,"type":"capital"}', '{"module":"financial_reporting"}', NOW() - INTERVAL 30 DAY),
 (1, '192.168.1.101', 'Process Payroll', 'payroll_run', 'PR-2024-12', NULL, '{"employees":25,"total_gross":305000}', '{"period":"2024-12"}', NOW() - INTERVAL 10 DAY),
 (1, '192.168.1.102', 'Generate Compliance Report', 'compliance_report', 'CR-2024-Q4', NULL, '{"type":"gaap","score":95}', '{"period":"2024-Q4"}', NOW() - INTERVAL 5 DAY),
@@ -1080,7 +1080,7 @@ INSERT INTO audit_logs (user_id, ip_address, action, object_type, object_id, old
 ON DUPLICATE KEY UPDATE action = VALUES(action);
 
 -- Compliance Reports
-INSERT INTO compliance_reports (report_type, period_start, period_end, generated_date, generated_by, status, file_path, report_data, compliance_score, issues_found, created_at) VALUES
+INSERT IGNORE INTO compliance_reports (report_type, period_start, period_end, generated_date, generated_by, status, file_path, report_data, compliance_score, issues_found, created_at) VALUES
 ('gaap', '2024-10-01', '2024-12-31', NOW() - INTERVAL 25 DAY, 1, 'completed', '/reports/gaap_2024_q4.pdf', '{"total_assets":15000000,"total_liabilities":5000000,"net_income":2000000}', 98.50, 'Excellent compliance. All transactions properly documented.', NOW() - INTERVAL 25 DAY),
 ('sox', '2024-11-01', '2024-12-31', NOW() - INTERVAL 10 DAY, 1, 'completed', '/reports/sox_2024_q4.pdf', '{"segregation_score":95,"audit_trail":100,"controls":90}', 95.00, 'Strong internal controls. Minor improvement needed in approval workflows.', NOW() - INTERVAL 10 DAY),
 ('bir', '2024-12-01', '2024-12-31', NOW() - INTERVAL 5 DAY, 1, 'generating', NULL, NULL, NULL, NULL, NOW() - INTERVAL 5 DAY),
@@ -1095,7 +1095,7 @@ ON DUPLICATE KEY UPDATE compliance_score = VALUES(compliance_score);
 -- ========================================
 
 -- Calculate account balances from existing journal entries
-INSERT INTO account_balances (account_id, fiscal_period_id, opening_balance, debit_movements, credit_movements, closing_balance, last_updated)
+INSERT IGNORE INTO account_balances (account_id, fiscal_period_id, opening_balance, debit_movements, credit_movements, closing_balance, last_updated)
 SELECT 
     a.id as account_id,
     fp.id as fiscal_period_id,
