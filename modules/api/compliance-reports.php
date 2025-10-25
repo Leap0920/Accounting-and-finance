@@ -11,13 +11,16 @@
  * - users: User information
  */
 
-require_once '../../config/database.php';
-require_once '../../includes/session.php';
+require_once dirname(__DIR__, 2) . '/config/database.php';
+require_once dirname(__DIR__, 2) . '/includes/session.php';
 
 header('Content-Type: application/json');
 
 // Verify user is logged in
-requireLogin();
+if (!isLoggedIn()) {
+    echo json_encode(['success' => false, 'error' => 'User not logged in']);
+    exit();
+}
 $current_user = getCurrentUser();
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
@@ -437,28 +440,41 @@ function generateIFRSCompliance($periodStart, $periodEnd) {
 function getComplianceReports() {
     global $conn;
     
-    $stmt = $conn->prepare("
-        SELECT 
-            cr.*,
-            u.full_name as generated_by_name
-        FROM compliance_reports cr
-        LEFT JOIN users u ON cr.generated_by = u.id
-        WHERE cr.deleted_at IS NULL
-        ORDER BY cr.created_at DESC
-        LIMIT 50
-    ");
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $reports = [];
-    while ($row = $result->fetch_assoc()) {
-        $reports[] = $row;
+    try {
+        $stmt = $conn->prepare("
+            SELECT 
+                cr.*,
+                u.full_name as generated_by_name
+            FROM compliance_reports cr
+            LEFT JOIN users u ON cr.generated_by = u.id
+            WHERE cr.deleted_at IS NULL
+            ORDER BY cr.created_at DESC
+            LIMIT 50
+        ");
+        
+        if (!$stmt) {
+            throw new Exception('Database prepare failed: ' . $conn->error);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $reports = [];
+        while ($row = $result->fetch_assoc()) {
+            $reports[] = $row;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $reports
+        ]);
+        
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Database error: ' . $e->getMessage()
+        ]);
     }
-    
-    echo json_encode([
-        'success' => true,
-        'data' => $reports
-    ]);
 }
 
 /**
@@ -999,14 +1015,15 @@ function restoreReport() {
 function restoreAllItems() {
     global $conn, $current_user;
     
-    // Get all deleted compliance reports
+    $totalRestoredCount = 0;
+    $errors = [];
+    
+    // Restore compliance reports
     $stmt = $conn->prepare("SELECT id FROM compliance_reports WHERE deleted_at IS NOT NULL");
     $stmt->execute();
     $result = $stmt->get_result();
     
-    $restoredCount = 0;
-    $errors = [];
-    
+    $complianceRestoredCount = 0;
     while ($row = $result->fetch_assoc()) {
         try {
             // Restore each report
@@ -1015,26 +1032,56 @@ function restoreAllItems() {
             $restoreStmt->execute();
             
             if ($restoreStmt->affected_rows > 0) {
-                $restoredCount++;
+                $complianceRestoredCount++;
                 
                 // Log audit action
                 logAuditActionToDB('Restore All - Compliance Report', 'compliance_report', $row['id']);
             }
         } catch (Exception $e) {
-            $errors[] = "Failed to restore report ID {$row['id']}: " . $e->getMessage();
+            $errors[] = "Failed to restore compliance report ID {$row['id']}: " . $e->getMessage();
         }
     }
     
+    // Restore transactions (journal entries)
+    $stmt = $conn->prepare("SELECT id FROM journal_entries WHERE status = 'deleted'");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $transactionRestoredCount = 0;
+    while ($row = $result->fetch_assoc()) {
+        try {
+            // Restore each transaction
+            $restoreStmt = $conn->prepare("UPDATE journal_entries SET status = 'draft', deleted_at = NULL, deleted_by = NULL WHERE id = ?");
+            $restoreStmt->bind_param('i', $row['id']);
+            $restoreStmt->execute();
+            
+            if ($restoreStmt->affected_rows > 0) {
+                $transactionRestoredCount++;
+                
+                // Log audit action
+                logAuditActionToDB('Restore All - Transaction', 'journal_entry', $row['id']);
+            }
+        } catch (Exception $e) {
+            $errors[] = "Failed to restore transaction ID {$row['id']}: " . $e->getMessage();
+        }
+    }
+    
+    $totalRestoredCount = $complianceRestoredCount + $transactionRestoredCount;
+    
     // Log bulk restore action
     logAuditActionToDB('Restore All Items', 'bin_operation', null, [
-        'restored_count' => $restoredCount,
+        'compliance_restored' => $complianceRestoredCount,
+        'transaction_restored' => $transactionRestoredCount,
+        'total_restored' => $totalRestoredCount,
         'errors' => $errors
     ]);
     
     echo json_encode([
         'success' => true,
-        'message' => "Successfully restored {$restoredCount} items",
-        'restored_count' => $restoredCount,
+        'message' => "Successfully restored {$totalRestoredCount} items ({$complianceRestoredCount} reports, {$transactionRestoredCount} transactions)",
+        'restored_count' => $totalRestoredCount,
+        'compliance_restored' => $complianceRestoredCount,
+        'transaction_restored' => $transactionRestoredCount,
         'errors' => $errors
     ]);
 }
@@ -1045,31 +1092,63 @@ function restoreAllItems() {
 function emptyBin() {
     global $conn, $current_user;
     
+    $totalDeletedCount = 0;
+    $deletedItems = [];
+    
     // Get all deleted compliance reports for logging
     $stmt = $conn->prepare("SELECT id, report_type FROM compliance_reports WHERE deleted_at IS NOT NULL");
     $stmt->execute();
     $result = $stmt->get_result();
     
-    $deletedItems = [];
+    $complianceDeletedItems = [];
     while ($row = $result->fetch_assoc()) {
-        $deletedItems[] = $row;
+        $complianceDeletedItems[] = $row;
     }
     
     // Permanently delete all compliance reports in bin
     $deleteStmt = $conn->prepare("DELETE FROM compliance_reports WHERE deleted_at IS NOT NULL");
     $deleteStmt->execute();
-    $deletedCount = $deleteStmt->affected_rows;
+    $complianceDeletedCount = $deleteStmt->affected_rows;
+    
+    // Get all deleted transactions for logging
+    $stmt = $conn->prepare("SELECT id, journal_no FROM journal_entries WHERE status = 'deleted'");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $transactionDeletedItems = [];
+    while ($row = $result->fetch_assoc()) {
+        $transactionDeletedItems[] = $row;
+    }
+    
+    // Permanently delete all transactions in bin
+    // First delete journal_lines (foreign key constraint)
+    $deleteLinesStmt = $conn->prepare("DELETE jl FROM journal_lines jl INNER JOIN journal_entries je ON jl.journal_entry_id = je.id WHERE je.status = 'deleted'");
+    $deleteLinesStmt->execute();
+    $linesDeletedCount = $deleteLinesStmt->affected_rows;
+    
+    // Then delete journal_entries
+    $deleteStmt = $conn->prepare("DELETE FROM journal_entries WHERE status = 'deleted'");
+    $deleteStmt->execute();
+    $transactionDeletedCount = $deleteStmt->affected_rows;
+    
+    $totalDeletedCount = $complianceDeletedCount + $transactionDeletedCount;
     
     // Log bulk delete action
     logAuditActionToDB('Empty Bin - Permanent Delete All', 'bin_operation', null, [
-        'deleted_count' => $deletedCount,
-        'deleted_items' => $deletedItems
+        'compliance_deleted' => $complianceDeletedCount,
+        'transaction_deleted' => $transactionDeletedCount,
+        'journal_lines_deleted' => $linesDeletedCount,
+        'total_deleted' => $totalDeletedCount,
+        'deleted_compliance_items' => $complianceDeletedItems,
+        'deleted_transaction_items' => $transactionDeletedItems
     ]);
     
     echo json_encode([
         'success' => true,
-        'message' => "Successfully permanently deleted {$deletedCount} items",
-        'deleted_count' => $deletedCount
+        'message' => "Successfully permanently deleted {$totalDeletedCount} items ({$complianceDeletedCount} reports, {$transactionDeletedCount} transactions)",
+        'deleted_count' => $totalDeletedCount,
+        'compliance_deleted' => $complianceDeletedCount,
+        'transaction_deleted' => $transactionDeletedCount
     ]);
 }
 

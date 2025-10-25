@@ -254,7 +254,7 @@
         showLoading('Moving transaction to bin...');
 
         // Make AJAX call to delete transaction
-        const url = '../modules/api/transaction-data.php';
+        const url = 'api/transaction-data.php';
         const data = `action=soft_delete_transaction&transaction_id=${transactionId}`;
         
         console.log('Making request to:', url);

@@ -12,11 +12,32 @@
  * - audit_logs: Audit trail tracking
  */
 
-require_once dirname(__DIR__, 2) . '/config/database.php';
-require_once dirname(__DIR__, 2) . '/includes/session.php';
+// Start output buffering to prevent any HTML output
+ob_start();
+
+// Disable error display to prevent HTML error pages
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
+try {
+    require_once dirname(__DIR__, 2) . '/config/database.php';
+    require_once dirname(__DIR__, 2) . '/includes/session.php';
+} catch (Exception $e) {
+    // Clear any output and return JSON error
+    ob_clean();
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error' => 'System error: ' . $e->getMessage()
+    ]);
+    exit();
+}
 
 // Verify user is logged in
 if (!isLoggedIn()) {
+    // Clear any output and return JSON error
+    ob_clean();
     http_response_code(401);
     header('Content-Type: application/json');
     echo json_encode([
@@ -68,11 +89,15 @@ try {
             throw new Exception('Invalid action');
     }
 } catch (Exception $e) {
+    // Clear any output and return JSON error
+    ob_clean();
     http_response_code(400);
+    header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()
     ]);
+    exit();
 }
 
 /**
@@ -564,5 +589,8 @@ function permanentDeleteTransaction() {
         throw $e;
     }
 }
+
+// Clean up output buffer to ensure only JSON is sent
+ob_end_flush();
 ?>
 
