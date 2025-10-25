@@ -16,6 +16,10 @@ if ($conn->connect_error) {
 // Set charset to UTF-8
 $conn->set_charset("utf8mb4");
 
+// Auto-run database migrations if needed
+require_once __DIR__ . '/../database/AutoMigration.php';
+AutoMigration::runIfNeeded($conn);
+
 // Create connection function (for backward compatibility)
 function getDBConnection() {
     global $conn;
