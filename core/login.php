@@ -67,6 +67,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Accounting and Finance System</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="login-page">
     <div class="login-container">
@@ -81,8 +84,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
         
         <div class="login-box">
-            <h2>ACCOUNTING AND FINANCE</h2>
-            <h3>Admin Login</h3>
+            <div class="login-title-section">
+                <h2>ACCOUNTING AND FINANCE</h2>
+                <h3>Admin Login</h3>
+            </div>
             
             <?php if (!empty($error_message)): ?>
                 <div class="alert alert-error">
@@ -96,18 +101,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
             <?php endif; ?>
             
-            <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
+            <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" class="login-form">
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autofocus>
+                    <input type="text" id="username" name="username" required autofocus placeholder="Enter your username">
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
                 </div>
                 
-                <button type="submit" class="btn-login">Login</button>
+                <button type="submit" class="btn-login">
+                    <span>Login</span>
+                </button>
             </form>
             
             <div class="login-footer">
