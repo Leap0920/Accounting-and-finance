@@ -263,31 +263,63 @@ $current_user = getCurrentUser();
          * Load bin data
          */
         function loadBinData() {
+            console.log('Loading bin data...');
+            const container = document.getElementById('binItems');
+            
+            // Show loading state
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border spinner-border-lg text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading deleted items...</p>
+                </div>
+            `;
+            
             // Load both compliance reports and transactions from bin
             $.when(
                 $.ajax({
                     url: 'api/compliance-reports.php',
                     method: 'GET',
                     data: { action: 'get_all_bin_items' },
-                    dataType: 'json'
+                    dataType: 'json',
+                    timeout: 10000
+                }).catch(function(xhr, status, error) {
+                    console.error('Error loading compliance reports:', error);
+                    return [{success: false, data: []}];
                 }),
                 $.ajax({
                     url: 'api/transaction-data.php',
                     method: 'GET',
                     data: { action: 'get_bin_items' },
-                    dataType: 'json'
+                    dataType: 'json',
+                    timeout: 10000
+                }).catch(function(xhr, status, error) {
+                    console.error('Error loading transaction data:', error);
+                    return [{success: false, data: []}];
                 })
             ).done(function(complianceResponse, transactionResponse) {
-                const complianceData = complianceResponse[0].success ? complianceResponse[0].data : [];
-                const transactionData = transactionResponse[0].success ? transactionResponse[0].data : [];
+                console.log('Compliance response:', complianceResponse);
+                console.log('Transaction response:', transactionResponse);
+                
+                const complianceData = complianceResponse[0] && complianceResponse[0].success ? complianceResponse[0].data : [];
+                const transactionData = transactionResponse[0] && transactionResponse[0].success ? transactionResponse[0].data : [];
+                
+                console.log('Compliance data:', complianceData);
+                console.log('Transaction data:', transactionData);
                 
                 // Combine all bin items
                 const allItems = [...complianceData, ...transactionData];
                 
+                console.log('Total bin items:', allItems.length);
+                
                 updateBinDisplay(allItems);
                 updateBinStats(allItems);
-            }).fail(function() {
-                showBinError('Connection error. Please try again.');
+            }).fail(function(xhr, status, error) {
+                console.error('Failed to load bin data:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                showBinError('Connection error: ' + (error || 'Unable to load bin data. Please check your database connection.'));
             });
         }
 
@@ -295,6 +327,7 @@ $current_user = getCurrentUser();
          * Update bin display
          */
         function updateBinDisplay(items) {
+            console.log('updateBinDisplay called with', items);
             const container = document.getElementById('binItems');
             
             if (!items || items.length === 0) {
@@ -308,34 +341,39 @@ $current_user = getCurrentUser();
                 return;
             }
             
+            console.log('Displaying', items.length, 'items');
+            
             let html = '';
             items.forEach(item => {
-                const deletedDate = new Date(item.deleted_at).toLocaleString();
+                const deletedDate = item.deleted_at ? new Date(item.deleted_at).toLocaleString() : 'Unknown';
                 const itemTypeLabel = getItemTypeLabel(item.item_type);
                 const itemIcon = getItemTypeIcon(item.item_type);
+                const title = item.title || item.description || item.journal_no || 'Item';
                 
                 html += `
-                    <div class="bin-item">
+                    <div class="bin-item border border-light rounded p-3 mb-3">
                         <div class="row align-items-center">
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center">
-                                    <i class="fas ${itemIcon} me-2 text-primary"></i>
+                                    <i class="fas ${itemIcon} me-2 text-primary fa-lg"></i>
                                     <div>
                                         <strong>${itemTypeLabel}</strong>
-                                        <br><small class="text-muted">${item.title || 'Item'}</small>
+                                        <br><small class="text-muted">${title}</small>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
-                                <small class="text-muted">${item.period_start ? formatDate(item.period_start) : 'N/A'}</small>
+                                <small class="text-muted">
+                                    ${item.period_start ? formatDate(item.period_start) : (item.entry_date ? formatDate(item.entry_date) : 'N/A')}
+                                </small>
                             </div>
                             <div class="col-md-2">
-                                <small class="text-muted">${item.score ? item.score + '%' : 'N/A'}</small>
+                                <small class="text-muted">${item.score ? item.score + '%' : (item.total_debit ? '₱' + parseFloat(item.total_debit).toFixed(2) : 'N/A')}</small>
                             </div>
                             <div class="col-md-2">
                                 <span class="badge bg-danger">
                                     <i class="fas fa-trash me-1"></i>
-                                    Deleted ${deletedDate}
+                                    ${deletedDate}
                                 </span>
                             </div>
                             <div class="col-md-3">
@@ -668,10 +706,12 @@ $current_user = getCurrentUser();
             loadBinData();
         }
         
-        function showNotification(message, type = 'info') {
-            // Simple notification - you can enhance this
-            alert(message);
-        }
+        // Note: showNotification is already defined above, so this is a duplicate
+        // Keeping the better version above and removing this
+        // function showNotification(message, type = 'info') {
+        //     // Simple notification - you can enhance this
+        //     alert(message);
+        // }
         
         function getReportTypeLabel(type) {
             const labels = {
@@ -694,16 +734,25 @@ $current_user = getCurrentUser();
         }
 
         function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString();
+            if (!dateString) return 'N/A';
+            try {
+                return new Date(dateString).toLocaleDateString();
+            } catch (e) {
+                return dateString;
+            }
         }
 
         function formatDateTime(dateString) {
-            return new Date(dateString).toLocaleString();
+            if (!dateString) return 'N/A';
+            try {
+                return new Date(dateString).toLocaleString();
+            } catch (e) {
+                return dateString;
+            }
         }
 
-        /**
-         * Restore transaction from bin
-         */
+        // Note: restoreTransaction is already defined in the restoreItem function context
+        // This is the dedicated transaction restoration function called by restoreItem
         function restoreTransaction(transactionId) {
             if (!confirm('Are you sure you want to restore this transaction? It will be moved back to active transactions.')) {
                 return;
@@ -722,10 +771,11 @@ $current_user = getCurrentUser();
                         showNotification('Transaction restored successfully!', 'success');
                         loadBinData(); // Refresh bin
                     } else {
-                        showNotification('Restore failed: ' + response.error, 'error');
+                        showNotification('Restore failed: ' + (response.error || 'Unknown error'), 'error');
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error('Restore transaction error:', error);
                     showNotification('Restore failed: ' + error, 'error');
                 }
             });
