@@ -150,37 +150,6 @@ SELECT COUNT(*) as transaction_count FROM journal_entries;
 
 **Solutions:**
 1. **Windows:** Run XAMPP as Administrator
-2. **Linux/Mac:** Set proper ownership and permissions
-   ```bash
-   chown -R www-data:www-data /path/to/project
-   chmod -R 755 /path/to/project
-   ```
-
-## 🔧 Environment-Specific Configurations
-
-### **Development Environment**
-- Use default XAMPP settings
-- Database: `localhost`, user: `root`, password: (empty)
-- Enable error reporting and debugging
-
-### **Production Environment**
-- **Security Updates:**
-  - Change default admin password
-  - Update database credentials
-  - Enable HTTPS/SSL
-  - Configure firewall rules
-
-- **Performance Optimization:**
-  - Enable MySQL query caching
-  - Configure PHP opcache
-  - Set up database indexing
-  - Implement backup procedures
-
-### **Cloud Deployment**
-- **Database:** Use managed MySQL service (AWS RDS, Google Cloud SQL)
-- **Web Server:** Configure for cloud environment
-- **File Storage:** Use cloud storage for uploads
-- **Monitoring:** Set up logging and monitoring
 
 ## 📊 Migration Validation
 
@@ -214,18 +183,6 @@ SELECT COUNT(*) FROM journal_lines WHERE journal_id IN (SELECT id FROM journal_e
 5. **Investigate Issues:** Identify and fix migration problems
 6. **Retry Migration:** Attempt migration again with fixes
 
-### **Emergency Recovery**
-```bash
-# Stop all services
-sudo systemctl stop apache2 mysql
-
-# Restore from backup
-cp -r /backup/location/* /current/location/
-
-# Restart services
-sudo systemctl start mysql apache2
-```
-
 ## 📈 Best Practices
 
 ### **Before Migration**
@@ -258,22 +215,3 @@ sudo systemctl start mysql apache2
 - `database/init.php` - Automated setup
 - `test_db_connection.php` - Database testing
 - `utils/fix_admin_password.php` - Password reset
-
-### **Emergency Contacts**
-- System Administrator
-- Database Administrator
-- Development Team
-
----
-
-**Migration Success Checklist:**
-- [ ] All files copied successfully
-- [ ] Database created and populated
-- [ ] Admin user can log in
-- [ ] All modules accessible
-- [ ] Data integrity verified
-- [ ] Security configurations updated
-- [ ] Backup procedures established
-- [ ] Documentation updated
-
-**Happy Migrating!** 🚀✨
