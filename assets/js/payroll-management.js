@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize employee selector
     initializeEmployeeSelector();
+    
+    // Initialize attendance filters
+    initializeAttendanceFilters();
 });
 
 /**
@@ -93,6 +96,17 @@ function initializeFiltersToggle() {
         }
         
         console.log('Filters toggle initialized');
+    }
+}
+
+/**
+ * Initialize attendance filters
+ */
+function initializeAttendanceFilters() {
+    const monthFilter = document.getElementById('attendance-month-filter');
+    if (monthFilter) {
+        monthFilter.addEventListener('change', filterAttendanceByMonth);
+        console.log('Attendance filters initialized');
     }
 }
 
@@ -469,6 +483,22 @@ function printPayslip() {
 }
 
 /**
+ * Filter attendance by month
+ */
+function filterAttendanceByMonth() {
+    const monthFilter = document.getElementById('attendance-month-filter');
+    if (monthFilter) {
+        const selectedMonth = monthFilter.value;
+        console.log('Filtering attendance for month:', selectedMonth);
+        
+        // Reload page with month parameter
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('attendance_month', selectedMonth);
+        window.location.href = currentUrl.toString();
+    }
+}
+
+/**
  * View expense details
  */
 function viewExpense(expenseId) {
@@ -514,6 +544,7 @@ window.exportLoans = exportLoans;
 window.printPayslip = printPayslip;
 window.changeEmployee = changeEmployee;
 window.toggleFilters = toggleFilters;
+window.filterAttendanceByMonth = filterAttendanceByMonth;
 window.viewExpense = viewExpense;
 window.editExpense = editExpense;
 window.viewTransaction = viewTransaction;

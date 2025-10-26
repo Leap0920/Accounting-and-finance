@@ -157,6 +157,135 @@ $recent_payslips_stmt = $conn->prepare($recent_payslips_query);
 $recent_payslips_stmt->bind_param("s", $selected_employee);
 $recent_payslips_stmt->execute();
 $recent_payslips_result = $recent_payslips_stmt->get_result();
+
+// Get attendance data for selected employee (current month)
+$attendance_data = [];
+$attendance_summary = [
+    'total_days' => 0,
+    'present_days' => 0,
+    'absent_days' => 0,
+    'late_days' => 0,
+    'leave_days' => 0,
+    'total_hours' => 0,
+    'regular_hours' => 0,
+    'overtime_hours' => 0
+];
+
+if ($selected_employee) {
+    // Get attendance month from URL parameter or default to current month
+    $attendance_month = isset($_GET['attendance_month']) ? $_GET['attendance_month'] : date('Y-m');
+    $attendance_query = "SELECT 
+                            DATE(attendance_date) as date,
+                            time_in,
+                            time_out,
+                            status,
+                            hours_worked,
+                            overtime_hours,
+                            late_minutes,
+                            remarks
+                        FROM employee_attendance 
+                        WHERE employee_external_no = ? 
+                        AND DATE_FORMAT(attendance_date, '%Y-%m') = ?
+                        ORDER BY attendance_date DESC";
+    
+    // Check if attendance table exists, if not create sample data
+    $table_check = $conn->query("SHOW TABLES LIKE 'employee_attendance'");
+    if ($table_check->num_rows == 0) {
+        // Create attendance table if it doesn't exist
+        $create_attendance_table = "CREATE TABLE IF NOT EXISTS employee_attendance (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            employee_external_no VARCHAR(100) NOT NULL,
+            attendance_date DATE NOT NULL,
+            time_in TIME,
+            time_out TIME,
+            status ENUM('present','absent','late','leave','half_day') DEFAULT 'present',
+            hours_worked DECIMAL(4,2) DEFAULT 0.00,
+            overtime_hours DECIMAL(4,2) DEFAULT 0.00,
+            late_minutes INT DEFAULT 0,
+            remarks TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_employee_date (employee_external_no, attendance_date)
+        )";
+        $conn->query($create_attendance_table);
+        
+        // Insert sample attendance data for current month
+        $sample_attendance_data = [
+            ['EMP001', '2024-12-01', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-02', '08:15:00', '17:30:00', 'late', 8.25, 0.25, 15, 'Late arrival'],
+            ['EMP001', '2024-12-03', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-04', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-05', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-06', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-07', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-08', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-09', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-10', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-11', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-12', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-13', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-14', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-15', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-16', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-17', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-18', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-19', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-20', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-21', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-22', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-23', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-24', '08:00:00', '12:00:00', 'half_day', 4.00, 0.00, 0, 'Half day - Christmas Eve'],
+            ['EMP001', '2024-12-25', NULL, NULL, 'leave', 0.00, 0.00, 0, 'Christmas Day - Holiday'],
+            ['EMP001', '2024-12-26', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-27', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-28', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-29', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-30', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
+            ['EMP001', '2024-12-31', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day']
+        ];
+        
+        $insert_stmt = $conn->prepare("INSERT INTO employee_attendance (employee_external_no, attendance_date, time_in, time_out, status, hours_worked, overtime_hours, late_minutes, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        foreach ($sample_attendance_data as $data) {
+            $insert_stmt->bind_param("ssssssdis", $data[0], $data[1], $data[2], $data[3], $data[4], $data[5], $data[6], $data[7], $data[8]);
+            $insert_stmt->execute();
+        }
+    }
+    
+    $attendance_stmt = $conn->prepare($attendance_query);
+    $attendance_stmt->bind_param("ss", $selected_employee, $attendance_month);
+    $attendance_stmt->execute();
+    $attendance_result = $attendance_stmt->get_result();
+    
+    while ($row = $attendance_result->fetch_assoc()) {
+        $attendance_data[] = $row;
+        
+        // Calculate summary
+        $attendance_summary['total_days']++;
+        $attendance_summary['total_hours'] += $row['hours_worked'];
+        $attendance_summary['overtime_hours'] += $row['overtime_hours'];
+        
+        switch ($row['status']) {
+            case 'present':
+                $attendance_summary['present_days']++;
+                $attendance_summary['regular_hours'] += $row['hours_worked'];
+                break;
+            case 'late':
+                $attendance_summary['late_days']++;
+                $attendance_summary['present_days']++;
+                $attendance_summary['regular_hours'] += $row['hours_worked'];
+                break;
+            case 'absent':
+                $attendance_summary['absent_days']++;
+                break;
+            case 'leave':
+                $attendance_summary['leave_days']++;
+                break;
+            case 'half_day':
+                $attendance_summary['present_days']++;
+                $attendance_summary['regular_hours'] += $row['hours_worked'];
+                break;
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -432,6 +561,218 @@ $recent_payslips_result = $recent_payslips_stmt->get_result();
                                         <td><?php echo htmlspecialchars($company_bank['account_number'] ?? 'N/A'); ?></td>
                                     </tr>
                                 </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Attendance Summary Cards -->
+                        <div class="attendance-summary-section">
+                            <h5 class="section-subtitle">Attendance Summary - <?php echo date('F Y', strtotime($attendance_month . '-01')); ?></h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-3">
+                                    <div class="attendance-summary-card present">
+                                        <div class="summary-icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="summary-content">
+                                            <div class="summary-number"><?php echo $attendance_summary['present_days']; ?></div>
+                                            <div class="summary-label">Present Days</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="attendance-summary-card absent">
+                                        <div class="summary-icon">
+                                            <i class="fas fa-times-circle"></i>
+                                        </div>
+                                        <div class="summary-content">
+                                            <div class="summary-number"><?php echo $attendance_summary['absent_days']; ?></div>
+                                            <div class="summary-label">Absent Days</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="attendance-summary-card late">
+                                        <div class="summary-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="summary-content">
+                                            <div class="summary-number"><?php echo $attendance_summary['late_days']; ?></div>
+                                            <div class="summary-label">Late Days</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="attendance-summary-card leave">
+                                        <div class="summary-icon">
+                                            <i class="fas fa-calendar-times"></i>
+                                        </div>
+                                        <div class="summary-content">
+                                            <div class="summary-number"><?php echo $attendance_summary['leave_days']; ?></div>
+                                            <div class="summary-label">Leave Days</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Hours Summary -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <div class="hours-summary-card">
+                                        <div class="hours-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="hours-content">
+                                            <div class="hours-number"><?php echo number_format($attendance_summary['total_hours'], 1); ?></div>
+                                            <div class="hours-label">Total Hours</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="hours-summary-card">
+                                        <div class="hours-icon">
+                                            <i class="fas fa-business-time"></i>
+                                        </div>
+                                        <div class="hours-content">
+                                            <div class="hours-number"><?php echo number_format($attendance_summary['regular_hours'], 1); ?></div>
+                                            <div class="hours-label">Regular Hours</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="hours-summary-card">
+                                        <div class="hours-icon">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </div>
+                                        <div class="hours-content">
+                                            <div class="hours-number"><?php echo number_format($attendance_summary['overtime_hours'], 1); ?></div>
+                                            <div class="hours-label">Overtime Hours</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Attendance Records Table -->
+                        <div class="attendance-records-section">
+                            <div class="section-header">
+                                <h5 class="section-subtitle">Daily Attendance Records</h5>
+                                <div class="attendance-filters">
+                                    <select class="form-select form-select-sm" id="attendance-month-filter">
+                                        <option value="<?php echo date('Y-m'); ?>" <?php echo ($attendance_month == date('Y-m')) ? 'selected' : ''; ?>><?php echo date('F Y'); ?></option>
+                                        <option value="<?php echo date('Y-m', strtotime('-1 month')); ?>" <?php echo ($attendance_month == date('Y-m', strtotime('-1 month'))) ? 'selected' : ''; ?>><?php echo date('F Y', strtotime('-1 month')); ?></option>
+                                        <option value="<?php echo date('Y-m', strtotime('-2 months')); ?>" <?php echo ($attendance_month == date('Y-m', strtotime('-2 months'))) ? 'selected' : ''; ?>><?php echo date('F Y', strtotime('-2 months')); ?></option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="attendance-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Day</th>
+                                            <th>Time In</th>
+                                            <th>Time Out</th>
+                                            <th>Status</th>
+                                            <th>Hours Worked</th>
+                                            <th>Overtime</th>
+                                            <th>Late (mins)</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (!empty($attendance_data)): ?>
+                                            <?php foreach ($attendance_data as $record): ?>
+                                                <tr class="attendance-row status-<?php echo $record['status']; ?>">
+                                                    <td><?php echo date('M d', strtotime($record['date'])); ?></td>
+                                                    <td><?php echo date('D', strtotime($record['date'])); ?></td>
+                                                    <td>
+                                                        <?php if ($record['time_in']): ?>
+                                                            <span class="time-badge"><?php echo date('H:i', strtotime($record['time_in'])); ?></span>
+                                                        <?php else: ?>
+                                                            <span class="time-badge absent">--:--</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($record['time_out']): ?>
+                                                            <span class="time-badge"><?php echo date('H:i', strtotime($record['time_out'])); ?></span>
+                                                        <?php else: ?>
+                                                            <span class="time-badge absent">--:--</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge status-<?php echo $record['status']; ?>">
+                                                            <?php echo ucfirst(str_replace('_', ' ', $record['status'])); ?>
+                                                        </span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="hours-badge"><?php echo number_format($record['hours_worked'], 1); ?>h</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <?php if ($record['overtime_hours'] > 0): ?>
+                                                            <span class="overtime-badge"><?php echo number_format($record['overtime_hours'], 1); ?>h</span>
+                                                        <?php else: ?>
+                                                            <span class="text-muted">--</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <?php if ($record['late_minutes'] > 0): ?>
+                                                            <span class="late-badge"><?php echo $record['late_minutes']; ?>m</span>
+                                                        <?php else: ?>
+                                                            <span class="text-muted">--</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="remarks-cell">
+                                                        <?php echo htmlspecialchars($record['remarks'] ?? ''); ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="9" class="text-center text-muted py-4">
+                                                    <i class="fas fa-calendar-times me-2"></i>
+                                                    No attendance records found for this month
+                                                </td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Attendance Statistics -->
+                        <div class="attendance-statistics">
+                            <h5 class="section-subtitle">Attendance Statistics</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-percentage"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-number">
+                                                <?php 
+                                                $attendance_rate = $attendance_summary['total_days'] > 0 
+                                                    ? round(($attendance_summary['present_days'] / $attendance_summary['total_days']) * 100, 1) 
+                                                    : 0; 
+                                                echo $attendance_rate; 
+                                                ?>%
+                                            </div>
+                                            <div class="stat-label">Attendance Rate</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-calendar-check"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-number"><?php echo $attendance_summary['total_days']; ?></div>
+                                            <div class="stat-label">Total Working Days</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     <?php else: ?>
