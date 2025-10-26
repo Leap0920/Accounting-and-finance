@@ -907,8 +907,8 @@ $recent_payslips_result = $recent_payslips_stmt->get_result();
                     </div>
 
                     <!-- Print Button -->
-                    <div class="text-center mt-4">
-                        <button class="btn-print" onclick="window.print()">
+                    <div class="text-center mt-4 no-print">
+                        <button class="btn-print" onclick="printPayslip()">
                             <i class="fas fa-print me-2"></i>Print Payslip
                         </button>
                     </div>

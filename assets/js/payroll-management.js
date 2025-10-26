@@ -456,7 +456,16 @@ function formatDate(dateString) {
  * Print payslip
  */
 function printPayslip() {
+    // Add a class to body to indicate printing
+    document.body.classList.add('printing');
+    
+    // Print the page
     window.print();
+    
+    // Remove the printing class after a short delay
+    setTimeout(() => {
+        document.body.classList.remove('printing');
+    }, 1000);
 }
 
 /**

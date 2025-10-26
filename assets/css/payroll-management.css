@@ -940,12 +940,71 @@ body {
     }
     
     body {
-        background: #fff;
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     .payroll-content-card {
-        box-shadow: none;
+        box-shadow: none !important;
         page-break-inside: avoid;
+        margin: 0 !important;
+        padding: 20px !important;
+    }
+    
+    /* Remove page numbering and margins */
+    @page {
+        margin: 0.5in !important;
+        size: A4;
+        @bottom-center {
+            content: "" !important;
+        }
+        @bottom-right {
+            content: "" !important;
+        }
+        @bottom-left {
+            content: "" !important;
+        }
+        @top-center {
+            content: "" !important;
+        }
+        @top-right {
+            content: "" !important;
+        }
+        @top-left {
+            content: "" !important;
+        }
+    }
+    
+    /* Hide any page numbering elements */
+    .page-number,
+    .page-counter,
+    [class*="page-"],
+    .page-break,
+    .page-break-before,
+    .page-break-after {
+        display: none !important;
+    }
+    
+    /* Ensure clean print layout */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* Hide browser-specific print elements */
+    .no-print,
+    .dont-print {
+        display: none !important;
+    }
+    
+    /* Ensure proper spacing for print */
+    .overall-section {
+        margin-bottom: 20px !important;
+    }
+    
+    .overall-summary-box {
+        margin-top: 30px !important;
     }
 }
 
