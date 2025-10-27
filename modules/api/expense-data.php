@@ -48,7 +48,7 @@ function getExpenseDetails() {
                 a.code as account_code,
                 a.name as account_name,
                 ec.created_at,
-                u.full_name as created_by_name,
+                'System' as created_by_name,
                 approver.full_name as approved_by_name,
                 ec.approved_at,
                 payment.payment_no,
@@ -57,7 +57,6 @@ function getExpenseDetails() {
             FROM expense_claims ec
             LEFT JOIN expense_categories ecat ON ec.category_id = ecat.id
             LEFT JOIN accounts a ON ecat.account_id = a.id
-            LEFT JOIN users u ON ec.created_by = u.id
             LEFT JOIN users approver ON ec.approved_by = approver.id
             LEFT JOIN payments payment ON ec.payment_id = payment.id
             WHERE ec.id = ?";
@@ -219,13 +218,12 @@ function exportExpenses() {
                 a.code as account_code,
                 a.name as account_name,
                 ec.created_at,
-                u.full_name as created_by_name,
+                'System' as created_by_name,
                 approver.full_name as approved_by_name,
                 ec.approved_at
             FROM expense_claims ec
             LEFT JOIN expense_categories ecat ON ec.category_id = ecat.id
             LEFT JOIN accounts a ON ecat.account_id = a.id
-            LEFT JOIN users u ON ec.created_by = u.id
             LEFT JOIN users approver ON ec.approved_by = approver.id
             WHERE 1=1";
     
@@ -259,10 +257,18 @@ function exportExpenses() {
     $sql .= " ORDER BY ec.expense_date DESC, ec.created_at DESC";
     
     $stmt = $conn->prepare($sql);
+    if ($stmt === false) {
+        throw new Exception('Database query preparation failed: ' . $conn->error);
+    }
+    
     if (!empty($params)) {
         $stmt->bind_param($types, ...$params);
     }
-    $stmt->execute();
+    
+    if (!$stmt->execute()) {
+        throw new Exception('Database query execution failed: ' . $stmt->error);
+    }
+    
     $result = $stmt->get_result();
     
     // Generate CSV
@@ -273,39 +279,29 @@ function exportExpenses() {
     
     $output = fopen('php://output', 'w');
     
-    // CSV headers
+    // CSV headers (simplified, matching print layout)
     fputcsv($output, [
-        'Transaction Number',
+        'Transaction #',
         'Date',
         'Employee',
         'Category',
-        'Account Code',
-        'Account Name',
+        'Account',
         'Amount',
         'Status',
-        'Description',
-        'Created By',
-        'Created At',
-        'Approved By',
-        'Approved At'
+        'Description'
     ]);
     
     // CSV data
     while ($row = $result->fetch_assoc()) {
         fputcsv($output, [
             $row['transaction_number'],
-            $row['transaction_date'],
+            date('M d, Y', strtotime($row['transaction_date'])),
             $row['employee_name'],
             $row['category_name'],
-            $row['account_code'],
-            $row['account_name'],
-            $row['amount'],
+            $row['account_code'] . ' - ' . $row['account_name'],
+            number_format($row['amount'], 2),
             ucfirst($row['status']),
-            $row['description'],
-            $row['created_by_name'],
-            $row['created_at'],
-            $row['approved_by_name'],
-            $row['approved_at']
+            $row['description'] ?? ''
         ]);
     }
     

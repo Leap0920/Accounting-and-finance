@@ -1024,7 +1024,7 @@ INSERT IGNORE INTO payroll_periods (period_start, period_end, frequency, status,
 ('2024-10-01', '2024-10-31', 'monthly', 'paid', '2024-10-01 00:00:00'),
 ('2024-11-01', '2024-11-30', 'monthly', 'paid', '2024-11-01 00:00:00'),
 ('2024-12-01', '2024-12-31', 'monthly', 'processing', '2024-12-01 00:00:00'),
-('2025-01-01', '2025-01-31', 'monthly', 'open', '2025-01-01 00:00:00'),
+('2025-01-01', '2025-01-31', 'monthly', 'open', '2025-01-01 00:00:00')
 ON DUPLICATE KEY UPDATE period_start = VALUES(period_start);
 
 -- Payroll Runs

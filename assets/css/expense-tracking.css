@@ -775,28 +775,149 @@
    ======================================== */
 
 @media print {
+    /* Hide unnecessary elements */
     .filter-section,
     .results-actions,
     .action-buttons,
-    .modal {
+    .modal,
+    nav,
+    footer,
+    .navbar,
+    .header-actions,
+    .beautiful-page-header .header-actions,
+    .results-count {
         display: none !important;
     }
     
+    /* Clean page header */
+    .beautiful-page-header {
+        background: white !important;
+        box-shadow: none !important;
+        padding: 1rem 0 !important;
+        margin-bottom: 1rem !important;
+        page-break-after: avoid;
+    }
+    
+    .page-title-beautiful {
+        color: #000 !important;
+        font-size: 18px !important;
+        text-align: center;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .page-subtitle-beautiful {
+        color: #666 !important;
+        font-size: 12px !important;
+        text-align: center;
+    }
+    
+    .header-info-card {
+        display: none !important;
+    }
+    
+    /* Results section */
     .results-section {
         box-shadow: none;
         border: 1px solid #000;
+        border-radius: 0;
     }
     
+    .results-header {
+        padding: 0.75rem 1rem;
+        background: white !important;
+        border-bottom: 2px solid #000;
+    }
+    
+    .results-info h3 {
+        color: #000 !important;
+        font-size: 14px;
+    }
+    
+    /* Table styles */
     .expense-table {
-        font-size: 12px;
+        font-size: 10px;
+        width: 100%;
     }
     
     .expense-table th {
         background: #000 !important;
         color: #fff !important;
+        padding: 8px 6px !important;
+        font-size: 10px !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .expense-table td {
+        padding: 6px !important;
+        border-bottom: 1px solid #ccc;
+    }
+    
+    /* Hide Actions column in print */
+    .expense-table th:last-child,
+    .expense-table td:last-child {
+        display: none !important;
     }
     
     .expense-table tbody tr {
-        border-bottom: 1px solid #000;
+        border-bottom: 1px solid #ccc;
+        page-break-inside: avoid;
+    }
+    
+    .expense-table tbody tr:hover {
+        background: white !important;
+        transform: none !important;
+    }
+    
+    /* Status badges - print friendly */
+    .status-badge {
+        padding: 3px 8px;
+        border-radius: 3px;
+        border: 1px solid #000;
+        background: white !important;
+        color: #000 !important;
+        font-size: 9px;
+    }
+    
+    /* Text elements */
+    .transaction-number,
+    .transaction-date,
+    .employee-name,
+    .category-name,
+    .description {
+        color: #000 !important;
+        font-size: 10px;
+    }
+    
+    .amount {
+        color: #000 !important;
+        font-weight: bold;
+        font-size: 10px;
+    }
+    
+    .account-info strong,
+    .account-info small {
+        color: #000 !important;
+        font-size: 9px;
+    }
+    
+    /* Page setup */
+    @page {
+        margin: 1cm;
+        size: landscape;
+    }
+    
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    
+    main {
+        padding: 0 !important;
+    }
+    
+    .module-content {
+        max-width: 100% !important;
+        padding: 0 !important;
     }
 }

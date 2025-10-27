@@ -28,13 +28,12 @@ $sql = "SELECT
             a.code as account_code,
             a.name as account_name,
             ec.created_at,
-            u.full_name as created_by_name,
+            'System' as created_by_name,
             approver.full_name as approved_by_name,
             ec.approved_at
         FROM expense_claims ec
         LEFT JOIN expense_categories ecat ON ec.category_id = ecat.id
         LEFT JOIN accounts a ON ecat.account_id = a.id
-        LEFT JOIN users u ON ec.created_by = u.id
         LEFT JOIN users approver ON ec.approved_by = approver.id
         WHERE 1=1";
 
@@ -56,7 +55,7 @@ if ($applyFilters) {
     }
     
     if (!empty($transactionType)) {
-        $sql .= " AND ec.status = ?";
+        $sql .= " AND 'expense_claim' = ?";
         $params[] = $transactionType;
         $types .= 's';
     }
