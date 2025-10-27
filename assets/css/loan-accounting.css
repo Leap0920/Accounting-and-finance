@@ -2,6 +2,250 @@
    LOAN ACCOUNTING MODULE STYLES
    ======================================== */
 
+/* Navigation Bar Styling */
+.navbar-custom {
+    background: linear-gradient(135deg, #0A3D3D 0%, #165A5A 100%) !important;
+    padding: 15px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-custom .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.navbar-custom .logo-circle {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #C17817 0%, #E89B2E 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #FFF;
+    box-shadow: 0 4px 15px rgba(193, 120, 23, 0.3);
+}
+
+.navbar-custom .logo-text h1 {
+    font-size: 20px;
+    margin: 0;
+    color: #FFF;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.navbar-custom .logo-text p {
+    font-size: 11px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+.navbar-custom .navbar-nav .nav-link {
+    color: #FFF !important;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 10px 15px;
+    margin: 0 5px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.navbar-custom .navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFF !important;
+}
+
+.navbar-custom .navbar-nav .nav-link.active {
+    background-color: rgba(193, 120, 23, 0.2);
+    color: #C17817 !important;
+    border-bottom: 2px solid #C17817;
+}
+
+.navbar-custom .navbar-nav .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 2px;
+    background-color: #C17817;
+}
+
+.navbar-custom .dropdown-toggle::after {
+    color: #FFF;
+    margin-left: 5px;
+}
+
+.navbar-custom .dropdown-menu {
+    background-color: #FFF;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    padding: 10px 0;
+    margin-top: 5px;
+}
+
+.navbar-custom .dropdown-menu .dropdown-item {
+    color: #333;
+    padding: 10px 20px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.navbar-custom .dropdown-menu .dropdown-item:hover {
+    background-color: rgba(10, 61, 61, 0.1);
+    color: #0A3D3D;
+}
+
+.navbar-custom .dropdown-menu .dropdown-item.active {
+    background-color: rgba(193, 120, 23, 0.1);
+    color: #C17817;
+}
+
+.navbar-custom .dropdown-menu .dropdown-divider {
+    margin: 8px 0;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Notifications */
+.navbar-custom .nav-icon-btn {
+    color: #FFF;
+    font-size: 18px;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.navbar-custom .nav-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFF;
+}
+
+.navbar-custom .notification-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #dc3545;
+    color: #FFF;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.navbar-custom .notifications-dropdown {
+    min-width: 300px;
+}
+
+.navbar-custom .notification-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+}
+
+.navbar-custom .notification-content {
+    flex: 1;
+}
+
+.navbar-custom .notification-content strong {
+    display: block;
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.navbar-custom .notification-content small {
+    color: #666;
+    font-size: 11px;
+}
+
+/* User Profile */
+.navbar-custom .user-profile-btn {
+    color: #FFF;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.navbar-custom .user-profile-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFF;
+}
+
+.navbar-custom .user-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.navbar-custom .user-dropdown-header i {
+    color: #0A3D3D;
+}
+
+.navbar-custom .user-dropdown-header strong {
+    display: block;
+    color: #333;
+    font-size: 14px;
+}
+
+.navbar-custom .user-dropdown-header small {
+    color: #666;
+    font-size: 12px;
+}
+
+/* Responsive Navigation */
+@media (max-width: 991px) {
+    .navbar-custom .navbar-collapse {
+        background-color: rgba(10, 61, 61, 0.95);
+        margin-top: 15px;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    
+    .navbar-custom .navbar-nav {
+        margin-top: 10px;
+    }
+    
+    .navbar-custom .navbar-nav .nav-link {
+        margin: 5px 0;
+        padding: 12px 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-custom .logo-text h1 {
+        font-size: 16px;
+    }
+    
+    .navbar-custom .logo-text p {
+        font-size: 10px;
+    }
+    
+    .navbar-custom .logo-circle {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+}
+
 /* Stats Cards */
 .stat-card {
     background: #fff;
