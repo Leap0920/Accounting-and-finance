@@ -4,6 +4,10 @@
 -- This file contains ALL sample data for the accounting system
 -- Run this after schema.sql to populate the database with comprehensive test data
 -- 
+-- This file includes merged data from:
+-- - Original Sampled_data.sql (comprehensive system data)
+-- - sample_expense_data.sql (expense tracking module data)
+-- 
 -- Instructions:
 -- 1. Open phpMyAdmin: http://localhost/phpmyadmin
 -- 2. Click "accounting_finance" database
@@ -368,6 +372,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name);
 -- 7. EXPENSE CATEGORIES
 -- ========================================
 
+-- Note: Some categories reference EXP-001 through EXP-005 accounts for backward compatibility
 INSERT INTO expense_categories (code, name, account_id, description, is_active) VALUES
 ('OFFICE', 'Office Supplies', (SELECT id FROM accounts WHERE code = '6203'), 'Office supplies and materials', TRUE),
 ('TRAVEL', 'Travel & Transportation', (SELECT id FROM accounts WHERE code = '6206'), 'Business travel expenses', TRUE),
@@ -380,7 +385,17 @@ INSERT INTO expense_categories (code, name, account_id, description, is_active) 
 ('PROFESSIONAL', 'Professional Services', (SELECT id FROM accounts WHERE code = '6204'), 'Legal, accounting, consulting fees', TRUE),
 ('INSURANCE', 'Insurance', (SELECT id FROM accounts WHERE code = '6207'), 'Insurance premiums', TRUE),
 ('MAINTENANCE', 'Repairs & Maintenance', (SELECT id FROM accounts WHERE code = '6209'), 'Equipment maintenance and repairs', TRUE),
-('COMMUNICATION', 'Communication', (SELECT id FROM accounts WHERE code = '6210'), 'Phone, internet, postage', TRUE)
+('COMM', 'Communication', (SELECT id FROM accounts WHERE code = '6210'), 'Phone, internet, and communication costs', TRUE),
+('COMMUNICATION', 'Communication Services', (SELECT id FROM accounts WHERE code = '6210'), 'Phone, internet, postage', TRUE)
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+-- Insert backup accounts for expense categories (if they don't exist)
+INSERT IGNORE INTO accounts (code, name, type_id, description, is_active, created_by) VALUES
+('EXP-001', 'Travel Expenses', (SELECT id FROM account_types WHERE category = 'expense' LIMIT 1), 'Business travel and transportation costs', TRUE, 1),
+('EXP-002', 'Meals & Entertainment', (SELECT id FROM account_types WHERE category = 'expense' LIMIT 1), 'Business meals and client entertainment', TRUE, 1),
+('EXP-003', 'Office Supplies', (SELECT id FROM account_types WHERE category = 'expense' LIMIT 1), 'Office supplies and equipment', TRUE, 1),
+('EXP-004', 'Communication Expenses', (SELECT id FROM account_types WHERE category = 'expense' LIMIT 1), 'Phone, internet, and communication costs', TRUE, 1),
+('EXP-005', 'Training & Development', (SELECT id FROM account_types WHERE category = 'expense' LIMIT 1), 'Employee training and development', TRUE, 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- ========================================
@@ -935,7 +950,19 @@ INSERT IGNORE INTO expense_claims (claim_no, employee_external_no, expense_date,
 ('EXP030', 'EMP009', '2024-12-12', 6, 2000.00, 'IT training certification', 'approved', 1, '2024-12-13 11:15:00', NULL, NULL, '2024-12-12 11:15:00'),
 ('EXP031', 'EMP002', '2024-12-15', 1, 600.00, 'Office supplies', 'draft', NULL, NULL, NULL, NULL, '2024-12-15 10:00:00'),
 ('EXP032', 'EMP004', '2024-12-18', 3, 450.00, 'Marketing team lunch', 'submitted', NULL, NULL, NULL, NULL, '2024-12-18 12:30:00'),
-('EXP033', 'EMP006', '2024-12-20', 2, 1200.00, 'Customer service training', 'approved', 1, '2024-12-21 13:00:00', NULL, NULL, '2024-12-20 13:00:00')
+('EXP033', 'EMP006', '2024-12-20', 2, 1200.00, 'Customer service training', 'approved', 1, '2024-12-21 13:00:00', NULL, NULL, '2024-12-20 13:00:00'),
+
+-- Additional expense tracking sample data
+('EXP-2024-001', 'EMP001', '2024-01-15', (SELECT id FROM expense_categories WHERE code = 'TRAVEL'), 2500.00, 'Business trip to Manila for client meeting', 'approved', 1, '2024-01-16 14:20:00', NULL, NULL, '2024-01-15 09:30:00'),
+('EXP-2024-002', 'EMP002', '2024-01-18', (SELECT id FROM expense_categories WHERE code = 'MEALS'), 850.00, 'Client dinner meeting at Makati restaurant', 'approved', 1, '2024-01-19 10:30:00', NULL, NULL, '2024-01-18 08:45:00'),
+('EXP-2024-003', 'EMP003', '2024-01-20', (SELECT id FROM expense_categories WHERE code = 'OFFICE'), 1200.00, 'Office supplies and stationery', 'submitted', NULL, NULL, NULL, NULL, '2024-01-20 14:20:00'),
+('EXP-2024-004', 'EMP001', '2024-01-22', (SELECT id FROM expense_categories WHERE code = 'COMM'), 450.00, 'Mobile phone bill for business calls', 'draft', NULL, NULL, NULL, NULL, '2024-01-22 11:15:00'),
+('EXP-2024-005', 'EMP004', '2024-01-25', (SELECT id FROM expense_categories WHERE code = 'TRAINING'), 3500.00, 'Professional certification course', 'approved', 1, '2024-01-26 16:45:00', NULL, NULL, '2024-01-25 16:30:00'),
+('EXP-2024-006', 'EMP002', '2024-01-28', (SELECT id FROM expense_categories WHERE code = 'TRAVEL'), 1800.00, 'Taxi fares for client visits', 'rejected', 1, '2024-01-29 09:15:00', NULL, NULL, '2024-01-28 13:20:00'),
+('EXP-2024-007', 'EMP005', '2024-01-30', (SELECT id FROM expense_categories WHERE code = 'MEALS'), 650.00, 'Team lunch meeting', 'paid', 1, '2024-01-31 11:20:00', NULL, NULL, '2024-01-30 10:45:00'),
+('EXP-2024-008', 'EMP003', '2024-02-02', (SELECT id FROM expense_categories WHERE code = 'OFFICE'), 950.00, 'Computer accessories and cables', 'submitted', NULL, NULL, NULL, NULL, '2024-02-02 09:00:00'),
+('EXP-2024-009', 'EMP001', '2024-02-05', (SELECT id FROM expense_categories WHERE code = 'COMM'), 380.00, 'Internet service for home office', 'draft', NULL, NULL, NULL, NULL, '2024-02-05 10:30:00'),
+('EXP-2024-010', 'EMP004', '2024-02-08', (SELECT id FROM expense_categories WHERE code = 'TRAVEL'), 3200.00, 'Conference attendance in Cebu', 'approved', 1, '2024-02-09 13:30:00', NULL, NULL, '2024-02-08 14:00:00')
 ON DUPLICATE KEY UPDATE amount = VALUES(amount);
 
 -- ========================================
@@ -1076,7 +1103,28 @@ INSERT IGNORE INTO audit_logs (user_id, ip_address, action, object_type, object_
 (1, '192.168.1.100', 'Login', 'user_session', '1', NULL, '{"login_time":"2024-12-15 08:30:00"}', '{"ip":"192.168.1.100"}', NOW() - INTERVAL 18 DAY),
 (1, '192.168.1.101', 'Create Loan', 'loan', 'LN-1025', NULL, '{"principal":20000,"rate":0.05,"term":18}', '{"borrower":"EMP021","type":"appliance"}', NOW() - INTERVAL 25 DAY),
 (1, '192.168.1.102', 'Process Loan Payment', 'loan_payment', 'PAY-2024-12-005', NULL, '{"amount":1500,"principal":1300,"interest":200}', '{"loan_id":19}', NOW() - INTERVAL 8 DAY),
-(1, '192.168.1.103', 'Generate Financial Report', 'financial_report', 'FR-IS-2024-Q4', NULL, '{"report_type":"income_statement","period":"2024-Q4"}', '{"format":"pdf"}', NOW() - INTERVAL 5 DAY)
+(1, '192.168.1.103', 'Generate Financial Report', 'financial_report', 'FR-IS-2024-Q4', NULL, '{"report_type":"income_statement","period":"2024-Q4"}', '{"format":"pdf"}', NOW() - INTERVAL 5 DAY),
+
+-- Audit logs for expense claims (from expense tracking module)
+(1, '192.168.1.100', 'Created', 'expense_claim', '1', NULL, '{"claim_no":"EXP-2024-001","amount":"2500.00","status":"draft"}', '{"description":"Expense claim created"}', '2024-01-15 09:30:00'),
+(1, '192.168.1.100', 'Updated', 'expense_claim', '1', '{"status":"draft"}', '{"status":"submitted"}', '{"description":"Status changed from draft to submitted"}', '2024-01-15 10:15:00'),
+(1, '192.168.1.101', 'Approved', 'expense_claim', '1', '{"status":"submitted"}', '{"status":"approved"}', '{"description":"Expense claim approved by manager"}', '2024-01-16 14:20:00'),
+(1, '192.168.1.100', 'Created', 'expense_claim', '2', NULL, '{"claim_no":"EXP-2024-002","amount":"850.00","status":"draft"}', '{"description":"Expense claim created"}', '2024-01-18 08:45:00'),
+(1, '192.168.1.100', 'Updated', 'expense_claim', '2', '{"status":"draft"}', '{"status":"submitted"}', '{"description":"Status changed from draft to submitted"}', '2024-01-18 09:00:00'),
+(1, '192.168.1.101', 'Approved', 'expense_claim', '2', '{"status":"submitted"}', '{"status":"approved"}', '{"description":"Expense claim approved by manager"}', '2024-01-19 10:30:00'),
+(1, '192.168.1.100', 'Created', 'expense_claim', '3', NULL, '{"claim_no":"EXP-2024-003","amount":"1200.00","status":"draft"}', '{"description":"Expense claim created"}', '2024-01-20 14:20:00'),
+(1, '192.168.1.100', 'Updated', 'expense_claim', '3', '{"status":"draft"}', '{"status":"submitted"}', '{"description":"Status changed from draft to submitted"}', '2024-01-20 14:35:00'),
+(1, '192.168.1.100', 'Created', 'expense_claim', '4', NULL, '{"claim_no":"EXP-2024-004","amount":"450.00","status":"draft"}', '{"description":"Expense claim created"}', '2024-01-22 11:15:00'),
+(1, '192.168.1.100', 'Created', 'expense_claim', '5', NULL, '{"claim_no":"EXP-2024-005","amount":"3500.00","status":"draft"}', '{"description":"Expense claim created"}', '2024-01-25 16:30:00'),
+(1, '192.168.1.100', 'Updated', 'expense_claim', '5', '{"status":"draft"}', '{"status":"submitted"}', '{"description":"Status changed from draft to submitted"}', '2024-01-25 16:45:00'),
+(1, '192.168.1.101', 'Approved', 'expense_claim', '5', '{"status":"submitted"}', '{"status":"approved"}', '{"description":"Expense claim approved by manager"}', '2024-01-26 16:45:00'),
+(1, '192.168.1.100', 'Created', 'expense_claim', '6', NULL, '{"claim_no":"EXP-2024-006","amount":"1800.00","status":"draft"}', '{"description":"Expense claim created"}', '2024-01-28 13:20:00'),
+(1, '192.168.1.100', 'Updated', 'expense_claim', '6', '{"status":"draft"}', '{"status":"submitted"}', '{"description":"Status changed from draft to submitted"}', '2024-01-28 13:35:00'),
+(1, '192.168.1.101', 'Rejected', 'expense_claim', '6', '{"status":"submitted"}', '{"status":"rejected"}', '{"description":"Expense claim rejected - insufficient documentation"}', '2024-01-29 09:15:00'),
+(1, '192.168.1.100', 'Created', 'expense_claim', '7', NULL, '{"claim_no":"EXP-2024-007","amount":"650.00","status":"draft"}', '{"description":"Expense claim created"}', '2024-01-30 10:45:00'),
+(1, '192.168.1.100', 'Updated', 'expense_claim', '7', '{"status":"draft"}', '{"status":"submitted"}', '{"description":"Status changed from draft to submitted"}', '2024-01-30 11:00:00'),
+(1, '192.168.1.101', 'Approved', 'expense_claim', '7', '{"status":"submitted"}', '{"status":"approved"}', '{"description":"Expense claim approved by manager"}', '2024-01-31 11:20:00'),
+(1, '192.168.1.101', 'Paid', 'expense_claim', '7', '{"status":"approved"}', '{"status":"paid"}', '{"description":"Payment processed"}', '2024-01-31 15:30:00')
 ON DUPLICATE KEY UPDATE action = VALUES(action);
 
 -- Compliance Reports
@@ -1352,7 +1400,7 @@ SELECT '=== ACCOUNTING & FINANCE SYSTEM IS READY FOR TESTING ===' AS ready_statu
 -- ✅ 20+ journal entries with balanced transactions
 -- ✅ 25+ loans across different types
 -- ✅ 100+ loan payments
--- ✅ 33+ expense claims
+-- ✅ 43+ expense claims (includes expense tracking module data)
 -- ✅ 40+ payment records
 -- ✅ 13 payroll periods with comprehensive payslips
 -- ✅ Integration logs and audit trails

@@ -134,6 +134,8 @@ foreach ($loans as $loan) {
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../assets/css/financial-reporting.css">
     <link rel="stylesheet" href="../assets/css/loan-accounting.css">
 </head>
 <body>
@@ -141,12 +143,12 @@ foreach ($loans as $loan) {
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid px-4">
             <div class="logo-section">
-            <div class="logo-circle">E</div>
-            <div class="logo-text">
-                <h1>EVERGREEN</h1>
-                <p>Secure. Invest. Achieve</p>
+                <div class="logo-circle">E</div>
+                <div class="logo-text">
+                    <h1>EVERGREEN</h1>
+                    <p>Secure. Invest. Achieve</p>
+                </div>
             </div>
-        </div>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -160,7 +162,7 @@ foreach ($loans as $loan) {
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-th-large me-1"></i>Modules
                         </a>
                         <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="modulesDropdown">
@@ -262,17 +264,57 @@ foreach ($loans as $loan) {
                 </div>
             </div>
         </div>
-        </nav>
-    
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="container">
-        <h2>LOAN ACCOUNTING</h2>
-    </div>
-    </div>
+    </nav>
     
     <!-- Main Content -->
-    <main class="container py-4">
+    <main class="container-fluid py-4">
+        <!-- Beautiful Page Header -->
+        <div class="beautiful-page-header mb-5">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="header-content">
+                            <h1 class="page-title-beautiful">
+                                <i class="fas fa-hand-holding-usd me-3"></i>
+                                Loan Accounting
+                            </h1>
+                            <p class="page-subtitle-beautiful">
+                                Monitor and manage loan records and calculations
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <div class="header-info-card">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Database Status</div>
+                                    <div class="info-value status-connected">Connected</div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Current Period</div>
+                                    <div class="info-value"><?php echo date('F Y'); ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-actions mt-3">
+                    <a href="../core/dashboard.php" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
         
         <!-- Statistics Cards -->
         <div class="row g-3 mb-4">
@@ -471,6 +513,7 @@ foreach ($loans as $loan) {
             </div>
         </div>
         
+        </div>
     </main>
     
     <!-- Footer -->
