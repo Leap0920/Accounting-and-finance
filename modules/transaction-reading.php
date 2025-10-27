@@ -43,7 +43,7 @@ $sql = "SELECT
         INNER JOIN journal_types jt ON je.journal_type_id = jt.id
         INNER JOIN users u ON je.created_by = u.id
         LEFT JOIN fiscal_periods fp ON je.fiscal_period_id = fp.id
-        WHERE je.status != 'deleted'";
+        WHERE je.status NOT IN ('deleted', 'voided')";
 
 $params = [];
 $types = '';
@@ -121,7 +121,7 @@ try {
                     SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft_count,
                     SUM(CASE WHEN DATE(entry_date) = CURDATE() THEN 1 ELSE 0 END) as today_count
                   FROM journal_entries 
-                  WHERE status != 'deleted'";
+                  WHERE status NOT IN ('deleted', 'voided')";
     
     $result = $conn->query($stats_sql);
     if ($result) {

@@ -262,6 +262,13 @@
      */
     window.deleteTransaction = function(transactionId) {
         console.log('Delete transaction called with ID:', transactionId);
+        console.log('Transaction ID type:', typeof transactionId);
+        console.log('Transaction ID value:', transactionId);
+        
+        if (!transactionId || transactionId === 'undefined' || transactionId === 'null') {
+            showNotification('Error: Invalid transaction ID', 'error');
+            return;
+        }
         
         if (!confirm('Are you sure you want to delete this transaction? It will be moved to the bin station where you can restore it later.')) {
             return;
@@ -274,8 +281,11 @@
         const url = 'api/transaction-data.php';
         const data = `action=soft_delete_transaction&transaction_id=${transactionId}`;
         
+        console.log('===== DELETE REQUEST DETAILS =====');
         console.log('Making request to:', url);
         console.log('With data:', data);
+        console.log('Full URL will be:', window.location.origin + window.location.pathname.replace('transaction-reading.php', '') + url);
+        console.log('==================================');
         
         fetch(url, {
             method: 'POST',
@@ -285,19 +295,69 @@
             body: data
         })
         .then(response => {
+            console.log('===== RESPONSE RECEIVED =====');
             console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            return response.json();
+            console.log('Response ok:', response.ok);
+            console.log('Response type:', response.type);
+            console.log('Response URL:', response.url);
+            
+            // Check if response is ok before trying to parse JSON
+            if (!response.ok) {
+                // Try to get error message from response
+                return response.text().then(text => {
+                    console.error('ERROR RESPONSE TEXT:', text);
+                    let errorMessage = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errorData = JSON.parse(text);
+                        console.error('Parsed error data:', errorData);
+                        if (errorData.error) {
+                            errorMessage += ` - ${errorData.error}`;
+                        }
+                    } catch (e) {
+                        console.error('Could not parse error as JSON:', e);
+                        // If not JSON, include raw text
+                        if (text.length > 0) {
+                            errorMessage += ` - ${text.substring(0, 200)}`;
+                        }
+                    }
+                    throw new Error(errorMessage);
+                });
+            }
+            
+            // Get response text first to debug
+            return response.text().then(text => {
+                console.log('Raw response text:', text);
+                try {
+                    return JSON.parse(text);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    console.error('Response text that failed to parse:', text);
+                    throw new Error('Invalid JSON response from server');
+                }
+            });
         })
         .then(data => {
             console.log('Response data:', data);
             hideLoading();
             if (data.success) {
-                showNotification('Transaction moved to bin successfully!', 'success');
+                // Show appropriate message based on what actually happened
+                let message = data.message || 'Transaction processed successfully!';
+                let notificationType = 'success';
+                
+                // If soft delete is not available, explain what happened
+                if (data.soft_delete_available === false) {
+                    message = 'Transaction voided successfully! It has been moved to the bin station where you can restore it later.';
+                    notificationType = 'info';
+                } else {
+                    message = 'Transaction deleted successfully! It has been moved to the bin station where you can restore it later.';
+                }
+                
+                showNotification(message, notificationType);
+                
                 // Reload the page to refresh the table
                 setTimeout(() => {
                     window.location.reload();
-                }, 1000);
+                }, 1500);
             } else {
                 showNotification('Delete failed: ' + (data.error || 'Unknown error'), 'error');
             }
@@ -305,7 +365,13 @@
         .catch(error => {
             console.error('Fetch error:', error);
             hideLoading();
-            showNotification('Delete failed: ' + error.message, 'error');
+            
+            // Try to get more specific error information
+            if (error.message.includes('HTTP error! status: 400')) {
+                showNotification('Delete failed: Bad request (400) - Check console for details', 'error');
+            } else {
+                showNotification('Delete failed: ' + error.message, 'error');
+            }
         });
     };
 

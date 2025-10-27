@@ -489,10 +489,10 @@ $current_user = getCurrentUser();
             button.disabled = true;
 
             $.ajax({
-                url: 'api/compliance-reports.php',
+                url: 'api/transaction-data.php',
                 method: 'POST',
                 data: { 
-                    action: 'restore_all_items'
+                    action: 'restore_all_transactions'
                 },
                 dataType: 'json',
                 success: function(response) {
@@ -539,10 +539,10 @@ $current_user = getCurrentUser();
             button.disabled = true;
 
             $.ajax({
-                url: 'api/compliance-reports.php',
+                url: 'api/transaction-data.php',
                 method: 'POST',
                 data: { 
-                    action: 'empty_bin'
+                    action: 'empty_bin_transactions'
                 },
                 dataType: 'json',
                 success: function(response) {
