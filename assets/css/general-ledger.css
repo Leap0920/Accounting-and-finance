@@ -5,9 +5,9 @@
 :root {
     --primary-teal: #0A3D3D;
     --secondary-teal: #165A5A;
-    --accent-orange: #F5A623;
-    --light-orange: #FFB84D;
-    --bg-light: #F8F9FA;
+    --accent-gold: #C17817;
+    --light-gold: #E89B2E;
+    --bg-cream: #F5F1E8;
     --card-bg: #FFFFFF;
     --text-dark: #2C3E50;
     --text-muted: #6C757D;
@@ -26,7 +26,7 @@
    ======================================== */
 
 body {
-    background-color: #F5F5DC;
+    background-color: var(--bg-cream);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
     color: var(--text-dark);
@@ -60,38 +60,184 @@ body {
 .navbar-custom .nav-link:hover,
 .navbar-custom .nav-link.active {
     background: rgba(255, 255, 255, 0.15);
-    color: white !important;
+    color: var(--light-gold) !important;
     transform: translateY(-1px);
 }
 
-.notification-icon {
-    color: var(--accent-orange);
-    font-size: 1.3rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 0.5rem;
-    border-radius: 50%;
+.navbar-custom .nav-link i {
+    margin-right: 0.5rem;
 }
 
-.notification-icon:hover {
-    background: rgba(245, 166, 35, 0.1);
-    transform: scale(1.1);
+/* Dropdown Menus */
+.dropdown-menu-custom {
+    background: #fff;
+    border: none;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    border-radius: 10px;
+    padding: 10px 0;
+    margin-top: 10px;
+    min-width: 250px;
 }
 
-.user-profile-btn {
-    color: white;
+.dropdown-menu-custom .dropdown-item {
+    padding: 10px 20px;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.3s;
+}
+
+.dropdown-menu-custom .dropdown-item:hover {
+    background-color: var(--bg-cream);
+    color: var(--primary-teal);
+    padding-left: 25px;
+}
+
+.dropdown-menu-custom .dropdown-item i {
+    width: 20px;
+    text-align: center;
+    color: var(--primary-teal);
+}
+
+.dropdown-header {
+    padding: 10px 20px;
+    font-weight: 700;
+    color: var(--primary-teal);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-divider {
+    margin: 10px 0;
+    border-top-color: #e0e0e0;
+}
+
+/* Notification Icon */
+.nav-icon-btn {
+    position: relative;
+    color: #fff;
+    font-size: 20px;
     text-decoration: none;
+    transition: all 0.3s;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.nav-icon-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: var(--light-gold);
+}
+
+.notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Notifications Dropdown */
+.notifications-dropdown {
+    min-width: 320px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: start;
+    gap: 12px;
+    padding: 12px 20px;
+    border-left: 3px solid transparent;
+}
+
+.notification-item:hover {
+    border-left-color: var(--primary-teal);
+    background-color: var(--bg-cream);
+}
+
+.notification-item i {
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-content strong {
+    display: block;
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 3px;
+}
+
+.notification-content small {
+    display: block;
+    font-size: 12px;
+    color: #666;
+}
+
+/* User Profile Button */
+.user-profile-btn {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
     display: flex;
     align-items: center;
-    font-size: 0.95rem;
-    padding: 0.5rem 1rem;
+    padding: 8px 15px;
     border-radius: 8px;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
 }
 
 .user-profile-btn:hover {
-    color: var(--accent-orange);
-    background: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.user-profile-btn i.fa-user-circle {
+    font-size: 24px;
+}
+
+.user-profile-btn i.fa-chevron-down {
+    font-size: 12px;
+}
+
+/* User Dropdown Header */
+.user-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 0;
+}
+
+.user-dropdown-header i {
+    color: var(--primary-teal);
+}
+
+.user-dropdown-header strong {
+    display: block;
+    font-size: 14px;
+    color: #333;
+}
+
+.user-dropdown-header small {
+    display: block;
+    font-size: 12px;
+    color: #666;
+}
+
+.dropdown-item.text-danger {
+    color: #dc3545 !important;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #ffe6e6;
+    color: #c82333 !important;
 }
 
 /* ========================================
@@ -99,7 +245,7 @@ body {
    ======================================== */
 
 .gl-page-header {
-    background: #F5F5DC;
+    background: white;
     padding: 2.5rem;
     border-radius: 16px;
     margin-bottom: 2rem;
@@ -110,7 +256,7 @@ body {
 .page-title {
     font-size: 2.25rem;
     font-weight: 700;
-    color: var(--text-dark);
+    color: var(--primary-teal);
     margin: 0 0 0.75rem 0;
     letter-spacing: -0.5px;
 }
@@ -130,9 +276,9 @@ body {
 }
 
 .btn-gl-primary-sm {
-    background: #F5A623;
-    border: 2px solid #2C3E50;
-    color: #2C3E50;
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--light-gold) 100%);
+    border: none;
+    color: white;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     font-weight: 600;
@@ -147,8 +293,7 @@ body {
 .btn-gl-primary-sm:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-medium);
-    background: #FFB84D;
-    border-color: #34495E;
+    background: linear-gradient(135deg, var(--light-gold) 0%, #FFC107 100%);
 }
 
 .btn-gl-secondary {
@@ -165,9 +310,9 @@ body {
 }
 
 .btn-gl-secondary:hover {
-    background: var(--bg-light);
-    border-color: var(--accent-orange);
-    color: var(--accent-orange);
+    background: var(--bg-cream);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
     transform: translateY(-1px);
 }
 
@@ -200,7 +345,7 @@ body {
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--light-orange) 100%);
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--light-gold) 100%);
     transform: scaleY(0);
     transition: transform 0.3s ease;
 }
@@ -217,12 +362,12 @@ body {
 .stat-icon {
     width: 70px;
     height: 70px;
-    background: #2C5F2D;
+    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #87CEEB;
+    color: white;
     font-size: 1.8rem;
     flex-shrink: 0;
     box-shadow: var(--shadow-light);
@@ -249,7 +394,7 @@ body {
 }
 
 .stat-link {
-    color: #F5A623;
+    color: var(--accent-gold);
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 600;
@@ -260,7 +405,7 @@ body {
 }
 
 .stat-link:hover {
-    color: #FFB84D;
+    color: var(--light-gold);
     text-decoration: none;
     transform: translateX(4px);
 }
@@ -347,7 +492,7 @@ body {
 }
 
 .btn-chart {
-    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--light-orange) 100%);
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--light-gold) 100%);
     border: none;
     color: white;
     padding: 0.75rem 2rem;
@@ -362,13 +507,13 @@ body {
 .btn-chart:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-medium);
-    background: linear-gradient(135deg, var(--light-orange) 0%, #FFC107 100%);
+    background: linear-gradient(135deg, var(--light-gold) 0%, #FFC107 100%);
 }
 
 .btn-chart-outline {
     background: transparent;
     border: none;
-    color: var(--accent-orange);
+    color: var(--accent-gold);
     padding: 0.75rem 0;
     font-weight: 600;
     cursor: pointer;
@@ -378,7 +523,7 @@ body {
 }
 
 .btn-chart-outline:hover {
-    color: var(--light-orange);
+    color: var(--light-gold);
     text-decoration: none;
     transform: translateX(4px);
 }
@@ -409,13 +554,13 @@ body {
 
 .search-input:focus {
     outline: none;
-    border-color: var(--accent-orange);
+    border-color: var(--accent-gold);
     box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1);
     background: white;
 }
 
 .btn-filter {
-    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--light-orange) 100%);
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--light-gold) 100%);
     border: none;
     color: white;
     padding: 0.75rem 1.5rem;
@@ -444,7 +589,7 @@ body {
 }
 
 .btn-reset:hover {
-    background: var(--bg-light);
+    background: var(--bg-cream);
     border-color: var(--text-muted);
     transform: translateY(-1px);
 }
@@ -468,7 +613,7 @@ body {
 }
 
 .gl-table thead {
-    background: linear-gradient(135deg, var(--bg-light) 0%, #F1F3F4 100%);
+    background: linear-gradient(135deg, var(--bg-cream) 0%, #F1F3F4 100%);
     border-bottom: 2px solid var(--border-color);
 }
 
@@ -531,15 +676,32 @@ body {
     width: 50px;
     height: 50px;
     border: 4px solid var(--border-color);
-    border-top: 4px solid var(--accent-orange);
+    border-top: 4px solid var(--accent-gold);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 1rem;
 }
 
+.loading-text {
+    color: var(--accent-gold);
+    font-weight: 600;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.7; 
+        transform: scale(1.05);
+    }
 }
 
 /* ========================================

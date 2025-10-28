@@ -12,7 +12,7 @@ function initializeGeneralLedger() {
     // Add smooth animations
     addSmoothAnimations();
     
-    // Load initial data
+    // Load initial data with better error handling
     loadStatistics();
     loadCharts();
     loadAccountsTable();
@@ -43,28 +43,54 @@ function addSmoothAnimations() {
 // ========================================
 
 function loadStatistics() {
-    showLoadingState('statistics');
+    // Show loading state immediately
+    showStatisticsLoadingState();
     
-    fetch('../modules/api/general-ledger-data.php?action=get_statistics')
+    // Try to fetch from API with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    fetch('../modules/api/general-ledger-data.php?action=get_statistics', {
+        signal: controller.signal
+    })
         .then(response => {
+            clearTimeout(timeoutId);
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
             if (data.success) {
                 animateStatistics(data.data);
+                console.log('Statistics loaded successfully:', data.data);
             } else {
                 console.warn('API returned error, using fallback data');
                 animateStatistics(getFallbackStatistics());
             }
         })
         .catch(error => {
+            clearTimeout(timeoutId);
             console.error('Error loading statistics:', error);
             console.log('Using fallback statistics data');
             animateStatistics(getFallbackStatistics());
         });
+}
+
+function showStatisticsLoadingState() {
+    const elements = {
+        'total-accounts': 'Loading...',
+        'total-transactions': 'Loading...',
+        'total-audit': 'Loading...',
+        'total-adjustments': 'Loading...'
+    };
+    
+    Object.entries(elements).forEach(([id, text]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.innerHTML = `<span class="loading-text">${text}</span>`;
+        }
+    });
 }
 
 function animateStatistics(data) {
@@ -78,7 +104,9 @@ function animateStatistics(data) {
     Object.entries(elements).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) {
-            animateNumber(element, 0, value, 1000);
+            // Clear loading text
+            element.innerHTML = '';
+            animateNumber(element, 0, value, 1500);
         }
     });
 }
@@ -92,29 +120,25 @@ function animateNumber(element, start, end, duration) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
         
-        const currentValue = Math.floor(startValue + (endValue - startValue) * progress);
+        // Use easing function for smoother animation
+        const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+        const currentValue = Math.floor(startValue + (endValue - startValue) * easeOutCubic);
+        
         element.textContent = currentValue.toLocaleString();
         
         if (progress < 1) {
             requestAnimationFrame(updateNumber);
+        } else {
+            // Add a subtle pulse effect when animation completes
+            element.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+                element.style.transition = 'transform 0.2s ease';
+            }, 100);
         }
     }
     
     requestAnimationFrame(updateNumber);
-}
-
-function showLoadingState(type) {
-    const loadingHtml = `
-        <div class="loading-spinner"></div>
-        <p class="text-center text-muted">Loading ${type}...</p>
-    `;
-    
-    // Add loading states to relevant containers
-    const containers = document.querySelectorAll('.stat-content, .chart-wrapper, .table-container');
-    containers.forEach(container => {
-        if (container.innerHTML.includes('Loading')) return;
-        container.innerHTML = loadingHtml;
-    });
 }
 
 // ========================================
@@ -122,10 +146,16 @@ function showLoadingState(type) {
 // ========================================
 
 function loadCharts() {
-    fetch('../modules/api/general-ledger-data.php?action=get_chart_data')
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    fetch('../modules/api/general-ledger-data.php?action=get_chart_data', {
+        signal: controller.signal
+    })
         .then(response => {
+            clearTimeout(timeoutId);
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
@@ -134,6 +164,7 @@ function loadCharts() {
                 renderAccountTypesChart(data.data.account_types);
                 renderTransactionSummaryChart(data.data.transaction_summary);
                 renderAuditCharts(data.data);
+                console.log('Charts loaded successfully');
             } else {
                 console.warn('API returned error, using fallback chart data');
                 const fallbackData = getFallbackChartData();
@@ -143,6 +174,7 @@ function loadCharts() {
             }
         })
         .catch(error => {
+            clearTimeout(timeoutId);
             console.error('Error loading charts:', error);
             console.log('Using fallback chart data');
             const fallbackData = getFallbackChartData();
