@@ -26,7 +26,7 @@
    ======================================== */
 
 body {
-    background-color: var(--bg-light);
+    background-color: #F5F5DC;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
     color: var(--text-dark);
@@ -99,7 +99,7 @@ body {
    ======================================== */
 
 .gl-page-header {
-    background: white;
+    background: #F5F5DC;
     padding: 2.5rem;
     border-radius: 16px;
     margin-bottom: 2rem;
@@ -130,11 +130,11 @@ body {
 }
 
 .btn-gl-primary-sm {
-    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--light-orange) 100%);
-    border: none;
-    color: white;
+    background: #F5A623;
+    border: 2px solid #2C3E50;
+    color: #2C3E50;
     padding: 0.75rem 1rem;
-    border-radius: 10px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
@@ -147,7 +147,8 @@ body {
 .btn-gl-primary-sm:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-medium);
-    background: linear-gradient(135deg, var(--light-orange) 0%, #FFC107 100%);
+    background: #FFB84D;
+    border-color: #34495E;
 }
 
 .btn-gl-secondary {
@@ -216,15 +217,20 @@ body {
 .stat-icon {
     width: 70px;
     height: 70px;
-    background: linear-gradient(135deg, var(--primary-teal) 0%, var(--secondary-teal) 100%);
+    background: #2C5F2D;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #87CEEB;
     font-size: 1.8rem;
     flex-shrink: 0;
     box-shadow: var(--shadow-light);
+    position: relative;
+}
+
+.stat-icon i {
+    font-size: 1.5rem;
 }
 
 .stat-content h3 {
@@ -243,7 +249,7 @@ body {
 }
 
 .stat-link {
-    color: var(--accent-orange);
+    color: #F5A623;
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 600;
@@ -254,7 +260,7 @@ body {
 }
 
 .stat-link:hover {
-    color: var(--light-orange);
+    color: #FFB84D;
     text-decoration: none;
     transform: translateX(4px);
 }
