@@ -48,7 +48,7 @@ $current_user = getCurrentUser();
                             <i class="fas fa-th-large me-1"></i>Modules
                         </a>
                         <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="modulesDropdown">
-                            <li><a class="dropdown-item" href="general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
+                            <li><a class="dropdown-item active" href="general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
                             <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-line me-2"></i>Financial Reporting</a></li>
                             <li><a class="dropdown-item" href="loan-accounting.php"><i class="fas fa-hand-holding-usd me-2"></i>Loan Accounting</a></li>
                             <li><hr class="dropdown-divider"></li>
