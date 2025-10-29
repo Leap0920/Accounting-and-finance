@@ -11,6 +11,12 @@ let filteredData = null;
 let showMoreDetails = false;
 let isFiltering = false; // Flag to prevent multiple simultaneous filter requests
 
+// Pagination variables
+let currentPage = 1;
+let entriesPerPage = 25;
+let totalEntries = 0;
+let totalPages = 0;
+
 /**
  * Initialize on page load
  */
@@ -811,8 +817,10 @@ function applyFilters() {
                             resultsSection.style.display = 'block';
                         }
                         
-                        // Display the data
-                        displayFilteredInformation(response.data);
+                        // Initialize pagination and display the data
+                        currentPage = 1;
+                        updatePagination();
+                        displayCurrentPageData();
                         showNotification(response.message || `Found ${response.data.length} records`, 'success');
                     } else {
                         console.log('No data in response');
@@ -1196,4 +1204,76 @@ function showNotification(message, type = 'info') {
             bsAlert.close();
         }
     }, 5000);
+}
+
+/**
+ * Pagination Functions
+ */
+
+function changeEntriesPerPage() {
+    entriesPerPage = parseInt(document.getElementById('entries-per-page').value);
+    currentPage = 1; // Reset to first page
+    updatePagination();
+    displayCurrentPageData();
+}
+
+function goToPage(page) {
+    if (page >= 1 && page <= totalPages) {
+        currentPage = page;
+        updatePagination();
+        displayCurrentPageData();
+    }
+}
+
+function goToPreviousPage() {
+    if (currentPage > 1) {
+        goToPage(currentPage - 1);
+    }
+}
+
+function goToNextPage() {
+    if (currentPage < totalPages) {
+        goToPage(currentPage + 1);
+    }
+}
+
+function goToLastPage() {
+    goToPage(totalPages);
+}
+
+function updatePagination() {
+    if (!filteredData) return;
+    
+    totalEntries = filteredData.length;
+    totalPages = Math.ceil(totalEntries / entriesPerPage);
+    
+    // Update pagination info
+    const startEntry = (currentPage - 1) * entriesPerPage + 1;
+    const endEntry = Math.min(currentPage * entriesPerPage, totalEntries);
+    
+    document.getElementById('pagination-info').textContent = 
+        `Showing ${startEntry} to ${endEntry} of ${totalEntries} entries`;
+    
+    // Update pagination controls
+    const controls = document.getElementById('pagination-controls');
+    const firstBtn = controls.querySelector('li:first-child');
+    const prevBtn = controls.querySelector('li:nth-child(2)');
+    const nextBtn = controls.querySelector('li:nth-child(3)');
+    const lastBtn = controls.querySelector('li:last-child');
+    
+    // Enable/disable buttons
+    firstBtn.classList.toggle('disabled', currentPage === 1);
+    prevBtn.classList.toggle('disabled', currentPage === 1);
+    nextBtn.classList.toggle('disabled', currentPage === totalPages);
+    lastBtn.classList.toggle('disabled', currentPage === totalPages);
+}
+
+function displayCurrentPageData() {
+    if (!filteredData) return;
+    
+    const startIndex = (currentPage - 1) * entriesPerPage;
+    const endIndex = startIndex + entriesPerPage;
+    const pageData = filteredData.slice(startIndex, endIndex);
+    
+    displayFilteredInformation(pageData);
 }
