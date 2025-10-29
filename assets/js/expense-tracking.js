@@ -205,37 +205,293 @@ function showAuditTrail() {
 
 // Export to Excel
 function exportToExcel() {
-    showLoading('Preparing Excel export...');
+    showNotification('Exporting expenses to Excel...', 'info');
     
-    // Get current filter parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const exportUrl = `../modules/api/expense-data.php?action=export_expenses&${urlParams.toString()}`;
+    // Get current table data
+    const table = document.getElementById('expensesTable');
+    if (!table) {
+        showNotification('No data to export', 'warning');
+        return;
+    }
     
-    // Create a temporary link to trigger download
-    const link = document.createElement('a');
-    link.href = exportUrl;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const rows = table.querySelectorAll('tbody tr');
+    if (rows.length === 0) {
+        showNotification('No expense data to export', 'warning');
+        return;
+    }
     
-    hideLoading();
-    showNotification('Export completed successfully!', 'success');
+    // Group expenses by category
+    const expensesByCategory = {};
+    const categoryTotals = {};
+    let grandTotal = 0;
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 6) {
+            const date = cells[0].textContent.trim();
+            const description = cells[1].textContent.trim();
+            const category = cells[2].textContent.trim();
+            const amount = parseFloat(cells[3].textContent.replace(/[₱,]/g, '')) || 0;
+            const status = cells[4].textContent.trim();
+            const reference = cells[5].textContent.trim();
+            
+            if (!expensesByCategory[category]) {
+                expensesByCategory[category] = [];
+                categoryTotals[category] = 0;
+            }
+            
+            expensesByCategory[category].push({
+                date, description, amount, status, reference
+            });
+            
+            categoryTotals[category] += amount;
+            grandTotal += amount;
+        }
+    });
+    
+    // Create CSV content with groupings and summaries
+    let csvContent = "EVERGREEN EXPENSE TRACKING REPORT\n";
+    csvContent += `Generated: ${new Date().toLocaleString()}\n`;
+    csvContent += `Total Expenses: ${rows.length}\n`;
+    csvContent += `Grand Total: ₱${grandTotal.toFixed(2)}\n\n`;
+    
+    // Add summary by category
+    csvContent += "SUMMARY BY CATEGORY\n";
+    csvContent += "Category,Total Amount,Percentage\n";
+    
+    Object.keys(categoryTotals).sort().forEach(category => {
+        const total = categoryTotals[category];
+        const percentage = ((total / grandTotal) * 100).toFixed(2);
+        csvContent += `"${category}","₱${total.toFixed(2)}","${percentage}%"\n`;
+    });
+    
+    csvContent += "\nDETAILED EXPENSES BY CATEGORY\n\n";
+    
+    // Add detailed expenses grouped by category
+    Object.keys(expensesByCategory).sort().forEach(category => {
+        csvContent += `CATEGORY: ${category.toUpperCase()}\n`;
+        csvContent += "Date,Description,Amount,Status,Reference\n";
+        
+        expensesByCategory[category].forEach(expense => {
+            csvContent += `"${expense.date}","${expense.description}","₱${expense.amount.toFixed(2)}","${expense.status}","${expense.reference}"\n`;
+        });
+        
+        csvContent += `"","TOTAL FOR ${category.toUpperCase()}","₱${categoryTotals[category].toFixed(2)}","",""\n\n`;
+    });
+    
+    // Add grand total summary
+    csvContent += "GRAND TOTAL SUMMARY\n";
+    csvContent += `Total Categories: ${Object.keys(categoryTotals).length}\n`;
+    csvContent += `Total Expenses: ${rows.length}\n`;
+    csvContent += `Grand Total Amount: ₱${grandTotal.toFixed(2)}\n`;
+    csvContent += `Average per Expense: ₱${(grandTotal / rows.length).toFixed(2)}\n`;
+    
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `expense_report_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    showNotification('Expense report exported successfully!', 'success');
 }
 
 // Print report
 function printReport() {
-    // Hide elements that shouldn't be printed
-    const elementsToHide = document.querySelectorAll('.filter-section, .results-actions, .action-buttons');
-    elementsToHide.forEach(el => el.style.display = 'none');
+    showNotification('Preparing to print expense report...', 'info');
     
-    // Print
-    window.print();
+    // Get current table data
+    const table = document.getElementById('expensesTable');
+    if (!table) {
+        showNotification('No data to print', 'warning');
+        return;
+    }
     
-    // Restore elements
-    elementsToHide.forEach(el => el.style.display = '');
+    const rows = table.querySelectorAll('tbody tr');
+    if (rows.length === 0) {
+        showNotification('No expense data to print', 'warning');
+        return;
+    }
     
-    showNotification('Print dialog opened', 'info');
+    // Group expenses by category
+    const expensesByCategory = {};
+    const categoryTotals = {};
+    let grandTotal = 0;
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 6) {
+            const date = cells[0].textContent.trim();
+            const description = cells[1].textContent.trim();
+            const category = cells[2].textContent.trim();
+            const amount = parseFloat(cells[3].textContent.replace(/[₱,]/g, '')) || 0;
+            const status = cells[4].textContent.trim();
+            const reference = cells[5].textContent.trim();
+            
+            if (!expensesByCategory[category]) {
+                expensesByCategory[category] = [];
+                categoryTotals[category] = 0;
+            }
+            
+            expensesByCategory[category].push({
+                date, description, amount, status, reference
+            });
+            
+            categoryTotals[category] += amount;
+            grandTotal += amount;
+        }
+    });
+    
+    // Create print window
+    const printWindow = window.open('', '_blank');
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Expense Tracking Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .company-name { font-size: 24px; font-weight: bold; color: #2c3e50; }
+                .report-title { font-size: 18px; color: #7f8c8d; margin-top: 10px; }
+                .report-info { font-size: 12px; color: #95a5a6; margin-top: 5px; }
+                .summary { background-color: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 5px; }
+                .summary h3 { margin-top: 0; color: #2c3e50; }
+                .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+                .summary-item { text-align: center; }
+                .summary-value { font-size: 18px; font-weight: bold; color: #28a745; }
+                .summary-label { font-size: 12px; color: #6c757d; }
+                .category-section { margin: 30px 0; }
+                .category-header { background-color: #e9ecef; padding: 10px; font-weight: bold; color: #495057; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f8f9fa; font-weight: bold; }
+                .text-right { text-align: right; }
+                .amount { font-weight: bold; }
+                .status-approved { color: #28a745; font-weight: bold; }
+                .status-pending { color: #ffc107; font-weight: bold; }
+                .status-rejected { color: #dc3545; font-weight: bold; }
+                .category-total { background-color: #e9ecef; font-weight: bold; }
+                .footer { margin-top: 30px; font-size: 12px; color: #95a5a6; text-align: center; }
+                @media print {
+                    body { margin: 0; }
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="company-name">EVERGREEN</div>
+                <div class="report-title">Expense Tracking Report</div>
+                <div class="report-info">Generated: ${new Date().toLocaleString()}</div>
+            </div>
+            
+            <div class="summary">
+                <h3>Summary</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-value">${rows.length}</div>
+                        <div class="summary-label">Total Expenses</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">₱${grandTotal.toFixed(2)}</div>
+                        <div class="summary-label">Grand Total</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">${Object.keys(categoryTotals).length}</div>
+                        <div class="summary-label">Categories</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">₱${(grandTotal / rows.length).toFixed(2)}</div>
+                        <div class="summary-label">Average per Expense</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="summary">
+                <h3>Summary by Category</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th class="text-right">Total Amount</th>
+                            <th class="text-right">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.keys(categoryTotals).sort().map(category => {
+                            const total = categoryTotals[category];
+                            const percentage = ((total / grandTotal) * 100).toFixed(2);
+                            return `
+                                <tr>
+                                    <td>${category}</td>
+                                    <td class="text-right amount">₱${total.toFixed(2)}</td>
+                                    <td class="text-right">${percentage}%</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            ${Object.keys(expensesByCategory).sort().map(category => `
+                <div class="category-section">
+                    <div class="category-header">CATEGORY: ${category.toUpperCase()}</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th class="text-right">Amount</th>
+                                <th>Status</th>
+                                <th>Reference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${expensesByCategory[category].map(expense => {
+                                const statusClass = expense.status.toLowerCase().includes('approved') ? 'status-approved' : 
+                                                  expense.status.toLowerCase().includes('pending') ? 'status-pending' : 
+                                                  expense.status.toLowerCase().includes('rejected') ? 'status-rejected' : '';
+                                
+                                return `
+                                    <tr>
+                                        <td>${expense.date}</td>
+                                        <td>${expense.description}</td>
+                                        <td class="text-right amount">₱${expense.amount.toFixed(2)}</td>
+                                        <td class="${statusClass}">${expense.status}</td>
+                                        <td>${expense.reference}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                            <tr class="category-total">
+                                <td colspan="2"><strong>TOTAL FOR ${category.toUpperCase()}</strong></td>
+                                <td class="text-right amount"><strong>₱${categoryTotals[category].toFixed(2)}</strong></td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `).join('')}
+            
+            <div class="footer">
+                <p>This report was generated by the Evergreen Accounting & Finance System</p>
+                <p>Total Expenses: ${rows.length} | Grand Total: ₱${grandTotal.toFixed(2)}</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+    
+    showNotification('Expense report printed successfully!', 'success');
 }
 
 // Utility functions
