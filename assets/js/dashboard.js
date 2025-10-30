@@ -15,6 +15,7 @@
         initModuleCardInteractions();
         initNotifications();
         initDropdownAnimations();
+        initLogoutConfirmation();
     });
 
     /**
@@ -172,6 +173,24 @@
                     menu.style.transform = 'translateY(-10px)';
                 });
             }
+        });
+    }
+
+    /**
+     * Add logout confirmation dialog
+     */
+    function initLogoutConfirmation() {
+        const logoutLinks = document.querySelectorAll('a[href*="logout.php"]');
+        
+        logoutLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Show confirmation dialog
+                if (confirm('Are you sure you want to logout? Any unsaved changes will be lost.')) {
+                    window.location.href = this.getAttribute('href');
+                }
+            });
         });
     }
 

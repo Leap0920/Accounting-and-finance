@@ -47,10 +47,10 @@ body {
 
 .payroll-tabs-container {
     background: linear-gradient(135deg, var(--primary-teal) 0%, var(--bg-dark-teal) 100%);
-    border-radius: 50px;
-    padding: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(10, 61, 61, 0.15);
     margin-bottom: 2rem;
+    padding: 15px;
 }
 
 .payroll-nav-tabs {
@@ -61,30 +61,49 @@ body {
 }
 
 .payroll-nav-tabs .nav-link {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.8);
     background: transparent;
     border: none;
-    border-radius: 30px;
-    padding: 12px 20px;
+    border-radius: 15px;
+    padding: 15px 25px;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: 0.5px;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
     flex: 1;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.payroll-nav-tabs .nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.payroll-nav-tabs .nav-link:hover::before {
+    left: 100%;
 }
 
 .payroll-nav-tabs .nav-link:hover {
     color: #fff;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
 }
 
 .payroll-nav-tabs .nav-link.active {
     color: var(--text-dark);
-    background: var(--accent-gold);
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--light-gold) 100%);
     font-weight: 700;
-    box-shadow: 0 2px 10px rgba(193, 120, 23, 0.3);
+    box-shadow: 0 4px 20px rgba(193, 120, 23, 0.4);
+    transform: translateY(-2px);
 }
 
 /* ========================================
@@ -95,8 +114,16 @@ body {
     background: var(--card-bg);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
     margin-bottom: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.payroll-content-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
 }
 
 .payroll-section-title {
@@ -324,27 +351,57 @@ body {
 
 .employee-details-grid {
     display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 30px;
+    grid-template-columns: 220px 1fr;
+    gap: 40px;
     align-items: start;
 }
 
 .employee-photo-section {
     text-align: center;
+    position: relative;
 }
 
 .employee-photo {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     background: linear-gradient(135deg, var(--primary-teal), var(--secondary-teal));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 15px;
-    font-size: 60px;
+    margin: 0 auto 20px;
+    font-size: 70px;
     color: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(10, 61, 61, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.employee-photo::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    transition: all 0.6s;
+}
+
+.employee-photo:hover::before {
+    animation: shimmer 1.5s ease-in-out;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.employee-photo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 35px rgba(10, 61, 61, 0.4);
 }
 
 .employee-status {
@@ -357,19 +414,28 @@ body {
 
 .employee-info-table {
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
     margin: 0;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 .employee-info-table td {
-    padding: 12px 15px;
-    border: 2px solid var(--border-color);
+    padding: 18px 20px;
+    border: none;
+    border-bottom: 1px solid rgba(224, 224, 224, 0.5);
+    transition: all 0.3s ease;
+}
+
+.employee-info-table tr:hover td {
+    background-color: rgba(245, 241, 232, 0.3);
 }
 
 .employee-info-table td:first-child {
-    font-weight: 600;
-    background: var(--bg-cream);
-    color: var(--text-dark);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--bg-cream), rgba(245, 241, 232, 0.8));
+    color: var(--primary-teal);
     width: 40%;
 }
 
@@ -1013,19 +1079,33 @@ body {
    ======================================== */
 
 .payslip-header {
-    background: var(--bg-cream);
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    border: 1px solid var(--border-color);
+    background: linear-gradient(135deg, var(--bg-cream), rgba(245, 241, 232, 0.8));
+    padding: 25px 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    border: 2px solid rgba(10, 61, 61, 0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.payslip-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-teal), var(--accent-gold), var(--secondary-teal));
 }
 
 .tax-period-info {
-    background: var(--bg-cream);
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    border: 1px solid var(--border-color);
+    background: linear-gradient(135deg, rgba(10, 61, 61, 0.05), rgba(22, 90, 90, 0.05));
+    padding: 20px 25px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(10, 61, 61, 0.15);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
 }
 
 /* ========================================
@@ -1034,11 +1114,23 @@ body {
 
 .section-subtitle {
     color: var(--primary-teal);
-    font-weight: 600;
-    font-size: 16px;
-    margin: 25px 0 15px 0;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--bg-cream);
+    font-weight: 700;
+    font-size: 18px;
+    margin: 30px 0 20px 0;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, rgba(10, 61, 61, 0.05), rgba(22, 90, 90, 0.05));
+    border-radius: 10px;
+    border-left: 4px solid var(--accent-gold);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-subtitle::before {
+    content: '▶';
+    color: var(--accent-gold);
+    font-size: 14px;
 }
 
 /* ========================================

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Ledger — UX Mockup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="general-ledger-ux.css">
+</head>
+
+<body class="glx-body">
+    <header class="glx-navbar">
+        <div class="glx-navbar__brand" aria-label="Evergreen home">
+            <span class="glx-logo">E</span>
+            <div>
+                <p class="glx-navbar__title">Evergreen Finance</p>
+                <p class="glx-navbar__subtitle">General Ledger Workspace</p>
+            </div>
+        </div>
+        <div class="glx-navbar__actions">
+            <div class="glx-navbar__pill">
+                <span class="glx-navbar__status-dot" aria-hidden="true"></span>
+                <span>Books closed • Q3 FY25</span>
+            </div>
+            <button class="glx-btn glx-btn--ghost" type="button">Support</button>
+            <button class="glx-btn glx-btn--primary" type="button">Create Journal</button>
+            <div class="glx-avatar" role="button" aria-haspopup="menu">
+                <span class="glx-avatar__initials" aria-hidden="true">MS</span>
+                <span class="glx-avatar__name">Maria Santos</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="glx-main" aria-labelledby="glx-page-title">
+        <section class="glx-hero">
+            <div>
+                <h1 id="glx-page-title">General Ledger Control Center</h1>
+                <p class="glx-hero__lead">Surface the right ledgers, spot anomalies, and hand off tasks without leaving
+                    this view.</p>
+                <div class="glx-hero__actions" role="group" aria-label="Primary actions">
+                    <button class="glx-btn glx-btn--primary" type="button">Review Pending Journals</button>
+                    <button class="glx-btn glx-btn--outline" type="button">Download Trial Balance</button>
+                </div>
+            </div>
+            <div class="glx-filter-chips" role="list" aria-label="Active filters">
+                <span class="glx-chip" role="listitem">Period: Oct 01 – Oct 31</span>
+                <span class="glx-chip" role="listitem">Entity: Evergreen Manila</span>
+                <span class="glx-chip glx-chip--alert" role="listitem">3 unresolved variances</span>
+            </div>
+        </section>
+
+        <section class="glx-stats" aria-label="Ledger KPIs">
+            <article class="glx-stat-card">
+                <h2>Total accounts</h2>
+                <p class="glx-stat-card__value">128</p>
+                <p class="glx-stat-card__trend glx-stat-card__trend--up">12 new YTD</p>
+            </article>
+            <article class="glx-stat-card">
+                <h2>Transactions this period</h2>
+                <p class="glx-stat-card__value">1,842</p>
+                <p class="glx-stat-card__trend">Avg. 68 per day</p>
+            </article>
+            <article class="glx-stat-card">
+                <h2>Outstanding approvals</h2>
+                <p class="glx-stat-card__value">6</p>
+                <p class="glx-stat-card__trend glx-stat-card__trend--alert">4 breach SLA</p>
+            </article>
+            <article class="glx-stat-card">
+                <h2>Variance watchlist</h2>
+                <p class="glx-stat-card__value">₱215k</p>
+                <p class="glx-stat-card__trend">Across 3 cost centers</p>
+            </article>
+        </section>
+
+        <section class="glx-summary" aria-label="Period summary">
+            <div class="glx-summary__item">
+                <h3>Focus period</h3>
+                <p>October 2025</p>
+                <button class="glx-link" type="button">Change period</button>
+            </div>
+            <div class="glx-summary__item">
+                <h3>Prepared by</h3>
+                <p>Gerald Cruz</p>
+                <button class="glx-link" type="button">Reassign</button>
+            </div>
+            <div class="glx-summary__item">
+                <h3>Submission deadline</h3>
+                <p>Nov 05, 2025 • 5:00 PM</p>
+                <button class="glx-link" type="button">View checklist</button>
+            </div>
+        </section>
+
+        <div class="glx-grid">
+            <div class="glx-grid__main">
+                <section class="glx-card" aria-label="Ledger filters">
+                    <header class="glx-card__header">
+                        <div>
+                            <h2>Ledger filters</h2>
+                            <p>Focus your view without losing context.</p>
+                        </div>
+                        <button class="glx-btn glx-btn--ghost" type="button">Save as default</button>
+                    </header>
+                    <div class="glx-card__body glx-card__body--filters">
+                        <div class="glx-field">
+                            <label for="search-ledger">Search accounts</label>
+                            <input id="search-ledger" type="search" placeholder="Type account code, name, or keyword">
+                        </div>
+                        <div class="glx-field">
+                            <label for="filter-ledger-type">Ledger type</label>
+                            <select id="filter-ledger-type">
+                                <option>All</option>
+                                <option>Assets</option>
+                                <option>Liabilities</option>
+                                <option>Revenue</option>
+                                <option>Expenses</option>
+                            </select>
+                        </div>
+                        <div class="glx-field">
+                            <label for="filter-ledger-status">Status</label>
+                            <div class="glx-toggle-group" role="group" aria-label="Ledger status">
+                                <button class="glx-toggle glx-toggle--active" type="button">Active</button>
+                                <button class="glx-toggle" type="button">Dormant</button>
+                                <button class="glx-toggle" type="button">Archived</button>
+                            </div>
+                        </div>
+                        <div class="glx-field glx-field--full">
+                            <label for="filter-tags">Tags</label>
+                            <div class="glx-tag-input" id="filter-tags">
+                                <span>Cash Management</span>
+                                <span>Compliance</span>
+                                <button type="button" aria-label="Add tag">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="glx-card__footer">
+                        <div class="glx-btn-group" role="group" aria-label="Filter actions">
+                            <button class="glx-btn glx-btn--primary" type="button">Apply filters</button>
+                            <button class="glx-btn glx-btn--ghost" type="button">Reset</button>
+                        </div>
+                        <p class="glx-card__hint">Auto-refresh every 15 minutes.</p>
+                    </footer>
+                </section>
+
+                <section class="glx-card" aria-label="Ledger activity overview">
+                    <header class="glx-card__header glx-card__header--compact">
+                        <div>
+                            <h2>Ledger activity</h2>
+                            <p>Monitor balances and spot outliers across accounts.</p>
+                        </div>
+                        <button class="glx-btn glx-btn--ghost" type="button">Export CSV</button>
+                    </header>
+                    <div class="glx-card__body glx-card__body--scroll">
+                        <table class="glx-table">
+                            <caption class="visually-hidden">Ledger balances and recent movement</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Account</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Ending balance</th>
+                                    <th scope="col">Movement (30d)</th>
+                                    <th scope="col">Owner</th>
+                                    <th scope="col"><span class="visually-hidden">Open actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th scope="row">1010 · Cash on Hand</th>
+                                    <td>Asset</td>
+                                    <td>₱425,800.00</td>
+                                    <td class="glx-badge glx-badge--positive">+₱35,200</td>
+                                    <td>Finance Ops</td>
+                                    <td><button class="glx-link" type="button">Inspect</button></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">2015 · Accounts Payable</th>
+                                    <td>Liability</td>
+                                    <td>₱812,450.00</td>
+                                    <td class="glx-badge glx-badge--alert">+₱120,830</td>
+                                    <td>Procurement</td>
+                                    <td><button class="glx-link" type="button">Escalate</button></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">4010 · Subscription Revenue</th>
+                                    <td>Revenue</td>
+                                    <td>₱1,935,670.00</td>
+                                    <td class="glx-badge">+₱64,500</td>
+                                    <td>Revenue Ops</td>
+                                    <td><button class="glx-link" type="button">View journal</button></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">5102 · Software Expense</th>
+                                    <td>Expense</td>
+                                    <td>₱187,990.00</td>
+                                    <td class="glx-badge">-₱12,400</td>
+                                    <td>IT Shared Services</td>
+                                    <td><button class="glx-link" type="button">Flag variance</button></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">7100 · FX Gain/Loss</th>
+                                    <td>Other</td>
+                                    <td>₱18,240.00</td>
+                                    <td class="glx-badge glx-badge--alert">+₱9,200</td>
+                                    <td>Treasury</td>
+                                    <td><button class="glx-link" type="button">Review entries</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <footer class="glx-card__footer glx-card__footer--split">
+                        <div>
+                            <p class="glx-card__hint">Showing accounts with movement > ₱5k in the last 30 days.</p>
+                        </div>
+                        <div class="glx-btn-group">
+                            <button class="glx-btn glx-btn--ghost" type="button">Customize columns</button>
+                            <button class="glx-btn glx-btn--primary" type="button">Open in ledger module</button>
+                        </div>
+                    </footer>
+                </section>
+            </div>
+
+            <aside class="glx-grid__aside" aria-label="Contextual insights">
+                <section class="glx-card glx-card--accent" aria-label="Variance drill-down">
+                    <header class="glx-card__header glx-card__header--compact">
+                        <div>
+                            <h2>Variance spotlight</h2>
+                            <p>High-risk movements needing attention.</p>
+                        </div>
+                        <span class="glx-pill">Updated 5m ago</span>
+                    </header>
+                    <div class="glx-card__body glx-card__body--stack">
+                        <article class="glx-variance">
+                            <div>
+                                <h3>Marketing Accruals</h3>
+                                <p>Unposted ₱82k difference vs. budget.</p>
+                            </div>
+                            <button class="glx-btn glx-btn--outline" type="button">Send reminder</button>
+                        </article>
+                        <article class="glx-variance">
+                            <div>
+                                <h3>Inventory Adjustments</h3>
+                                <p>Warehouse audit pending sign-off.</p>
+                            </div>
+                            <button class="glx-btn glx-btn--outline" type="button">View packet</button>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="glx-card" aria-label="Close checklist">
+                    <header class="glx-card__header glx-card__header--compact">
+                        <h2>Close checklist</h2>
+                        <button class="glx-link" type="button">See all tasks</button>
+                    </header>
+                    <ol class="glx-checklist">
+                        <li>
+                            <span>Confirm bank reconciliations</span>
+                            <span class="glx-checklist__status">Completed</span>
+                        </li>
+                        <li>
+                            <span>Review intercompany balances</span>
+                            <span class="glx-checklist__status glx-checklist__status--progress">In progress</span>
+                        </li>
+                        <li>
+                            <span>Post depreciation journals</span>
+                            <span class="glx-checklist__status glx-checklist__status--pending">Pending</span>
+                        </li>
+                    </ol>
+                </section>
+
+                <section class="glx-card" aria-label="Activity timeline">
+                    <header class="glx-card__header glx-card__header--compact">
+                        <h2>Activity timeline</h2>
+                        <button class="glx-link" type="button">Export log</button>
+                    </header>
+                    <ul class="glx-timeline">
+                        <li>
+                            <div class="glx-timeline__dot glx-timeline__dot--success"></div>
+                            <div>
+                                <p class="glx-timeline__title">AJ-2025-014 approved</p>
+                                <p class="glx-timeline__meta">Louise Tan • 2h ago</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="glx-timeline__dot glx-timeline__dot--warning"></div>
+                            <div>
+                                <p class="glx-timeline__title">Variance flagged on AP Aging</p>
+                                <p class="glx-timeline__meta">System alert • 4h ago</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="glx-timeline__dot"></div>
+                            <div>
+                                <p class="glx-timeline__title">Pending approval reminder sent</p>
+                                <p class="glx-timeline__meta">Automation • 6h ago</p>
+                            </div>
+                        </li>
+                    </ul>
+                </section>
+            </aside>
+        </div>
+    </main>
+
+    <footer class="glx-footer">
+        <p>Prepared for feedback • UX concept · October 2025</p>
+        <button class="glx-link" type="button">Open design notes</button>
+    </footer>
+</body>
+
+</html>
