@@ -75,10 +75,8 @@ $current_user = getCurrentUser();
                             </a>
                             <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="settingsDropdown">
                                 <li><a class="dropdown-item" href="bin-station.php"><i class="fas fa-trash-alt me-2"></i>Bin Station</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>General Settings</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user-cog me-2"></i>User Management</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-database me-2"></i>Database Settings</a></li>
+                                <li><a class="dropdown-item" href="database-settings.php"><i class="fas fa-database me-2"></i>Database Settings</a></li>
                             </ul>
                     </li>
                 </ul>
@@ -138,9 +136,7 @@ $current_user = getCurrentUser();
                             </div>
                         </li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>My Profile</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Account Settings</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-history me-2"></i>Activity Log</a></li>
+                        <li><a class="dropdown-item" href="activity-log.php"><i class="fas fa-history me-2"></i>Activity Log</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="../core/logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                     </ul>
@@ -552,9 +548,6 @@ $current_user = getCurrentUser();
                             <button class="btn btn-outline-secondary btn-lg px-3" onclick="clearFilters()">
                                 <i class="fas fa-times"></i>
                             </button>
-                            <button class="btn btn-outline-info btn-sm ms-2" onclick="testFilters()" title="Test filtering">
-                                <i class="fas fa-bug"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -586,6 +579,45 @@ $current_user = getCurrentUser();
                     <i class="fas fa-print me-1"></i>Print
                                 </button>
                 </div>
+
+            <!-- Pagination Controls -->
+            <div class="pagination-controls mb-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <label for="entries-per-page" class="form-label me-2 mb-0">Show</label>
+                            <select class="form-select form-select-sm" id="entries-per-page" style="width: auto;" onchange="changeEntriesPerPage()">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span class="ms-2">entries per page</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-end align-items-center">
+                            <span class="text-muted me-3" id="pagination-info">Showing 0 to 0 of 0 entries</span>
+                            <nav aria-label="Pagination">
+                                <ul class="pagination pagination-sm mb-0" id="pagination-controls">
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" onclick="goToPage(1)">First</a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" onclick="goToPreviousPage()">Previous</a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" onclick="goToNextPage()">Next</a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" onclick="goToLastPage()">Last</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="results-table-container">
                 <div class="table-responsive">
