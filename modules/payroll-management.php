@@ -342,6 +342,7 @@ if ($selected_employee) {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../assets/css/financial-reporting.css">
     <link rel="stylesheet" href="../assets/css/payroll-management.css">
 </head>
 <body>
@@ -468,162 +469,211 @@ if ($selected_employee) {
         </div>
     </nav>
     
-    <!-- Page Title -->
-    <div class="page-header-payroll">
-        <div class="container-fluid">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h2>Payroll Management</h2>
-                </div>
-                <div class="col-md-6">
-                    <div class="employee-selector">
-                        <label for="employee-select" class="form-label">Select Employee:</label>
-                        <select class="form-select" id="employee-select" onchange="changeEmployee()">
-                            <option value="">Choose an employee...</option>
-                            <?php 
-                            $employees_result->data_seek(0);
-                            while($emp = $employees_result->fetch_assoc()): 
-                            ?>
-                                <option value="<?php echo $emp['external_employee_no']; ?>" 
-                                        <?php echo ($emp['external_employee_no'] == $selected_employee) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($emp['name'] . ' (' . $emp['external_employee_no'] . ')'); ?>
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
+    <!-- Main Content -->
+    <main class="container-fluid py-3">
+        <!-- Beautiful Page Header -->
+        <div class="beautiful-page-header mb-3">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="header-content">
+                            <h1 class="page-title-beautiful">
+                                <i class="fas fa-users me-3"></i>
+                                Payroll Management
+                            </h1>
+                            <p class="page-subtitle-beautiful">
+                                Manage employee payroll, attendance, and tax information
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Advanced Search and Filters -->
-            <div class="search-filters-section">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="search-filters-card">
-                            <div class="filters-header">
-                                <div class="filters-title-section">
-                                    <h5><i class="fas fa-search me-2"></i>Search & Filter Employees</h5>
-                                    <div class="results-counter">
-                                        <span class="badge bg-primary">
-                                            <?php echo $employees_result->num_rows; ?> employee<?php echo $employees_result->num_rows != 1 ? 's' : ''; ?> found
-                                        </span>
-                                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <div class="header-info-card">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-database"></i>
                                 </div>
-                                <button class="btn-toggle-filters" onclick="toggleFilters()">
-                                    <i class="fas fa-filter me-1"></i>Filters
-                                    <i class="fas fa-chevron-down" id="filter-chevron"></i>
-                                </button>
+                                <div class="info-content">
+                                    <div class="info-label">Database Status</div>
+                                    <div class="info-value status-connected">Connected</div>
+                                </div>
                             </div>
-                            
-                            <div class="filters-content" id="filters-content">
-                                <form method="GET" class="filters-form">
-                                    <div class="row g-3">
-                                        <!-- Search Bar -->
-                                        <div class="col-md-4">
-                                            <label for="search" class="form-label">Search</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-search"></i>
-                                                </span>
-                                                <input type="text" class="form-control" id="search" name="search" 
-                                                       placeholder="Search by name or employee number..." 
-                                                       value="<?php echo htmlspecialchars($search_term); ?>">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Position Filter -->
-                                        <div class="col-md-2">
-                                            <label for="position" class="form-label">Position</label>
-                                            <select class="form-select" id="position" name="position">
-                                                <option value="">All Positions</option>
-                                                <?php 
-                                                $positions_result->data_seek(0);
-                                                while($pos = $positions_result->fetch_assoc()): 
-                                                ?>
-                                                    <option value="<?php echo htmlspecialchars($pos['position']); ?>" 
-                                                            <?php echo ($pos['position'] == $filter_position) ? 'selected' : ''; ?>>
-                                                        <?php echo htmlspecialchars($pos['position']); ?>
-                                                    </option>
-                                                <?php endwhile; ?>
-                                            </select>
-                                        </div>
-                                        
-                                        <!-- Department Filter -->
-                                        <div class="col-md-2">
-                                            <label for="department" class="form-label">Department</label>
-                                            <select class="form-select" id="department" name="department">
-                                                <option value="">All Departments</option>
-                                                <?php 
-                                                $departments_result->data_seek(0);
-                                                while($dept = $departments_result->fetch_assoc()): 
-                                                ?>
-                                                    <option value="<?php echo htmlspecialchars($dept['department']); ?>" 
-                                                            <?php echo ($dept['department'] == $filter_department) ? 'selected' : ''; ?>>
-                                                        <?php echo htmlspecialchars($dept['department']); ?>
-                                                    </option>
-                                                <?php endwhile; ?>
-                                            </select>
-                                        </div>
-                                        
-                                        <!-- Employment Type Filter -->
-                                        <div class="col-md-2">
-                                            <label for="type" class="form-label">Type</label>
-                                            <select class="form-select" id="type" name="type">
-                                                <option value="">All Types</option>
-                                                <?php 
-                                                $types_result->data_seek(0);
-                                                while($type = $types_result->fetch_assoc()): 
-                                                ?>
-                                                    <option value="<?php echo htmlspecialchars($type['employment_type']); ?>" 
-                                                            <?php echo ($type['employment_type'] == $filter_type) ? 'selected' : ''; ?>>
-                                                        <?php echo ucfirst($type['employment_type']); ?>
-                                                    </option>
-                                                <?php endwhile; ?>
-                                            </select>
-                                        </div>
-                                        
-                                        <!-- Action Buttons -->
-                                        <div class="col-md-2">
-                                            <label class="form-label">&nbsp;</label>
-                                            <div class="d-flex gap-2">
-                                                <button type="submit" class="btn btn-primary btn-sm">
-                                                    <i class="fas fa-search me-1"></i>Search
-                                                </button>
-                                                <a href="?" class="btn btn-outline-secondary btn-sm">
-                                                    <i class="fas fa-times me-1"></i>Clear
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Current Period</div>
+                                    <div class="info-value"><?php echo date('F Y'); ?></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <?php if ($current_employee): ?>
-            <div class="current-employee-info">
-                <div class="row">
-                    <div class="col-md-3">
-                        <strong>Employee:</strong> <?php echo htmlspecialchars($current_employee['name']); ?>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Position:</strong> <?php echo htmlspecialchars($current_employee['position'] ?? 'N/A'); ?>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Department:</strong> <?php echo htmlspecialchars($current_employee['department'] ?? 'N/A'); ?>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Type:</strong> <?php echo ucfirst($current_employee['employment_type'] ?? 'N/A'); ?>
+                <div class="header-actions mt-3">
+                    <div class="row align-items-end">
+                        <div class="col-md-8">
+                            <div class="employee-selector-header">
+                                <label for="employee-select" class="form-label mb-1">Select Employee:</label>
+                                <select class="form-select" id="employee-select" onchange="changeEmployee()">
+                                    <option value="">Choose an employee...</option>
+                                    <?php 
+                                    $employees_result->data_seek(0);
+                                    while($emp = $employees_result->fetch_assoc()): 
+                                    ?>
+                                        <option value="<?php echo $emp['external_employee_no']; ?>" 
+                                                <?php echo ($emp['external_employee_no'] == $selected_employee) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($emp['name'] . ' (' . $emp['external_employee_no'] . ')'); ?>
+                                        </option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                            <a href="../core/dashboard.php" class="btn-back-dashboard">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-            <?php endif; ?>
         </div>
-    </div>
-    
-    <!-- Main Content -->
-    <main class="container-fluid py-4">
+        
+        <!-- Advanced Search and Filters -->
+        <div class="search-filters-section mb-3">
+            <div class="search-filters-card">
+                <div class="filters-header">
+                    <div class="filters-title-section">
+                        <i class="fas fa-search me-2"></i>
+                        <h5 class="mb-0">Search & Filter Employees</h5>
+                        <div class="results-counter">
+                            <span class="badge-employee-count">
+                                <?php echo $employees_result->num_rows; ?> employee<?php echo $employees_result->num_rows != 1 ? 's' : ''; ?> found
+                            </span>
+                        </div>
+                    </div>
+                    <button class="btn-toggle-filters" onclick="toggleFilters()" type="button">
+                        <i class="fas fa-filter me-1"></i>Filters
+                        <i class="fas fa-chevron-down ms-1" id="filter-chevron"></i>
+                    </button>
+                </div>
+                        
+                        <div class="filters-content" id="filters-content">
+                            <form method="GET" class="filters-form">
+                                <input type="hidden" name="employee" value="<?php echo htmlspecialchars($selected_employee); ?>">
+                                <div class="row g-3">
+                                    <!-- Search Bar -->
+                                    <div class="col-md-4">
+                                        <label for="search" class="form-label">Search</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-search"></i>
+                                            </span>
+                                            <input type="text" class="form-control" id="search" name="search" 
+                                                   placeholder="Search by name or employee number..." 
+                                                   value="<?php echo htmlspecialchars($search_term); ?>">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Position Filter -->
+                                    <div class="col-md-2">
+                                        <label for="position" class="form-label">Position</label>
+                                        <select class="form-select" id="position" name="position">
+                                            <option value="">All Positions</option>
+                                            <?php 
+                                            $positions_result->data_seek(0);
+                                            while($pos = $positions_result->fetch_assoc()): 
+                                            ?>
+                                                <option value="<?php echo htmlspecialchars($pos['position']); ?>" 
+                                                        <?php echo ($pos['position'] == $filter_position) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($pos['position']); ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Department Filter -->
+                                    <div class="col-md-2">
+                                        <label for="department" class="form-label">Department</label>
+                                        <select class="form-select" id="department" name="department">
+                                            <option value="">All Departments</option>
+                                            <?php 
+                                            $departments_result->data_seek(0);
+                                            while($dept = $departments_result->fetch_assoc()): 
+                                            ?>
+                                                <option value="<?php echo htmlspecialchars($dept['department']); ?>" 
+                                                        <?php echo ($dept['department'] == $filter_department) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($dept['department']); ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Employment Type Filter -->
+                                    <div class="col-md-2">
+                                        <label for="type" class="form-label">Type</label>
+                                        <select class="form-select" id="type" name="type">
+                                            <option value="">All Types</option>
+                                            <?php 
+                                            $types_result->data_seek(0);
+                                            while($type = $types_result->fetch_assoc()): 
+                                            ?>
+                                                <option value="<?php echo htmlspecialchars($type['employment_type']); ?>" 
+                                                        <?php echo ($type['employment_type'] == $filter_type) ? 'selected' : ''; ?>>
+                                                    <?php echo ucfirst($type['employment_type']); ?>
+                                                </option>
+                                            <?php endwhile; ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="col-md-2">
+                                        <label class="form-label">&nbsp;</label>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-search me-1"></i>Search
+                                            </button>
+                                            <a href="?" class="btn btn-outline-secondary btn-sm">
+                                                <i class="fas fa-times me-1"></i>Clear
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+        
+        <?php if ($current_employee): ?>
+        <div class="current-employee-info-card mb-3">
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <div class="info-item">
+                        <span class="info-label">Employee:</span>
+                        <span class="info-value"><?php echo htmlspecialchars($current_employee['name']); ?></span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="info-item">
+                        <span class="info-label">Position:</span>
+                        <span class="info-value"><?php echo htmlspecialchars($current_employee['position'] ?? 'N/A'); ?></span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="info-item">
+                        <span class="info-label">Department:</span>
+                        <span class="info-value"><?php echo htmlspecialchars($current_employee['department'] ?? 'N/A'); ?></span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="info-item">
+                        <span class="info-label">Type:</span>
+                        <span class="info-value"><?php echo ucfirst($current_employee['employment_type'] ?? 'N/A'); ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+        
         <!-- Tab Navigation -->
         <div class="payroll-tabs-container">
             <ul class="nav nav-pills payroll-nav-tabs" id="payrollTabs" role="tablist">
@@ -717,35 +767,44 @@ if ($selected_employee) {
                                 $adj = $attendance_payroll_adjustments['salary_adjustments'];
                                 $has_impact = $adj['absent_deduction'] > 0 || $adj['half_day_deduction'] > 0 || $adj['late_penalty'] > 0 || $adj['overtime_pay'] > 0;
                             ?>
-                            <div class="alert alert-info mb-3" role="alert">
-                                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Payroll Impact</h6>
-                                <div class="row mt-2">
+                            <div class="alert alert-info mb-3 payroll-impact-alert" role="alert">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <h6 class="alert-heading mb-0">Payroll Impact</h6>
+                                    <?php if (!$has_impact): ?>
+                                    <span class="ms-auto text-success d-flex align-items-center">
+                                        <i class="fas fa-check-circle me-1"></i>Perfect attendance - no payroll adjustments
+                                    </span>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if ($has_impact): ?>
+                                <div class="payroll-impact-items">
                                     <?php if ($adj['overtime_pay'] > 0): ?>
-                                    <div class="col-md-6 mb-2">
-                                        <strong class="text-success">Overtime Pay:</strong> +₱<?php echo number_format($adj['overtime_pay'], 2); ?>
+                                    <div class="impact-item">
+                                        <strong class="text-success">Overtime Pay:</strong> 
+                                        <span class="impact-amount text-success">+₱<?php echo number_format($adj['overtime_pay'], 2); ?></span>
                                     </div>
                                     <?php endif; ?>
                                     <?php if ($adj['absent_deduction'] > 0): ?>
-                                    <div class="col-md-6 mb-2">
-                                        <strong class="text-danger">Absent Deduction:</strong> -₱<?php echo number_format($adj['absent_deduction'], 2); ?>
+                                    <div class="impact-item">
+                                        <strong class="text-danger">Absent Deduction:</strong> 
+                                        <span class="impact-amount text-danger">-₱<?php echo number_format($adj['absent_deduction'], 2); ?></span>
                                     </div>
                                     <?php endif; ?>
                                     <?php if ($adj['half_day_deduction'] > 0): ?>
-                                    <div class="col-md-6 mb-2">
-                                        <strong class="text-warning">Half Day Deduction:</strong> -₱<?php echo number_format($adj['half_day_deduction'], 2); ?>
+                                    <div class="impact-item">
+                                        <strong class="text-warning">Half Day Deduction:</strong> 
+                                        <span class="impact-amount text-warning">-₱<?php echo number_format($adj['half_day_deduction'], 2); ?></span>
                                     </div>
                                     <?php endif; ?>
                                     <?php if ($adj['late_penalty'] > 0): ?>
-                                    <div class="col-md-6 mb-2">
-                                        <strong class="text-danger">Late Penalty:</strong> -₱<?php echo number_format($adj['late_penalty'], 2); ?>
-                                    </div>
-                                    <?php endif; ?>
-                                    <?php if (!$has_impact): ?>
-                                    <div class="col-12">
-                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i>Perfect attendance - no payroll adjustments</span>
+                                    <div class="impact-item">
+                                        <strong class="text-danger">Late Penalty:</strong> 
+                                        <span class="impact-amount text-danger">-₱<?php echo number_format($adj['late_penalty'], 2); ?></span>
                                     </div>
                                     <?php endif; ?>
                                 </div>
+                                <?php endif; ?>
                             </div>
                             <?php endif; ?>
                             
@@ -1719,7 +1778,6 @@ if ($selected_employee) {
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
     
