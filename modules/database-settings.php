@@ -309,9 +309,6 @@ if ($conn) {
                             <button class="btn btn-warning" onclick="optimizeTables()">
                                 <i class="fas fa-magic me-2"></i>Optimize Tables
                             </button>
-                            <button class="btn btn-success" onclick="exportSchema()">
-                                <i class="fas fa-download me-2"></i>Export Schema
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -401,10 +398,6 @@ if ($conn) {
             if (confirm('This will optimize all database tables. Continue?')) {
                 alert('Table optimization completed!');
             }
-        }
-        
-        function exportSchema() {
-            alert('Schema export feature coming soon!');
         }
         
         function analyzeTable(tableName) {
