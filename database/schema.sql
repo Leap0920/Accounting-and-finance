@@ -47,6 +47,7 @@ CREATE TABLE employee_refs (
   name VARCHAR(200),
   department VARCHAR(100),
   position VARCHAR(100),
+  base_monthly_salary DECIMAL(12,2) DEFAULT 0.00,
   employment_type ENUM('regular','contract','part-time') DEFAULT 'regular',
   external_source VARCHAR(100) DEFAULT 'HRIS',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

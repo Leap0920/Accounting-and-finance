@@ -1,6 +1,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../includes/session.php';
+require_once 'api/payroll-calculation.php';
 
 requireLogin();
 $current_user = getCurrentUser();
@@ -77,6 +78,12 @@ if ($selected_employee) {
     $employee_result = $conn->query("SELECT * FROM employee_refs ORDER BY name LIMIT 1");
     $current_employee = $employee_result->fetch_assoc();
     $selected_employee = $current_employee ? $current_employee['external_employee_no'] : '';
+}
+
+// Get employee base salary directly from employee_refs table
+$position_salary = 0;
+if ($selected_employee && $current_employee && isset($current_employee['base_monthly_salary'])) {
+    $position_salary = floatval($current_employee['base_monthly_salary']);
 }
 
 // Fetch salary components for earnings
@@ -257,8 +264,10 @@ if ($selected_employee) {
     
     while ($row = $attendance_result->fetch_assoc()) {
         $attendance_data[] = $row;
-        
-        // Calculate summary
+    }
+    
+    // Calculate summary from attendance data for display (will be overridden by API if available)
+    foreach ($attendance_data as $row) {
         $attendance_summary['total_days']++;
         $attendance_summary['total_hours'] += $row['hours_worked'];
         $attendance_summary['overtime_hours'] += $row['overtime_hours'];
@@ -284,6 +293,38 @@ if ($selected_employee) {
                 $attendance_summary['regular_hours'] += $row['hours_worked'];
                 break;
         }
+    }
+}
+
+// Calculate attendance-based payroll adjustments for current month
+$attendance_payroll_adjustments = null;
+if ($selected_employee) {
+    $current_month_start = date('Y-m-01');
+    $current_month_end = date('Y-m-t');
+    
+    // Get base salary components
+    $base_components = [];
+    if ($earnings_result) {
+        $earnings_result->data_seek(0);
+        while($earning = $earnings_result->fetch_assoc()) {
+            $base_components[] = $earning;
+        }
+        // Reset pointer for later use
+        $earnings_result->data_seek(0);
+    }
+    
+    // Calculate payroll based on attendance
+    $attendance_payroll_adjustments = calculatePayrollFromAttendance(
+        $conn, 
+        $selected_employee, 
+        $current_month_start, 
+        $current_month_end,
+        $base_components
+    );
+    
+    // Use attendance summary from API calculation as single source of truth
+    if ($attendance_payroll_adjustments && isset($attendance_payroll_adjustments['attendance_summary'])) {
+        $attendance_summary = $attendance_payroll_adjustments['attendance_summary'];
     }
 }
 ?>
@@ -671,6 +712,43 @@ if ($selected_employee) {
                         <!-- Attendance Summary Cards -->
                         <div class="attendance-summary-section">
                             <h5 class="section-subtitle">Attendance Summary - <?php echo date('F Y', strtotime($attendance_month . '-01')); ?></h5>
+                            
+                            <?php if ($attendance_payroll_adjustments && $attendance_month == date('Y-m')): 
+                                $adj = $attendance_payroll_adjustments['salary_adjustments'];
+                                $has_impact = $adj['absent_deduction'] > 0 || $adj['half_day_deduction'] > 0 || $adj['late_penalty'] > 0 || $adj['overtime_pay'] > 0;
+                            ?>
+                            <div class="alert alert-info mb-3" role="alert">
+                                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Payroll Impact</h6>
+                                <div class="row mt-2">
+                                    <?php if ($adj['overtime_pay'] > 0): ?>
+                                    <div class="col-md-6 mb-2">
+                                        <strong class="text-success">Overtime Pay:</strong> +₱<?php echo number_format($adj['overtime_pay'], 2); ?>
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php if ($adj['absent_deduction'] > 0): ?>
+                                    <div class="col-md-6 mb-2">
+                                        <strong class="text-danger">Absent Deduction:</strong> -₱<?php echo number_format($adj['absent_deduction'], 2); ?>
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php if ($adj['half_day_deduction'] > 0): ?>
+                                    <div class="col-md-6 mb-2">
+                                        <strong class="text-warning">Half Day Deduction:</strong> -₱<?php echo number_format($adj['half_day_deduction'], 2); ?>
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php if ($adj['late_penalty'] > 0): ?>
+                                    <div class="col-md-6 mb-2">
+                                        <strong class="text-danger">Late Penalty:</strong> -₱<?php echo number_format($adj['late_penalty'], 2); ?>
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php if (!$has_impact): ?>
+                                    <div class="col-12">
+                                        <span class="text-success"><i class="fas fa-check-circle me-1"></i>Perfect attendance - no payroll adjustments</span>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
                             <div class="row g-3 mb-4">
                                 <div class="col-md-3">
                                     <div class="attendance-summary-card present">
@@ -909,6 +987,51 @@ if ($selected_employee) {
                         </div>
                     <?php endif; ?>
                     
+                    <!-- Attendance Summary for Payroll Tab -->
+                    <?php if ($selected_employee && $attendance_summary): ?>
+                    <div class="mb-4">
+                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo date('F Y'); ?></h5>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="attendance-summary-card present">
+                                    <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number"><?php echo $attendance_summary['present_days']; ?></div>
+                                        <div class="summary-label">Present Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="attendance-summary-card absent">
+                                    <div class="summary-icon"><i class="fas fa-times-circle"></i></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number"><?php echo $attendance_summary['absent_days']; ?></div>
+                                        <div class="summary-label">Absent Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="attendance-summary-card late">
+                                    <div class="summary-icon"><i class="fas fa-clock"></i></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number"><?php echo $attendance_summary['late_days']; ?></div>
+                                        <div class="summary-label">Late Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="attendance-summary-card leave">
+                                    <div class="summary-icon"><i class="fas fa-calendar-times"></i></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number"><?php echo $attendance_summary['leave_days']; ?></div>
+                                        <div class="summary-label">Leave Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
                     <div class="payroll-two-column">
                         <!-- Earnings Column -->
                         <div class="payroll-column-card">
@@ -927,6 +1050,7 @@ if ($selected_employee) {
                                         $earnings_result->data_seek(0);
                                         while($earning = $earnings_result->fetch_assoc()): 
                                             // Use payslip JSON data if available for accurate Philippine calculations
+                                            // Otherwise, apply attendance-based adjustments
                                             $amount = 0;
                                             if ($payslip_data && $payslip_data['payslip_json']) {
                                                 $payslip_json = json_decode($payslip_data['payslip_json'], true);
@@ -940,8 +1064,29 @@ if ($selected_employee) {
                                                     default: $amount = $earning['value']; break;
                                                 }
                                             } else {
-                                                $amount = $earning['value'];
+                                                // Apply position-based salary and attendance adjustments for basic salary
+                                                if ($earning['code'] === 'BASIC') {
+                                                    // Use position-based salary if available, otherwise use component value
+                                                    $base_amount = ($position_salary > 0) ? $position_salary : $earning['value'];
+                                                    
+                                                    // Apply attendance-based adjustments if available
+                                                    if ($attendance_payroll_adjustments) {
+                                                        // If adjusted salary is calculated, use it; otherwise use base
+                                                        $adj_salary = $attendance_payroll_adjustments['salary_adjustments']['adjusted_salary'];
+                                                        $amount = ($adj_salary > 0) ? $adj_salary : $base_amount;
+                                                    } else {
+                                                        $amount = $base_amount;
+                                                    }
+                                                } else {
+                                                    $amount = $earning['value'];
+                                                }
                                             }
+                                            
+                                            // Add overtime pay if this is the overtime component
+                                            if ($earning['code'] === 'OVERTIME' && $attendance_payroll_adjustments) {
+                                                $amount = $attendance_payroll_adjustments['salary_adjustments']['overtime_pay'];
+                                            }
+                                            
                                             $current_earnings_total += $amount;
                                     ?>
                                         <tr>
@@ -979,6 +1124,43 @@ if ($selected_employee) {
                                 <tbody>
                                     <?php 
                                     $current_deductions_total = 0;
+                                    
+                                    // Add attendance-based deductions first (before regular deductions)
+                                    if ($attendance_payroll_adjustments && !$payslip_data): 
+                                        $adj = $attendance_payroll_adjustments['salary_adjustments'];
+                                        
+                                        // Absent days deduction
+                                        if ($adj['absent_deduction'] > 0): ?>
+                                        <tr>
+                                            <td>Absent Days Deduction</td>
+                                            <td class="amount-cell">₱<?php echo number_format($adj['absent_deduction'], 2); ?></td>
+                                        </tr>
+                                    <?php 
+                                        $current_deductions_total += $adj['absent_deduction'];
+                                        endif;
+                                        
+                                        // Half day deduction
+                                        if ($adj['half_day_deduction'] > 0): ?>
+                                        <tr>
+                                            <td>Half Day Deduction</td>
+                                            <td class="amount-cell">₱<?php echo number_format($adj['half_day_deduction'], 2); ?></td>
+                                        </tr>
+                                    <?php 
+                                        $current_deductions_total += $adj['half_day_deduction'];
+                                        endif;
+                                        
+                                        // Late penalty
+                                        if ($adj['late_penalty'] > 0): ?>
+                                        <tr>
+                                            <td>Late Arrival Penalty</td>
+                                            <td class="amount-cell">₱<?php echo number_format($adj['late_penalty'], 2); ?></td>
+                                        </tr>
+                                    <?php 
+                                        $current_deductions_total += $adj['late_penalty'];
+                                        endif;
+                                    endif;
+                                    
+                                    // Regular deductions
                                     if ($deductions_result && $deductions_result->num_rows > 0): 
                                         $deductions_result->data_seek(0);
                                         while($deduction = $deductions_result->fetch_assoc()): 
@@ -1085,6 +1267,51 @@ if ($selected_employee) {
                                 </div>
                             </div>
                         </div>
+                    <?php endif; ?>
+                    
+                    <!-- Attendance Summary for Tax Tab -->
+                    <?php if ($selected_employee && $attendance_summary): ?>
+                    <div class="mb-4">
+                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo date('F Y'); ?></h5>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="attendance-summary-card present">
+                                    <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number"><?php echo $attendance_summary['present_days']; ?></div>
+                                        <div class="summary-label">Present Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="attendance-summary-card absent">
+                                    <div class="summary-icon"><i class="fas fa-times-circle"></i></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number"><?php echo $attendance_summary['absent_days']; ?></div>
+                                        <div class="summary-label">Absent Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="attendance-summary-card late">
+                                    <div class="summary-icon"><i class="fas fa-clock"></i></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number"><?php echo $attendance_summary['late_days']; ?></div>
+                                        <div class="summary-label">Late Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="attendance-summary-card leave">
+                                    <div class="summary-icon"><i class="fas fa-calendar-times"></i></div>
+                                    <div class="summary-content">
+                                        <div class="summary-number"><?php echo $attendance_summary['leave_days']; ?></div>
+                                        <div class="summary-label">Leave Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <?php endif; ?>
                     
                     <div class="tax-details-container">
@@ -1254,6 +1481,51 @@ if ($selected_employee) {
                                     <td><?php echo htmlspecialchars($employee['position'] ?? 'N/A'); ?></td>
                                 </tr>
                             </table>
+                            
+                            <!-- Attendance Summary for Overall Tab -->
+                            <?php if ($selected_employee && $attendance_summary): ?>
+                            <div class="mt-4">
+                                <div class="overall-section-title mb-3">Attendance Summary - <?php echo date('F Y'); ?></div>
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <div class="attendance-summary-card present">
+                                            <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+                                            <div class="summary-content">
+                                                <div class="summary-number"><?php echo $attendance_summary['present_days']; ?></div>
+                                                <div class="summary-label">Present Days</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="attendance-summary-card absent">
+                                            <div class="summary-icon"><i class="fas fa-times-circle"></i></div>
+                                            <div class="summary-content">
+                                                <div class="summary-number"><?php echo $attendance_summary['absent_days']; ?></div>
+                                                <div class="summary-label">Absent Days</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="attendance-summary-card late">
+                                            <div class="summary-icon"><i class="fas fa-clock"></i></div>
+                                            <div class="summary-content">
+                                                <div class="summary-number"><?php echo $attendance_summary['late_days']; ?></div>
+                                                <div class="summary-label">Late Days</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="attendance-summary-card leave">
+                                            <div class="summary-icon"><i class="fas fa-calendar-times"></i></div>
+                                            <div class="summary-content">
+                                                <div class="summary-number"><?php echo $attendance_summary['leave_days']; ?></div>
+                                                <div class="summary-label">Leave Days</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
 
@@ -1276,12 +1548,48 @@ if ($selected_employee) {
                                         $total_earnings_overall = 0;
                                         if ($earnings_result && $earnings_result->num_rows > 0): 
                                             while($earning = $earnings_result->fetch_assoc()): 
-                                                $amount = $earning['value'];
+                                                // Use same logic as Payroll Information tab
+                                                $amount = 0;
+                                                if ($payslip_data && $payslip_data['payslip_json']) {
+                                                    $payslip_json = json_decode($payslip_data['payslip_json'], true);
+                                                    switch($earning['code']) {
+                                                        case 'BASIC': $amount = $payslip_json['basic_salary'] ?? $earning['value']; break;
+                                                        case 'COLA': $amount = $payslip_json['cola'] ?? $earning['value']; break;
+                                                        case 'MEAL': $amount = $payslip_json['meal_allowance'] ?? $earning['value']; break;
+                                                        case 'COMM': $amount = $payslip_json['comm_allowance'] ?? $earning['value']; break;
+                                                        case 'RICE': $amount = $payslip_json['rice_subsidy'] ?? $earning['value']; break;
+                                                        case 'TRANSPORT': $amount = $payslip_json['transport_allowance'] ?? $earning['value']; break;
+                                                        default: $amount = $earning['value']; break;
+                                                    }
+                                                } else {
+                                                    // Apply position-based salary and attendance adjustments for basic salary
+                                                    if ($earning['code'] === 'BASIC') {
+                                                        // Use position-based salary if available, otherwise use component value
+                                                        $base_amount = ($position_salary > 0) ? $position_salary : $earning['value'];
+                                                        
+                                                        // Apply attendance-based adjustments if available
+                                                        if ($attendance_payroll_adjustments) {
+                                                            // If adjusted salary is calculated, use it; otherwise use base
+                                                            $adj_salary = $attendance_payroll_adjustments['salary_adjustments']['adjusted_salary'];
+                                                            $amount = ($adj_salary > 0) ? $adj_salary : $base_amount;
+                                                        } else {
+                                                            $amount = $base_amount;
+                                                        }
+                                                    } else {
+                                                        $amount = $earning['value'];
+                                                    }
+                                                }
+                                                
+                                                // Add overtime pay if this is the overtime component
+                                                if ($earning['code'] === 'OVERTIME' && $attendance_payroll_adjustments) {
+                                                    $amount = $attendance_payroll_adjustments['salary_adjustments']['overtime_pay'];
+                                                }
+                                                
                                                 $total_earnings_overall += $amount;
                                         ?>
                                             <tr>
                                                 <td><?php echo htmlspecialchars($earning['name']); ?></td>
-                                                <td class="amount-cell"><?php echo number_format($amount, 2); ?></td>
+                                                <td class="amount-cell">₱<?php echo number_format($amount, 2); ?></td>
                                             </tr>
                                         <?php endwhile; endif; ?>
                                     </tbody>
@@ -1302,14 +1610,66 @@ if ($selected_employee) {
                                         <?php 
                                         $deductions_result->data_seek(0); // Reset pointer
                                         $total_deductions_overall = 0;
+                                        
+                                        // Add attendance-based deductions first (before regular deductions)
+                                        if ($attendance_payroll_adjustments && !$payslip_data): 
+                                            $adj = $attendance_payroll_adjustments['salary_adjustments'];
+                                            
+                                            // Absent days deduction
+                                            if ($adj['absent_deduction'] > 0): ?>
+                                            <tr>
+                                                <td>Absent Days Deduction</td>
+                                                <td class="amount-cell">₱<?php echo number_format($adj['absent_deduction'], 2); ?></td>
+                                            </tr>
+                                        <?php 
+                                            $total_deductions_overall += $adj['absent_deduction'];
+                                            endif;
+                                            
+                                            // Half day deduction
+                                            if ($adj['half_day_deduction'] > 0): ?>
+                                            <tr>
+                                                <td>Half Day Deduction</td>
+                                                <td class="amount-cell">₱<?php echo number_format($adj['half_day_deduction'], 2); ?></td>
+                                            </tr>
+                                        <?php 
+                                            $total_deductions_overall += $adj['half_day_deduction'];
+                                            endif;
+                                            
+                                            // Late penalty
+                                            if ($adj['late_penalty'] > 0): ?>
+                                            <tr>
+                                                <td>Late Arrival Penalty</td>
+                                                <td class="amount-cell">₱<?php echo number_format($adj['late_penalty'], 2); ?></td>
+                                            </tr>
+                                        <?php 
+                                            $total_deductions_overall += $adj['late_penalty'];
+                                            endif;
+                                        endif;
+                                        
+                                        // Regular deductions
                                         if ($deductions_result && $deductions_result->num_rows > 0): 
                                             while($deduction = $deductions_result->fetch_assoc()): 
-                                                $amount = $deduction['value'];
+                                                // Use same logic as Payroll Information tab
+                                                $amount = 0;
+                                                if ($payslip_data && $payslip_data['payslip_json']) {
+                                                    $payslip_json = json_decode($payslip_data['payslip_json'], true);
+                                                    switch($deduction['code']) {
+                                                        case 'SSS_EMP': $amount = $payslip_json['sss_emp'] ?? $deduction['value']; break;
+                                                        case 'PAGIBIG_EMP': $amount = $payslip_json['pagibig_emp'] ?? $deduction['value']; break;
+                                                        case 'PHILHEALTH_EMP': $amount = $payslip_json['philhealth_emp'] ?? $deduction['value']; break;
+                                                        case 'WHT': $amount = $payslip_json['withholding_tax'] ?? $deduction['value']; break;
+                                                        case 'LOAN': $amount = $payslip_json['loan_deduction'] ?? $deduction['value']; break;
+                                                        case 'UNIFORM': $amount = $payslip_json['uniform_deduction'] ?? $deduction['value']; break;
+                                                        default: $amount = $deduction['value']; break;
+                                                    }
+                                                } else {
+                                                    $amount = $deduction['value'];
+                                                }
                                                 $total_deductions_overall += $amount;
                                         ?>
                                             <tr>
                                                 <td><?php echo htmlspecialchars($deduction['name']); ?></td>
-                                                <td class="amount-cell"><?php echo number_format($amount, 2); ?></td>
+                                                <td class="amount-cell">₱<?php echo number_format($amount, 2); ?></td>
                                             </tr>
                                         <?php endwhile; endif; ?>
                                     </tbody>
