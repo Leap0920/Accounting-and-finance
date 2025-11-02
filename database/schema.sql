@@ -53,6 +53,21 @@ CREATE TABLE employee_refs (
   UNIQUE KEY (external_employee_no, external_source)
 );
 
+CREATE TABLE employee_attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_external_no VARCHAR(100) NOT NULL,
+    attendance_date DATE NOT NULL,
+    time_in TIME,
+    time_out TIME,
+    status ENUM('present','absent','late','leave','half_day') DEFAULT 'present',
+    hours_worked DECIMAL(4,2) DEFAULT 0.00,
+    overtime_hours DECIMAL(4,2) DEFAULT 0.00,
+    late_minutes INT DEFAULT 0,
+    remarks TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_employee_date (employee_external_no, attendance_date)
+);
+
 -- ========================================
 -- CORE ACCOUNTING
 -- ========================================
