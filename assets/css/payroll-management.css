@@ -996,6 +996,9 @@ body {
 
 @media print {
     .main-header,
+    .navbar,
+    .navbar-custom,
+    .page-header-payroll,
     .payroll-tabs-container,
     .btn-export,
     .btn-print,

@@ -1482,9 +1482,9 @@ if ($selected_employee) {
                                 </tr>
                             </table>
                             
-                            <!-- Attendance Summary for Overall Tab -->
+                            <!-- Attendance Summary for Overall Tab - Hidden in print -->
                             <?php if ($selected_employee && $attendance_summary): ?>
-                            <div class="mt-4">
+                            <div class="mt-4 no-print">
                                 <div class="overall-section-title mb-3">Attendance Summary - <?php echo date('F Y'); ?></div>
                                 <div class="row g-3">
                                     <div class="col-md-3">
