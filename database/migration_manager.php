@@ -40,7 +40,7 @@ if (!$isAdmin) {
                             <h6><i class="fas fa-lightbulb me-2"></i>First Time Setup</h6>
                             <p>If you're setting up the database for the first time, follow these steps:</p>
                             <ol>
-                                <li><strong>Import Base Schema:</strong> Run the <code>database/schema.sql</code> file in your MySQL database</li>
+                                <li><strong>Import Base Schema:</strong> Run the <code>database/unified_schema.sql</code> file in your MySQL database</li>
                                 <li><strong>Run Migrations:</strong> Use the "Run Migrations" button below to add additional features</li>
                                 <li><strong>Verify Setup:</strong> Check the migration status to ensure everything is working</li>
                             </ol>
@@ -134,23 +134,33 @@ if (!$isAdmin) {
                     </div>
                     <div class="card-body">
                         <?php
-                        $result = $conn->query("SELECT * FROM database_migrations ORDER BY applied_at DESC");
-                        if ($result && $result->num_rows > 0) {
-                            echo '<div class="table-responsive">';
-                            echo '<table class="table table-striped">';
-                            echo '<thead><tr><th>Version</th><th>Description</th><th>Applied At</th></tr></thead>';
-                            echo '<tbody>';
-                            while ($row = $result->fetch_assoc()) {
-                                echo '<tr>';
-                                echo '<td><span class="badge bg-primary">' . htmlspecialchars($row['version']) . '</span></td>';
-                                echo '<td>' . htmlspecialchars($row['description']) . '</td>';
-                                echo '<td>' . date('Y-m-d H:i:s', strtotime($row['applied_at'])) . '</td>';
-                                echo '</tr>';
+                        try {
+                            // Check if migrations table exists first
+                            $tableCheck = $conn->query("SHOW TABLES LIKE 'database_migrations'");
+                            if ($tableCheck && $tableCheck->num_rows > 0) {
+                                $result = $conn->query("SELECT * FROM database_migrations ORDER BY applied_at DESC");
+                                if ($result && $result->num_rows > 0) {
+                                    echo '<div class="table-responsive">';
+                                    echo '<table class="table table-striped">';
+                                    echo '<thead><tr><th>Version</th><th>Description</th><th>Applied At</th></tr></thead>';
+                                    echo '<tbody>';
+                                    while ($row = $result->fetch_assoc()) {
+                                        echo '<tr>';
+                                        echo '<td><span class="badge bg-primary">' . htmlspecialchars($row['version']) . '</span></td>';
+                                        echo '<td>' . htmlspecialchars($row['description']) . '</td>';
+                                        echo '<td>' . date('Y-m-d H:i:s', strtotime($row['applied_at'])) . '</td>';
+                                        echo '</tr>';
+                                    }
+                                    echo '</tbody></table>';
+                                    echo '</div>';
+                                } else {
+                                    echo '<p class="text-muted">No migrations have been applied yet.</p>';
+                                }
+                            } else {
+                                echo '<p class="text-muted">Migration system not initialized. Please set up the database first.</p>';
                             }
-                            echo '</tbody></table>';
-                            echo '</div>';
-                        } else {
-                            echo '<p class="text-muted">No migrations have been applied yet.</p>';
+                        } catch (Exception $e) {
+                            echo '<p class="text-muted">Unable to load migration history: ' . htmlspecialchars($e->getMessage()) . '</p>';
                         }
                         ?>
                     </div>

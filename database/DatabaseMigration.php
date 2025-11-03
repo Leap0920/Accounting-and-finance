@@ -19,20 +19,34 @@ class DatabaseMigration {
      * Get current database version
      */
     private function getCurrentVersion() {
-        // Check if migrations table exists
-        $result = $this->conn->query("SHOW TABLES LIKE 'database_migrations'");
-        if ($result->num_rows == 0) {
-            return '0.0.0'; // Fresh installation
+        try {
+            // Check if migrations table exists
+            $result = $this->conn->query("SHOW TABLES LIKE 'database_migrations'");
+            if ($result === false) {
+                // Database might not exist or connection issue
+                return '0.0.0';
+            }
+            
+            if ($result->num_rows == 0) {
+                return '0.0.0'; // Fresh installation
+            }
+            
+            // Get latest migration version
+            $result = $this->conn->query("SELECT version FROM database_migrations ORDER BY applied_at DESC LIMIT 1");
+            if ($result === false) {
+                return '0.0.0';
+            }
+            
+            if ($result && $result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                return $row['version'];
+            }
+            
+            return '0.0.0';
+        } catch (Exception $e) {
+            // If there's any error, assume fresh installation
+            return '0.0.0';
         }
-        
-        // Get latest migration version
-        $result = $this->conn->query("SELECT version FROM database_migrations ORDER BY applied_at DESC LIMIT 1");
-        if ($result && $result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            return $row['version'];
-        }
-        
-        return '0.0.0';
     }
     
     /**
@@ -46,8 +60,17 @@ class DatabaseMigration {
      * Check if database is completely empty
      */
     private function isDatabaseEmpty() {
-        $result = $this->conn->query("SHOW TABLES");
-        return $result->num_rows === 0;
+        try {
+            $result = $this->conn->query("SHOW TABLES");
+            if ($result === false) {
+                // If query fails, assume database is empty or doesn't exist
+                return true;
+            }
+            return $result->num_rows === 0;
+        } catch (Exception $e) {
+            // If there's any error, assume database is empty
+            return true;
+        }
     }
     
     /**
@@ -288,44 +311,48 @@ class DatabaseMigration {
     public function checkDatabaseHealth() {
         $issues = [];
         
-        // Check required tables based on schema.sql
-        $requiredTables = [
-            'users', 'roles', 'user_roles', 'employee_refs', 'accounts', 
-            'journal_types', 'journal_entries', 'journal_lines', 'fiscal_periods',
-            'expense_categories', 'expense_claims', 'compliance_reports', 
-            'payments', 'bank_accounts', 'salary_components', 'payslips', 
-            'payroll_runs', 'loans', 'loan_types', 'account_types', 
-            'account_balances', 'payroll_periods', 'loan_payments', 
-            'audit_logs', 'integration_logs'
-        ];
-        
-        foreach ($requiredTables as $table) {
-            $result = $this->conn->query("SHOW TABLES LIKE '$table'");
-            if ($result === false) {
-                $issues[] = "Error checking table: $table";
-            } elseif ($result->num_rows == 0) {
-                $issues[] = "Missing table: $table";
+        try {
+            // Check required tables based on schema.sql
+            $requiredTables = [
+                'users', 'roles', 'user_roles', 'employee_refs', 'accounts', 
+                'journal_types', 'journal_entries', 'journal_lines', 'fiscal_periods',
+                'expense_categories', 'expense_claims', 'compliance_reports', 
+                'payments', 'bank_accounts', 'salary_components', 'payslips', 
+                'payroll_runs', 'loans', 'loan_types', 'account_types', 
+                'account_balances', 'payroll_periods', 'loan_payments', 
+                'audit_logs', 'integration_logs'
+            ];
+            
+            foreach ($requiredTables as $table) {
+                $result = $this->conn->query("SHOW TABLES LIKE '$table'");
+                if ($result === false) {
+                    $issues[] = "Error checking table: $table - " . $this->conn->error;
+                } elseif ($result->num_rows == 0) {
+                    $issues[] = "Missing table: $table";
+                }
             }
-        }
-        
-        // Check required columns only for tables that exist
-        $requiredColumns = [
-            // No additional columns required beyond what's in schema.sql
-        ];
-        
-        foreach ($requiredColumns as $table => $columns) {
-            // First check if table exists
-            $tableCheck = $this->conn->query("SHOW TABLES LIKE '$table'");
-            if ($tableCheck && $tableCheck->num_rows > 0) {
-                foreach ($columns as $column) {
-                    $result = $this->conn->query("SHOW COLUMNS FROM $table LIKE '$column'");
-                    if ($result === false) {
-                        $issues[] = "Error checking column: $table.$column";
-                    } elseif ($result->num_rows == 0) {
-                        $issues[] = "Missing column: $table.$column";
+            
+            // Check required columns only for tables that exist
+            $requiredColumns = [
+                // No additional columns required beyond what's in schema.sql
+            ];
+            
+            foreach ($requiredColumns as $table => $columns) {
+                // First check if table exists
+                $tableCheck = $this->conn->query("SHOW TABLES LIKE '$table'");
+                if ($tableCheck && $tableCheck->num_rows > 0) {
+                    foreach ($columns as $column) {
+                        $result = $this->conn->query("SHOW COLUMNS FROM $table LIKE '$column'");
+                        if ($result === false) {
+                            $issues[] = "Error checking column: $table.$column";
+                        } elseif ($result->num_rows == 0) {
+                            $issues[] = "Missing column: $table.$column";
+                        }
                     }
                 }
             }
+        } catch (Exception $e) {
+            $issues[] = "Database health check error: " . $e->getMessage();
         }
         
         return [

@@ -30,7 +30,14 @@ class AutoMigration {
                 
                 // If there were errors, you might want to handle them
                 if (!$result['success']) {
-                    error_log("Migration errors: " . implode(', ', $result['errors']));
+                    // Handle different error formats
+                    if (isset($result['errors']) && is_array($result['errors'])) {
+                        error_log("Migration errors: " . implode(', ', $result['errors']));
+                    } elseif (isset($result['error'])) {
+                        error_log("Migration error: " . $result['error']);
+                    } else {
+                        error_log("Migration failed: Unknown error");
+                    }
                 }
             }
             
