@@ -122,7 +122,7 @@ Accounting and finance/
 ### Database Connection Issues
 1. Ensure MySQL is running in XAMPP
 2. Check `config/database.php` settings
-3. Verify database `accounting_finance` exists
+3. Verify database `BankingDB` exists
 
 ### Login Issues
 1. Use exact demo credentials provided
@@ -139,9 +139,9 @@ This is the most common setup problem! If you get "Invalid username or password"
 
 **Manual Fix Steps:**
 1. Open phpMyAdmin (`http://localhost/phpmyadmin`)
-2. Select the `accounting_finance` database
+2. Select the `BankingDB` database
 3. Go to **SQL** tab
-4. Copy and paste contents of `database/insert_admin.sql`
+4. Copy and paste contents of `database/Sampled_data.sql`
 5. Click **Go** to execute
 6. Try logging in again with `admin` / `admin123`
 

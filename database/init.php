@@ -12,7 +12,7 @@ header('Content-Type: text/html; charset=UTF-8');
 $db_host = 'localhost';
 $db_user = 'root';
 $db_pass = ''; // Default XAMPP password is empty
-$db_name = 'accounting_finance';
+$db_name = 'BankingDB';
 
 ?>
 <!DOCTYPE html>

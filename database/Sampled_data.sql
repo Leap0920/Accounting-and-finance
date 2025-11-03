@@ -11,14 +11,14 @@
 -- 
 -- Instructions:
 -- 1. Open phpMyAdmin: http://localhost/phpmyadmin
--- 2. Click "accounting_finance" database
+-- 2. Click "BankingDB" database
 -- 3. Click "SQL" tab
 -- 4. Copy this entire file and paste into SQL box
 -- 5. Click "Go" button
 -- 6. Wait for success messages
 -- ========================================
 
-USE accounting_finance;
+USE BankingDB;
 
 -- ========================================
 -- 1. ADMIN USER & ROLES
@@ -261,8 +261,96 @@ INSERT INTO fiscal_periods (period_name, start_date, end_date, status) VALUES
 ON DUPLICATE KEY UPDATE period_name = VALUES(period_name);
 
 -- ========================================
--- 4. EMPLOYEE REFERENCE DATA
+-- 4. HRIS MODULE DATA (Department & Position)
 -- ========================================
+
+-- Insert departments
+INSERT INTO department (department_id, department_name, description) VALUES
+(1, 'IT', 'Information Technology Department'),
+(2, 'Human Resources', 'Human Resources Department'),
+(3, 'Finance', 'Finance and Accounting Department'),
+(4, 'Marketing', 'Marketing and Sales Department'),
+(5, 'Operations', 'Operations and Logistics Department'),
+(6, 'Customer Service', 'Customer Service Department'),
+(7, 'Sales', 'Sales Department')
+ON DUPLICATE KEY UPDATE department_name = VALUES(department_name);
+
+-- Insert positions (using backticks because 'position' is a reserved word)
+INSERT INTO `position` (position_id, position_title, job_description, salary_grade) VALUES
+(1, 'CTO', 'Chief Technology Officer', 15),
+(2, 'CFO', 'Chief Financial Officer', 15),
+(3, 'COO', 'Chief Operating Officer', 15),
+(4, 'Marketing Director', 'Director of Marketing', 14),
+(5, 'HR Manager', 'Human Resources Manager', 12),
+(6, 'CS Manager', 'Customer Service Manager', 12),
+(7, 'Sales Manager', 'Sales Manager', 12),
+(8, 'Senior Accountant', 'Senior Accountant', 10),
+(9, 'Senior Developer', 'Senior Software Developer', 11),
+(10, 'Marketing Specialist', 'Marketing Specialist', 9),
+(11, 'Software Developer', 'Software Developer', 9),
+(12, 'Accountant', 'Accountant', 8),
+(13, 'Sales Executive', 'Sales Executive', 8),
+(14, 'CS Representative', 'Customer Service Representative', 7),
+(15, 'Operations Coordinator', 'Operations Coordinator', 8),
+(16, 'Content Creator', 'Content Creator', 7),
+(17, 'Junior Developer', 'Junior Software Developer', 7),
+(18, 'Payroll Specialist', 'Payroll Specialist', 8),
+(19, 'Sales Representative', 'Sales Representative', 7),
+(20, 'Warehouse Supervisor', 'Warehouse Supervisor', 9),
+(21, 'Accounts Payable Clerk', 'Accounts Payable Clerk', 7),
+(22, 'System Administrator', 'System Administrator', 9),
+(23, 'Social Media Manager', 'Social Media Manager', 8),
+(24, 'Account Manager', 'Account Manager', 9)
+ON DUPLICATE KEY UPDATE position_title = VALUES(position_title);
+
+-- ========================================
+-- 4A. EMPLOYEE TABLE DATA (HRIS Core)
+-- ========================================
+-- Insert employee records linking to departments and positions
+-- This connects HRIS module to the payroll system
+
+INSERT INTO employee (employee_id, first_name, last_name, middle_name, gender, birth_date, contact_number, email, address, hire_date, department_id, position_id, employment_status) VALUES
+-- Management (C-Suite & Directors)
+(1, 'Juan', 'Santos', 'Carlos', 'Male', '1980-05-15', '09171234567', 'juan.santos@company.com', 'Makati City, Metro Manila', '2020-01-15', 2, 5, 'Active'),
+(2, 'Maria Elena', 'Rodriguez', NULL, 'Female', '1978-03-20', '09171234568', 'maria.rodriguez@company.com', 'BGC, Taguig City', '2019-06-01', 3, 2, 'Active'),
+(3, 'Jose Miguel', 'Cruz', NULL, 'Male', '1982-08-10', '09171234569', 'jose.cruz@company.com', 'Ortigas, Pasig City', '2021-02-01', 1, 1, 'Active'),
+(4, 'Ana Patricia', 'Lopez', NULL, 'Female', '1985-11-25', '09171234570', 'ana.lopez@company.com', 'Mandaluyong City', '2020-03-15', 4, 4, 'Active'),
+(5, 'Roberto Antonio', 'Garcia', NULL, 'Male', '1981-07-30', '09171234571', 'roberto.garcia@company.com', 'Quezon City', '2019-09-01', 5, 3, 'Active'),
+
+-- Senior Staff (Managers & Senior Specialists)
+(6, 'Carmen Sofia', 'Martinez', NULL, 'Female', '1987-04-12', '09171234572', 'carmen.martinez@company.com', 'San Juan City', '2021-05-01', 6, 6, 'Active'),
+(7, 'Fernando Luis', 'Torres', NULL, 'Male', '1986-09-18', '09171234573', 'fernando.torres@company.com', 'Pasay City', '2020-07-01', 7, 7, 'Active'),
+(8, 'Isabella Rose', 'Flores', NULL, 'Female', '1989-12-05', '09171234574', 'isabella.flores@company.com', 'Makati City', '2021-01-15', 3, 8, 'Active'),
+(9, 'Miguel Angel', 'Reyes', NULL, 'Male', '1988-06-22', '09171234575', 'miguel.reyes@company.com', 'Taguig City', '2020-08-01', 1, 9, 'Active'),
+(10, 'Sofia Grace', 'Villanueva', NULL, 'Female', '1990-02-14', '09171234576', 'sofia.villanueva@company.com', 'Mandaluyong City', '2021-03-01', 4, 10, 'Active'),
+
+-- Mid-level Staff
+(11, 'Carlos Eduardo', 'Mendoza', NULL, 'Male', '1992-10-08', '09171234577', 'carlos.mendoza@company.com', 'Pasig City', '2022-01-15', 1, 11, 'Active'),
+(12, 'Patricia Isabel', 'Gutierrez', NULL, 'Female', '1991-03-17', '09171234578', 'patricia.gutierrez@company.com', 'Quezon City', '2022-02-01', 3, 12, 'Active'),
+(13, 'Ricardo Manuel', 'Herrera', NULL, 'Male', '1990-07-23', '09171234579', 'ricardo.herrera@company.com', 'Manila City', '2021-06-01', 7, 13, 'Active'),
+(14, 'Gabriela Alejandra', 'Morales', NULL, 'Female', '1993-05-11', '09171234580', 'gabriela.morales@company.com', 'Makati City', '2022-03-01', 6, 14, 'Active'),
+(15, 'Diego Fernando', 'Ramos', NULL, 'Male', '1992-11-29', '09171234581', 'diego.ramos@company.com', 'Taguig City', '2021-09-01', 5, 15, 'Active'),
+
+-- Junior Staff & Support Roles
+(16, 'Valentina Sofia', 'Castillo', NULL, 'Female', '1994-08-06', '09171234582', 'valentina.castillo@company.com', 'Pasig City', '2022-05-01', 4, 16, 'Active'),
+(17, 'Sebastian Alejandro', 'Vega', NULL, 'Male', '1993-12-19', '09171234583', 'sebastian.vega@company.com', 'Quezon City', '2022-04-15', 1, 17, 'Active'),
+(18, 'Camila Esperanza', 'Ruiz', NULL, 'Female', '1992-01-31', '09171234584', 'camila.ruiz@company.com', 'Makati City', '2021-11-01', 3, 18, 'Active'),
+(19, 'Nicolas Gabriel', 'Silva', NULL, 'Male', '1994-09-14', '09171234585', 'nicolas.silva@company.com', 'Mandaluyong City', '2022-06-01', 7, 19, 'Active'),
+(20, 'Lucia Esperanza', 'Jimenez', NULL, 'Female', '1995-04-27', '09171234586', 'lucia.jimenez@company.com', 'Pasay City', '2022-07-01', 6, 14, 'Active'),
+
+-- Additional Staff
+(21, 'Andres Felipe', 'Castro', NULL, 'Male', '1991-10-03', '09171234587', 'andres.castro@company.com', 'Taguig City', '2021-10-01', 5, 20, 'Active'),
+(22, 'Mariana Beatriz', 'Ortega', NULL, 'Female', '1993-06-16', '09171234588', 'mariana.ortega@company.com', 'Quezon City', '2022-01-01', 3, 21, 'Active'),
+(23, 'Santiago Ignacio', 'Pena', NULL, 'Male', '1990-02-28', '09171234589', 'santiago.pena@company.com', 'Makati City', '2021-07-15', 1, 22, 'Active'),
+(24, 'Daniela Fernanda', 'Vargas', NULL, 'Female', '1994-11-09', '09171234590', 'daniela.vargas@company.com', 'Pasig City', '2022-08-01', 4, 23, 'Active'),
+(25, 'Alejandro Jose', 'Medina', NULL, 'Male', '1992-05-22', '09171234591', 'alejandro.medina@company.com', 'Mandaluyong City', '2021-12-01', 7, 24, 'Active')
+ON DUPLICATE KEY UPDATE first_name = VALUES(first_name), last_name = VALUES(last_name);
+
+-- ========================================
+-- 4B. EMPLOYEE REFERENCE DATA (External HRIS Integration)
+-- ========================================
+-- This table is used by payroll system via employee_external_no
+-- Links to employee table through mapping
 
 INSERT INTO employee_refs (external_employee_no, name, department, position, base_monthly_salary, employment_type, external_source) VALUES
 -- Management (C-Suite & Directors) - Philippine Market Rates
@@ -302,7 +390,60 @@ INSERT INTO employee_refs (external_employee_no, name, department, position, bas
 ON DUPLICATE KEY UPDATE name = VALUES(name), base_monthly_salary = VALUES(base_monthly_salary);
 
 -- ========================================
--- 4B. EMPLOYEE ATTENDANCE DATA FOR NOVEMBER 2025
+-- 4C. USER ACCOUNT LINKING (HRIS-User System Integration)
+-- ========================================
+-- Links employees to user accounts for system access
+-- This connects HRIS employee records to authentication system
+
+-- Link admin user (already exists in users table) to employee system
+-- Note: Additional user_account records can be created as needed
+-- The employee_id links to the employee table, enabling HRIS-Payroll integration
+INSERT INTO user_account (user_id, employee_id, username, password_hash, role, last_login) VALUES
+(1, 1, 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Administrator', NOW() - INTERVAL 5 DAY)
+ON DUPLICATE KEY UPDATE employee_id = VALUES(employee_id);
+
+-- ========================================
+-- HRIS-PAYROLL CONNECTION DOCUMENTATION
+-- ========================================
+-- 
+-- IMPORTANT: Understanding the HRIS-Payroll Data Flow
+-- 
+-- 1. HRIS CORE TABLES (HRIS Module):
+--    - department: Organizational departments
+--    - position: Job positions (note: backticked because 'position' is a reserved word)
+--    - employee: Core employee records with foreign keys to department and position
+--    - employee_attendance: Daily attendance tracking
+-- 
+-- 2. PAYROLL SYSTEM TABLES (Payroll Module):
+--    - employee_refs: External employee references used by payroll system
+--      * Uses: external_employee_no (EMP001, EMP002, etc.)
+--      * Contains: base_monthly_salary, employment_type
+--    - payslips: Payroll payslips linked via employee_external_no
+--    - payroll_runs: Payroll processing runs
+--    - payroll_periods: Payroll periods
+-- 
+-- 3. DATA MAPPING:
+--    - employee.employee_id (1-25) corresponds to employee_refs.external_employee_no (EMP001-EMP025)
+--    - employee_refs.external_employee_no is used throughout payroll system:
+--      * payslips.employee_external_no
+--      * employee_attendance.employee_external_no
+--      * expense_claims.employee_external_no
+--      * loans.borrower_external_no
+-- 
+-- 4. INTEGRATION POINTS:
+--    - Payroll calculations use employee_refs.base_monthly_salary
+--    - Attendance tracking uses employee_attendance linked via employee_external_no
+--    - Department and position info flows from employee -> department/position tables
+--    - User accounts link via user_account.employee_id for system access
+-- 
+-- 5. EXAMPLE FLOW:
+--    Employee Record (HRIS) -> employee_refs (Payroll Interface) -> Payroll Processing -> Payslip
+--    employee_id: 1 -> external_employee_no: EMP001 -> payroll calculation -> payslip record
+-- 
+-- ========================================
+
+-- ========================================
+-- 4D. EMPLOYEE ATTENDANCE DATA FOR NOVEMBER 2025
 -- ========================================
 -- Note: November 2025 has 30 days. Workdays exclude weekends (Nov 1,2,8,9,15,16,22,23,29,30 are weekends)
 -- Workdays: 3,4,5,6,7,10,11,12,13,14,17,18,19,20,21,24,25,26,27,28 (20 workdays)
@@ -1989,6 +2130,62 @@ SELECT
 FROM payments
 WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY);
 
+-- ========================================
+-- HRIS-PAYROLL INTEGRATION VERIFICATION
+-- ========================================
+-- This query demonstrates the connection between HRIS and Payroll systems
+
+SELECT 
+    'HRIS-PAYROLL CONNECTION' AS verification_type,
+    e.employee_id,
+    CONCAT(e.first_name, ' ', e.last_name) AS employee_name,
+    d.department_name AS department,
+    p.position_title AS position,
+    er.external_employee_no,
+    er.base_monthly_salary AS payroll_base_salary,
+    COUNT(DISTINCT ps.id) AS payslip_count,
+    SUM(ps.gross_pay) AS total_gross_paid
+FROM employee e
+LEFT JOIN department d ON e.department_id = d.department_id
+LEFT JOIN `position` p ON e.position_id = p.position_id
+LEFT JOIN employee_refs er ON er.external_employee_no = CONCAT('EMP', LPAD(e.employee_id, 3, '0'))
+LEFT JOIN payslips ps ON ps.employee_external_no = er.external_employee_no
+WHERE e.employment_status = 'Active'
+GROUP BY e.employee_id, e.first_name, e.last_name, d.department_name, p.position_title, er.external_employee_no, er.base_monthly_salary
+ORDER BY e.employee_id
+LIMIT 10;
+
+-- Verification: Check employee attendance linked to payroll
+SELECT 
+    'ATTENDANCE-PAYROLL LINK' AS verification_type,
+    er.external_employee_no,
+    er.name AS employee_name,
+    COUNT(DISTINCT ea.attendance_date) AS attendance_days,
+    SUM(ea.hours_worked) AS total_hours,
+    SUM(ea.overtime_hours) AS total_overtime,
+    COUNT(DISTINCT ps.id) AS payslips_generated
+FROM employee_refs er
+LEFT JOIN employee_attendance ea ON ea.employee_external_no = er.external_employee_no
+LEFT JOIN payslips ps ON ps.employee_external_no = er.external_employee_no
+WHERE er.employment_type = 'regular'
+GROUP BY er.external_employee_no, er.name
+ORDER BY er.external_employee_no
+LIMIT 10;
+
+-- Verification: Department and Position summary from HRIS
+SELECT 
+    'HRIS DEPARTMENT SUMMARY' AS summary_type,
+    d.department_name,
+    COUNT(DISTINCT e.employee_id) AS total_employees,
+    COUNT(DISTINCT p.position_id) AS total_positions,
+    SUM(er.base_monthly_salary) AS total_monthly_salary_budget
+FROM department d
+LEFT JOIN employee e ON e.department_id = d.department_id
+LEFT JOIN `position` p ON p.position_id = e.position_id
+LEFT JOIN employee_refs er ON er.external_employee_no = CONCAT('EMP', LPAD(e.employee_id, 3, '0'))
+GROUP BY d.department_id, d.department_name
+ORDER BY total_employees DESC;
+
 SELECT '=== ALL DATA SUCCESSFULLY INSERTED ===' AS final_status;
 SELECT '=== ACCOUNTING & FINANCE SYSTEM IS READY FOR TESTING ===' AS ready_status;
 
@@ -1999,7 +2196,8 @@ SELECT '=== ACCOUNTING & FINANCE SYSTEM IS READY FOR TESTING ===' AS ready_statu
 -- This file contains ALL sample data for the accounting system:
 -- ✅ Admin user and roles
 -- ✅ Complete chart of accounts (80+ accounts)
--- ✅ 25 employees across multiple departments
+-- ✅ HRIS Module: 7 departments, 24 positions, 25 employees (fully connected)
+-- ✅ HRIS-Payroll Integration: employee_refs linking to payroll system
 -- ✅ 8 bank accounts
 -- ✅ 20+ journal entries with balanced transactions
 -- ✅ 35+ loans across different types (merged from Sampled_data.sql and sample_loan_data.sql)
@@ -2013,9 +2211,10 @@ SELECT '=== ACCOUNTING & FINANCE SYSTEM IS READY FOR TESTING ===' AS ready_statu
 -- ✅ Verification queries to ensure data integrity
 --
 -- The system now has comprehensive test data for:
+-- - HRIS Module (departments, positions, employees, attendance)
 -- - Financial Reporting Module
 -- - Transaction Recording Module  
--- - Payroll Management Module
+-- - Payroll Management Module (linked to HRIS via employee_refs)
 -- - Loan Accounting Module
 -- - Expense Tracking Module
 -- - Compliance Reporting Module

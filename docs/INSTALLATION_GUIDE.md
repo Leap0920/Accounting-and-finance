@@ -60,9 +60,9 @@ If you get "Invalid username or password" when trying to log in:
 
 **Manual Fix:**
 1. Open phpMyAdmin (`http://localhost/phpmyadmin`)
-2. Select the `accounting_finance` database
+2. Select the `BankingDB` database
 3. Go to **SQL** tab
-4. Copy and paste the contents of `database/insert_admin.sql`
+4. Copy and paste the contents of `database/Sampled_data.sql`
 5. Click **Go** to execute
 6. Verify the admin user was created by running: `SELECT * FROM users WHERE username = 'admin';`
 
@@ -74,7 +74,7 @@ You should see one row with the admin user details.
 
 ### Cannot connect to database
 - Make sure MySQL is running in XAMPP
-- Check if database name is `accounting_finance`
+- Check if database name is `BankingDB`
 - Verify credentials in `config/database.php`
 
 ### Login page not loading

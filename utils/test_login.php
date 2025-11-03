@@ -79,7 +79,7 @@ try {
     echo "<ul>";
     echo "<li>Database connection settings in config/database.php</li>";
     echo "<li>MySQL server not running</li>";
-    echo "<li>Database 'accounting_finance' doesn't exist</li>";
+    echo "<li>Database 'BankingDB' doesn't exist</li>";
     echo "</ul>";
 }
 

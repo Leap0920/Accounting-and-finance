@@ -20,7 +20,7 @@ This guide covers migrating your Accounting & Finance System between devices, se
 1. **Database Export:**
    ```sql
    -- Export entire database
-   mysqldump -u root -p accounting_finance > backup.sql
+   mysqldump -u root -p BankingDB > backup.sql
    ```
 
 2. **File System Backup:**
@@ -47,21 +47,20 @@ This guide covers migrating your Accounting & Finance System between devices, se
 #### **Option B: Manual Setup**
 1. **Create Database:**
    ```sql
-   CREATE DATABASE accounting_finance CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE DATABASE BankingDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
 
 2. **Import Schema:**
    - Open phpMyAdmin
-   - Select `accounting_finance` database
-   - Import `database/schema.sql`
+   - Import `database/unified_schema.sql`
 
 3. **Create Admin User:**
-   - **CRITICAL STEP:** Import `database/insert_admin.sql`
+   - **CRITICAL STEP:** Import `database/Sampled_data.sql` into `BankingDB` database
    - Without this, you cannot log in!
 
-4. **Load Sample Data (Optional):**
-   - Import `database/sample_hris_data.sql`
-   - Import `database/test_financial_data.sql`
+4. **Verify Data:**
+   - Check admin user exists: `SELECT * FROM users WHERE username = 'admin';`
+   - Verify employee data: `SELECT COUNT(*) FROM employee_refs;`
 
 ### Phase 3: Data Migration (If Moving Existing Data)
 
@@ -74,7 +73,7 @@ This guide covers migrating your Accounting & Finance System between devices, se
 
 2. **Method 2: Command Line**
    ```bash
-   mysql -u root -p accounting_finance < backup.sql
+   mysql -u root -p BankingDB < backup.sql
    ```
 
 #### **File System Migration**
@@ -108,7 +107,7 @@ SELECT id, username, email, is_active FROM users WHERE username = 'admin';
 
 -- Check table count
 SELECT COUNT(*) as table_count FROM information_schema.tables 
-WHERE table_schema = 'accounting_finance';
+WHERE table_schema = 'BankingDB';
 
 -- Check sample data
 SELECT COUNT(*) as transaction_count FROM journal_entries;
@@ -132,7 +131,7 @@ SELECT COUNT(*) as transaction_count FROM journal_entries;
 **Solutions:**
 1. Check `config/database.php` settings
 2. Verify MySQL service is running
-3. Confirm database `accounting_finance` exists
+3. Confirm database `BankingDB` exists
 4. Test connection with phpMyAdmin
 
 ### **Issue 3: Tables Missing**
@@ -140,7 +139,7 @@ SELECT COUNT(*) as transaction_count FROM journal_entries;
 **Root Cause:** Schema not imported properly
 
 **Solutions:**
-1. Re-import `database/schema.sql`
+1. Re-import `database/unified_schema.sql`
 2. Check for SQL errors during import
 3. Verify database permissions
 

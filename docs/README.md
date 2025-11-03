@@ -1,11 +1,13 @@
 # Accounting & Finance System
 
-A comprehensive PHP-based accounting and finance management system designed for banking and financial organizations. This system integrates with HRIS (Human Resources Information System) to process payroll and manage all financial operations.
+A comprehensive Enterprise Resource Planning (ERP) and financial management system designed for banking, HRIS, and financial organizations. This unified system integrates banking operations, HRIS (Human Resources Information System), and accounting to process payroll, manage loans, track expenses, and handle all financial operations.
 
 ## 🚀 Features
 
 ### Core Modules
 - **User Authentication & Role Management** - Admin role with full system access
+- **Banking Operations** - Customer accounts, transactions, and management
+- **HRIS Integration** - Employee management, attendance, recruitment, and onboarding
 - **Transaction Reading & Management** - Complete financial transaction viewing and filtering
 - **General Ledger** - Double-entry bookkeeping system with journal entries
 - **Payroll Management** - Automated payroll processing with HRIS integration
@@ -44,15 +46,13 @@ C:\xampp\htdocs\Accounting and finance\
 ### 2. Database Setup
 1. Start XAMPP and ensure MySQL is running
 2. Open phpMyAdmin (http://localhost/phpmyadmin)
-3. Create a new database named `accounting_finance`
-4. Import the database schema:
-   - Click on the `accounting_finance` database
+3. Import the unified database schema:
    - Go to the **Import** tab
-   - Choose the file `database/schema.sql`
+   - Choose the file `database/unified_schema.sql`
    - Click **Go** to execute
-5. **⚠️ CRITICAL:** Insert the admin user and sample data:
-   - Go to the **SQL** tab
-   - Copy and paste the contents of `database/insert_admin.sql`
+4. **⚠️ CRITICAL:** Insert the admin user and sample data:
+   - Go to the **SQL** tab and select the `BankingDB` database
+   - Copy and paste the contents of `database/Sampled_data.sql`
    - Click **Go** to execute
    - **Without this step, you cannot log in to the system!**
 
@@ -63,7 +63,7 @@ C:\xampp\htdocs\Accounting and finance\
 ### 3. Configuration
 The database configuration is already set up in `config/database.php` for XAMPP default settings:
 - Host: localhost
-- Database: accounting_finance
+- Database: BankingDB
 - Username: root
 - Password: (empty)
 

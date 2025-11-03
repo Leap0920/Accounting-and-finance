@@ -3,7 +3,7 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', ''); // Default XAMPP password is empty
-define('DB_NAME', 'accounting_finance');
+define('DB_NAME', 'BankingDB');
 define('DB_PORT', '3306'); // Default MySQL port
 
 // Create global connection with error handling
