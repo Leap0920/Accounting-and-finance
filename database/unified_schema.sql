@@ -1,6 +1,5 @@
 -- ========================================
 -- UNIFIED DATABASE SCHEMA
--- Enterprise Resource Planning & Financial Management System
 -- ========================================
 -- This file contains the complete unified database schema
 -- Merged from: schema.sql, hris_system.sql, evergreen_bank.sql, basic-operation.sql
