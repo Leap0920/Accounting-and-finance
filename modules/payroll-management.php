@@ -769,36 +769,37 @@ if ($selected_employee) {
                             ?>
                             <div class="alert alert-info mb-3 payroll-impact-alert" role="alert">
                                 <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    <h6 class="alert-heading mb-0">Payroll Impact</h6>
+                                    <i class="fas fa-info-circle me-3"></i>
+                                    <h6 class="alert-heading mb-0 me-4">Payroll Impact</h6>
                                     <?php if (!$has_impact): ?>
-                                    <span class="ms-auto text-success d-flex align-items-center">
-                                        <i class="fas fa-check-circle me-1"></i>Perfect attendance - no payroll adjustments
+                                    <span class="ms-auto text-success d-flex align-items-center gap-2">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Perfect attendance - no payroll adjustments</span>
                                     </span>
                                     <?php endif; ?>
                                 </div>
                                 <?php if ($has_impact): ?>
                                 <div class="payroll-impact-items">
                                     <?php if ($adj['overtime_pay'] > 0): ?>
-                                    <div class="impact-item">
+                                    <div class="d-flex align-items-center gap-2" style="padding-left: 26px;">
                                         <strong class="text-success">Overtime Pay:</strong> 
                                         <span class="impact-amount text-success">+₱<?php echo number_format($adj['overtime_pay'], 2); ?></span>
                                     </div>
                                     <?php endif; ?>
                                     <?php if ($adj['absent_deduction'] > 0): ?>
-                                    <div class="impact-item">
+                                    <div class="d-flex align-items-center gap-2" style="padding-left: 26px;">
                                         <strong class="text-danger">Absent Deduction:</strong> 
                                         <span class="impact-amount text-danger">-₱<?php echo number_format($adj['absent_deduction'], 2); ?></span>
                                     </div>
                                     <?php endif; ?>
                                     <?php if ($adj['half_day_deduction'] > 0): ?>
-                                    <div class="impact-item">
+                                    <div class="d-flex align-items-center gap-2" style="padding-left: 26px;">
                                         <strong class="text-warning">Half Day Deduction:</strong> 
                                         <span class="impact-amount text-warning">-₱<?php echo number_format($adj['half_day_deduction'], 2); ?></span>
                                     </div>
                                     <?php endif; ?>
                                     <?php if ($adj['late_penalty'] > 0): ?>
-                                    <div class="impact-item">
+                                    <div class="d-flex align-items-center gap-2" style="padding-left: 26px;">
                                         <strong class="text-danger">Late Penalty:</strong> 
                                         <span class="impact-amount text-danger">-₱<?php echo number_format($adj['late_penalty'], 2); ?></span>
                                     </div>

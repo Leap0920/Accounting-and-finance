@@ -1359,31 +1359,43 @@ body {
 .payroll-impact-alert .fa-info-circle {
     color: var(--primary-teal);
     font-size: 18px;
+    flex-shrink: 0;
+}
+
+.payroll-impact-alert .gap-2 {
+    gap: 0.75rem !important;
 }
 
 .payroll-impact-items {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 12px;
-    padding-left: 26px;
-}
-
-.impact-item {
-    display: flex;
-    align-items: baseline;
     gap: 8px;
+    margin-top: 12px;
+    padding-left: 0;
 }
 
-.impact-item strong {
-    min-width: 140px;
+.payroll-impact-items > div {
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+}
+
+.payroll-impact-items strong {
     font-size: 14px;
+    line-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
 }
 
 .impact-amount {
     font-weight: 700;
     font-size: 14px;
     font-family: 'Courier New', monospace;
+    line-height: 24px;
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
 }
 
 /* ========================================
