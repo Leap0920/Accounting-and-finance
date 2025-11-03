@@ -208,7 +208,7 @@ function exportToExcel() {
     showNotification('Exporting expenses to Excel...', 'info');
     
     // Get current table data
-    const table = document.getElementById('expensesTable');
+    const table = document.getElementById('expenseTable');
     if (!table) {
         showNotification('No data to export', 'warning');
         return;
@@ -227,13 +227,17 @@ function exportToExcel() {
     
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 6) {
-            const date = cells[0].textContent.trim();
-            const description = cells[1].textContent.trim();
-            const category = cells[2].textContent.trim();
-            const amount = parseFloat(cells[3].textContent.replace(/[₱,]/g, '')) || 0;
-            const status = cells[4].textContent.trim();
-            const reference = cells[5].textContent.trim();
+        if (cells.length >= 8) {
+            // Map actual table columns: 0=Transaction#, 1=Date, 2=Employee, 3=Category, 4=Account, 5=Amount, 6=Status, 7=Description, 8=Actions
+            const transactionNo = cells[0].textContent.trim();
+            const date = cells[1].textContent.trim();
+            const employee = cells[2].textContent.trim();
+            const category = cells[3].textContent.trim();
+            const accountInfo = cells[4].textContent.trim();
+            const amountText = cells[5].textContent.trim();
+            const amount = parseFloat(amountText.replace(/[₱,]/g, '')) || 0;
+            const status = cells[6].textContent.trim();
+            const description = cells[7].textContent.trim();
             
             if (!expensesByCategory[category]) {
                 expensesByCategory[category] = [];
@@ -241,7 +245,13 @@ function exportToExcel() {
             }
             
             expensesByCategory[category].push({
-                date, description, amount, status, reference
+                transactionNo,
+                date,
+                employee,
+                amount,
+                status,
+                description,
+                accountInfo
             });
             
             categoryTotals[category] += amount;
@@ -261,7 +271,7 @@ function exportToExcel() {
     
     Object.keys(categoryTotals).sort().forEach(category => {
         const total = categoryTotals[category];
-        const percentage = ((total / grandTotal) * 100).toFixed(2);
+        const percentage = grandTotal > 0 ? ((total / grandTotal) * 100).toFixed(2) : '0.00';
         csvContent += `"${category}","₱${total.toFixed(2)}","${percentage}%"\n`;
     });
     
@@ -270,13 +280,13 @@ function exportToExcel() {
     // Add detailed expenses grouped by category
     Object.keys(expensesByCategory).sort().forEach(category => {
         csvContent += `CATEGORY: ${category.toUpperCase()}\n`;
-        csvContent += "Date,Description,Amount,Status,Reference\n";
+        csvContent += "Transaction #,Date,Employee,Description,Account,Amount,Status\n";
         
         expensesByCategory[category].forEach(expense => {
-            csvContent += `"${expense.date}","${expense.description}","₱${expense.amount.toFixed(2)}","${expense.status}","${expense.reference}"\n`;
+            csvContent += `"${expense.transactionNo}","${expense.date}","${expense.employee}","${expense.description.replace(/"/g, '""')}","${expense.accountInfo.replace(/"/g, '""')}","₱${expense.amount.toFixed(2)}","${expense.status}"\n`;
         });
         
-        csvContent += `"","TOTAL FOR ${category.toUpperCase()}","₱${categoryTotals[category].toFixed(2)}","",""\n\n`;
+        csvContent += `"","","","TOTAL FOR ${category.toUpperCase()}","","₱${categoryTotals[category].toFixed(2)}",""\n\n`;
     });
     
     // Add grand total summary
@@ -284,10 +294,10 @@ function exportToExcel() {
     csvContent += `Total Categories: ${Object.keys(categoryTotals).length}\n`;
     csvContent += `Total Expenses: ${rows.length}\n`;
     csvContent += `Grand Total Amount: ₱${grandTotal.toFixed(2)}\n`;
-    csvContent += `Average per Expense: ₱${(grandTotal / rows.length).toFixed(2)}\n`;
+    csvContent += `Average per Expense: ₱${rows.length > 0 ? (grandTotal / rows.length).toFixed(2) : '0.00'}\n`;
     
     // Download CSV
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -305,7 +315,7 @@ function printReport() {
     showNotification('Preparing to print expense report...', 'info');
     
     // Get current table data
-    const table = document.getElementById('expensesTable');
+    const table = document.getElementById('expenseTable');
     if (!table) {
         showNotification('No data to print', 'warning');
         return;
@@ -324,13 +334,17 @@ function printReport() {
     
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length >= 6) {
-            const date = cells[0].textContent.trim();
-            const description = cells[1].textContent.trim();
-            const category = cells[2].textContent.trim();
-            const amount = parseFloat(cells[3].textContent.replace(/[₱,]/g, '')) || 0;
-            const status = cells[4].textContent.trim();
-            const reference = cells[5].textContent.trim();
+        if (cells.length >= 8) {
+            // Map actual table columns: 0=Transaction#, 1=Date, 2=Employee, 3=Category, 4=Account, 5=Amount, 6=Status, 7=Description, 8=Actions
+            const transactionNo = cells[0].textContent.trim();
+            const date = cells[1].textContent.trim();
+            const employee = cells[2].textContent.trim();
+            const category = cells[3].textContent.trim();
+            const accountInfo = cells[4].textContent.trim();
+            const amountText = cells[5].textContent.trim();
+            const amount = parseFloat(amountText.replace(/[₱,]/g, '')) || 0;
+            const status = cells[6].textContent.trim();
+            const description = cells[7].textContent.trim();
             
             if (!expensesByCategory[category]) {
                 expensesByCategory[category] = [];
@@ -338,7 +352,13 @@ function printReport() {
             }
             
             expensesByCategory[category].push({
-                date, description, amount, status, reference
+                transactionNo,
+                date,
+                employee,
+                amount,
+                status,
+                description,
+                accountInfo
             });
             
             categoryTotals[category] += amount;
@@ -365,9 +385,9 @@ function printReport() {
                 .summary-item { text-align: center; }
                 .summary-value { font-size: 18px; font-weight: bold; color: #28a745; }
                 .summary-label { font-size: 12px; color: #6c757d; }
-                .category-section { margin: 30px 0; }
+                .category-section { margin: 30px 0; page-break-inside: avoid; }
                 .category-header { background-color: #e9ecef; padding: 10px; font-weight: bold; color: #495057; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
                 th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                 th { background-color: #f8f9fa; font-weight: bold; }
                 .text-right { text-align: right; }
@@ -375,11 +395,14 @@ function printReport() {
                 .status-approved { color: #28a745; font-weight: bold; }
                 .status-pending { color: #ffc107; font-weight: bold; }
                 .status-rejected { color: #dc3545; font-weight: bold; }
+                .status-submitted { color: #17a2b8; font-weight: bold; }
+                .status-draft { color: #6c757d; font-weight: bold; }
                 .category-total { background-color: #e9ecef; font-weight: bold; }
                 .footer { margin-top: 30px; font-size: 12px; color: #95a5a6; text-align: center; }
                 @media print {
-                    body { margin: 0; }
+                    body { margin: 0; padding: 10px; }
                     .no-print { display: none; }
+                    .category-section { page-break-inside: avoid; }
                 }
             </style>
         </head>
@@ -406,7 +429,7 @@ function printReport() {
                         <div class="summary-label">Categories</div>
                     </div>
                     <div class="summary-item">
-                        <div class="summary-value">₱${(grandTotal / rows.length).toFixed(2)}</div>
+                        <div class="summary-value">₱${rows.length > 0 ? (grandTotal / rows.length).toFixed(2) : '0.00'}</div>
                         <div class="summary-label">Average per Expense</div>
                     </div>
                 </div>
@@ -425,7 +448,7 @@ function printReport() {
                     <tbody>
                         ${Object.keys(categoryTotals).sort().map(category => {
                             const total = categoryTotals[category];
-                            const percentage = ((total / grandTotal) * 100).toFixed(2);
+                            const percentage = grandTotal > 0 ? ((total / grandTotal) * 100).toFixed(2) : '0.00';
                             return `
                                 <tr>
                                     <td>${category}</td>
@@ -444,33 +467,39 @@ function printReport() {
                     <table>
                         <thead>
                             <tr>
+                                <th>Transaction #</th>
                                 <th>Date</th>
+                                <th>Employee</th>
                                 <th>Description</th>
+                                <th>Account</th>
                                 <th class="text-right">Amount</th>
                                 <th>Status</th>
-                                <th>Reference</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${expensesByCategory[category].map(expense => {
                                 const statusClass = expense.status.toLowerCase().includes('approved') ? 'status-approved' : 
                                                   expense.status.toLowerCase().includes('pending') ? 'status-pending' : 
-                                                  expense.status.toLowerCase().includes('rejected') ? 'status-rejected' : '';
+                                                  expense.status.toLowerCase().includes('submitted') ? 'status-submitted' :
+                                                  expense.status.toLowerCase().includes('rejected') ? 'status-rejected' : 
+                                                  expense.status.toLowerCase().includes('draft') ? 'status-draft' : '';
                                 
                                 return `
                                     <tr>
+                                        <td>${expense.transactionNo}</td>
                                         <td>${expense.date}</td>
+                                        <td>${expense.employee}</td>
                                         <td>${expense.description}</td>
+                                        <td>${expense.accountInfo}</td>
                                         <td class="text-right amount">₱${expense.amount.toFixed(2)}</td>
                                         <td class="${statusClass}">${expense.status}</td>
-                                        <td>${expense.reference}</td>
                                     </tr>
                                 `;
                             }).join('')}
                             <tr class="category-total">
-                                <td colspan="2"><strong>TOTAL FOR ${category.toUpperCase()}</strong></td>
+                                <td colspan="5"><strong>TOTAL FOR ${category.toUpperCase()}</strong></td>
                                 <td class="text-right amount"><strong>₱${categoryTotals[category].toFixed(2)}</strong></td>
-                                <td colspan="2"></td>
+                                <td></td>
                             </tr>
                         </tbody>
                     </table>
@@ -487,11 +516,15 @@ function printReport() {
     
     printWindow.document.write(printContent);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
     
-    showNotification('Expense report printed successfully!', 'success');
+    // Wait a bit for content to load, then print
+    setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        // Don't close immediately - let user see print preview
+    }, 250);
+    
+    showNotification('Expense report prepared for printing!', 'success');
 }
 
 // Utility functions
