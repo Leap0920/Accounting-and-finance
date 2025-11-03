@@ -7,6 +7,7 @@
 -- This file includes merged data from:
 -- - Original Sampled_data.sql (comprehensive system data)
 -- - sample_expense_data.sql (expense tracking module data)
+-- - sample_loan_data.sql (loan accounting module data)
 -- 
 -- Instructions:
 -- 1. Open phpMyAdmin: http://localhost/phpmyadmin
@@ -843,7 +844,7 @@ INSERT INTO employee_attendance (employee_external_no, attendance_date, time_in,
 ('EMP025', '2025-11-06', '08:00:00', '18:00:00', 'present', 9.00, 1.00, 0, 'Overtime work'),
 ('EMP025', '2025-11-07', NULL, NULL, 'leave', 0.00, 0.00, 0, 'Vacation leave'),
 ('EMP025', '2025-11-10', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'),
-('EMP025', '2025-11-11', '08:20:00', '17:00:00', 'late', 8.00, 0.00, 20, 'Late arrival'),
+('EMP025', '2025-11-11', '08:20:00', '17:00:00', 'late', 8.00, 0.00, 20, 'Late arriv'),
 ('EMP025', '2025-11-12', '08:00:00', '12:00:00', 'half_day', 4.00, 0.00, 0, 'Half day'),
 ('EMP025', '2025-11-13', NULL, NULL, 'absent', 0.00, 0.00, 0, 'Absent'),
 ('EMP025', '2025-11-14', '08:00:00', '19:30:00', 'present', 10.50, 2.50, 0, 'Overtime work'),
@@ -967,7 +968,13 @@ INSERT INTO loan_types (code, name, max_amount, max_term_months, interest_rate, 
 ('EDUCATION', 'Education Loan', 100000.00, 24, 0.04, 'Educational assistance loan', TRUE),
 ('VEHICLE', 'Vehicle Loan', 300000.00, 36, 0.07, 'Vehicle purchase loan', TRUE),
 ('MEDICAL', 'Medical Loan', 15000.00, 12, 0.03, 'Medical emergency loan', TRUE),
-('APPLIANCE', 'Appliance Loan', 20000.00, 18, 0.05, 'Home appliance loan', TRUE)
+('APPLIANCE', 'Appliance Loan', 20000.00, 18, 0.05, 'Home appliance loan', TRUE),
+-- Additional loan types from sample_loan_data.sql
+('PL', 'Personal Loan', 500000.00, 60, 12.5000, 'Personal loans for employees', TRUE),
+('HL', 'Housing Loan (Extended)', 2000000.00, 360, 8.5000, 'Housing/Home loans with extended terms', TRUE),
+('VL', 'Vehicle Loan (Extended)', 1000000.00, 60, 10.0000, 'Auto/Vehicle loans', TRUE),
+('EL', 'Emergency Loan (Extended)', 100000.00, 12, 15.0000, 'Quick emergency loans', TRUE),
+('SL', 'Salary Loan (Extended)', 200000.00, 24, 14.0000, 'Salary advance loans with higher limits', TRUE)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- ========================================
@@ -1403,7 +1410,20 @@ INSERT IGNORE INTO loans (loan_no, loan_type_id, borrower_external_no, principal
 
 -- Appliance Loans
 ('LN-1024', 7, 'EMP019', 15000.00, 0.05, '2024-07-01', 18, 900.00, 15000.00, 'active', 1, '2024-07-01 10:00:00'),
-('LN-1025', 7, 'EMP021', 20000.00, 0.05, '2024-08-15', 18, 1200.00, 20000.00, 'active', 1, '2024-08-15 14:30:00')
+('LN-1025', 7, 'EMP021', 20000.00, 0.05, '2024-08-15', 18, 1200.00, 20000.00, 'active', 1, '2024-08-15 14:30:00'),
+
+-- Additional loans from sample_loan_data.sql (using extended loan types)
+-- Note: These use different loan_type_id references based on the new types added above
+('LOAN-2024-001', (SELECT id FROM loan_types WHERE code = 'PL'), 'EMP001', 150000.00, 12.5000, '2024-01-15', 36, 5025.00, 120000.00, 'active', 1, '2024-01-15 09:00:00'),
+('LOAN-2024-002', (SELECT id FROM loan_types WHERE code = 'HL'), 'EMP002', 1500000.00, 8.5000, '2024-02-01', 240, 12850.00, 1450000.00, 'active', 1, '2024-02-01 11:00:00'),
+('LOAN-2024-003', (SELECT id FROM loan_types WHERE code = 'VL'), 'EMP003', 500000.00, 10.0000, '2024-03-10', 60, 10625.00, 450000.00, 'active', 1, '2024-03-10 10:00:00'),
+('LOAN-2024-004', (SELECT id FROM loan_types WHERE code = 'EL'), 'EMP004', 50000.00, 15.0000, '2023-12-01', 12, 4500.00, 0.00, 'paid', 1, '2023-12-01 09:00:00'),
+('LOAN-2024-005', (SELECT id FROM loan_types WHERE code = 'SL'), 'EMP005', 100000.00, 14.0000, '2024-04-01', 24, 4850.00, 85000.00, 'active', 1, '2024-04-01 09:00:00'),
+('LOAN-2024-006', (SELECT id FROM loan_types WHERE code = 'PL'), 'EMP001', 75000.00, 12.5000, '2024-05-15', 24, 3575.00, 65000.00, 'active', 1, '2024-05-15 10:00:00'),
+('LOAN-2023-010', (SELECT id FROM loan_types WHERE code = 'PL'), 'EMP002', 100000.00, 12.5000, '2023-01-15', 36, 3350.00, 0.00, 'paid', 1, '2023-01-15 09:00:00'),
+('LOAN-2023-015', (SELECT id FROM loan_types WHERE code = 'VL'), 'EMP003', 350000.00, 10.0000, '2023-06-01', 60, 7437.50, 280000.00, 'active', 1, '2023-06-01 09:00:00'),
+('LOAN-2024-007', (SELECT id FROM loan_types WHERE code = 'EL'), 'EMP004', 25000.00, 15.0000, '2024-06-01', 12, 2250.00, 18000.00, 'active', 1, '2024-06-01 09:00:00'),
+('LOAN-2024-008', (SELECT id FROM loan_types WHERE code = 'HL'), 'EMP005', 800000.00, 8.5000, '2024-07-01', 180, 7960.00, 795000.00, 'pending', 1, '2024-07-01 09:00:00')
 ON DUPLICATE KEY UPDATE principal_amount = VALUES(principal_amount);
 
 -- ========================================
@@ -1459,7 +1479,33 @@ INSERT IGNORE INTO loan_payments (loan_id, payment_date, amount, principal_amoun
 (16, '2024-12-15', 1620.00, 1500.00, 120.00, 'PAY-2024-12-002', NULL, '2024-12-15 10:00:00'),
 (17, '2024-12-01', 2520.00, 2300.00, 220.00, 'PAY-2024-12-003', NULL, '2024-12-01 10:00:00'),
 (18, '2024-12-01', 4000.00, 3000.00, 1000.00, 'PAY-2024-12-004', NULL, '2024-12-01 10:00:00'),
-(19, '2024-12-15', 1500.00, 1300.00, 200.00, 'PAY-2024-12-005', NULL, '2024-12-15 10:00:00')
+(19, '2024-12-15', 1500.00, 1300.00, 200.00, 'PAY-2024-12-005', NULL, '2024-12-15 10:00:00'),
+
+-- Additional loan payments from sample_loan_data.sql for LOAN-2024-001 through LOAN-2024-008
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-001' LIMIT 1), '2024-02-15', 5025.00, 3775.00, 1250.00, 'PAY-2024-001', NULL, '2024-02-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-001' LIMIT 1), '2024-03-15', 5025.00, 3815.00, 1210.00, 'PAY-2024-002', NULL, '2024-03-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-001' LIMIT 1), '2024-04-15', 5025.00, 3855.00, 1170.00, 'PAY-2024-003', NULL, '2024-04-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-001' LIMIT 1), '2024-05-15', 5025.00, 3895.00, 1130.00, 'PAY-2024-004', NULL, '2024-05-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-001' LIMIT 1), '2024-06-15', 5025.00, 3935.00, 1090.00, 'PAY-2024-005', NULL, '2024-06-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-001' LIMIT 1), '2024-07-15', 5025.00, 3975.00, 1050.00, 'PAY-2024-006', NULL, '2024-07-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-002' LIMIT 1), '2024-03-01', 12850.00, 2225.00, 10625.00, 'PAY-2024-010', NULL, '2024-03-01 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-002' LIMIT 1), '2024-04-01', 12850.00, 2241.00, 10609.00, 'PAY-2024-011', NULL, '2024-04-01 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-003' LIMIT 1), '2024-04-10', 10625.00, 6458.33, 4166.67, 'PAY-2024-020', NULL, '2024-04-10 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2023-12-15', 4500.00, 3875.00, 625.00, 'PAY-2023-100', NULL, '2023-12-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-01-15', 4500.00, 3924.00, 576.00, 'PAY-2024-101', NULL, '2024-01-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-02-15', 4500.00, 3974.00, 526.00, 'PAY-2024-102', NULL, '2024-02-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-03-15', 4500.00, 4024.00, 476.00, 'PAY-2024-103', NULL, '2024-03-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-04-15', 4500.00, 4075.00, 425.00, 'PAY-2024-104', NULL, '2024-04-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-05-15', 4500.00, 4126.00, 374.00, 'PAY-2024-105', NULL, '2024-05-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-06-15', 4500.00, 4177.00, 323.00, 'PAY-2024-106', NULL, '2024-06-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-07-15', 4500.00, 4229.00, 271.00, 'PAY-2024-107', NULL, '2024-07-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-08-15', 4500.00, 4281.00, 219.00, 'PAY-2024-108', NULL, '2024-08-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-09-15', 4500.00, 4334.00, 166.00, 'PAY-2024-109', NULL, '2024-09-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-10-15', 4500.00, 4387.00, 113.00, 'PAY-2024-110', NULL, '2024-10-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-004' LIMIT 1), '2024-11-15', 4113.00, 4050.00, 63.00, 'PAY-2024-111', NULL, '2024-11-15 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-005' LIMIT 1), '2024-05-01', 4850.00, 3683.33, 1166.67, 'PAY-2024-200', NULL, '2024-05-01 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-005' LIMIT 1), '2024-06-01', 4850.00, 3726.00, 1124.00, 'PAY-2024-201', NULL, '2024-06-01 10:00:00'),
+((SELECT id FROM loans WHERE loan_no = 'LOAN-2024-005' LIMIT 1), '2024-07-01', 4850.00, 3769.00, 1081.00, 'PAY-2024-202', NULL, '2024-07-01 10:00:00')
 ON DUPLICATE KEY UPDATE amount = VALUES(amount);
 
 -- ========================================
@@ -1956,8 +2002,8 @@ SELECT '=== ACCOUNTING & FINANCE SYSTEM IS READY FOR TESTING ===' AS ready_statu
 -- ✅ 25 employees across multiple departments
 -- ✅ 8 bank accounts
 -- ✅ 20+ journal entries with balanced transactions
--- ✅ 25+ loans across different types
--- ✅ 100+ loan payments
+-- ✅ 35+ loans across different types (merged from Sampled_data.sql and sample_loan_data.sql)
+-- ✅ 130+ loan payments (includes payments from both data files)
 -- ✅ 43+ expense claims (includes expense tracking module data)
 -- ✅ 40+ payment records
 -- ✅ 13 payroll periods with comprehensive payslips
