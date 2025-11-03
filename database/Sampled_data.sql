@@ -1001,6 +1001,288 @@ INSERT INTO employee_attendance (employee_external_no, attendance_date, time_in,
 ('EMP025', '2025-11-28', NULL, NULL, 'absent', 0.00, 0.00, 0, 'Absent')
 ON DUPLICATE KEY UPDATE hours_worked = VALUES(hours_worked), status = VALUES(status), overtime_hours = VALUES(overtime_hours), late_minutes = VALUES(late_minutes);
 -- ========================================
+-- 4E. HRIS ADDITIONAL TABLES (Leave, Contracts, Onboarding, Recruitment)
+-- ========================================
+
+-- Leave Types
+INSERT INTO leave_type (leave_type_id, leave_name, purpose, duration, paid_unpaid) VALUES
+(1, 'Vacation Leave', 'Annual vacation time', 'Per year', 'paid'),
+(2, 'Sick Leave', 'Medical leave for illness', 'Per year', 'paid'),
+(3, 'Maternity Leave', 'Maternity and childcare', 'Per occurrence', 'paid'),
+(4, 'Paternity Leave', 'Paternity and childcare', 'Per occurrence', 'paid'),
+(5, 'Emergency Leave', 'Family emergencies', 'Per year', 'paid'),
+(6, 'Bereavement Leave', 'Death in family', 'Per occurrence', 'paid'),
+(7, 'Service Incentive Leave', 'Service recognition', 'Per year', 'paid'),
+(8, 'Sabbatical Leave', 'Extended leave for personal development', 'As needed', 'unpaid'),
+(9, 'Study Leave', 'Educational purposes', 'As needed', 'unpaid'),
+(10, 'Emergency Leave', 'Unforeseen circumstances', 'As needed', 'unpaid')
+ON DUPLICATE KEY UPDATE leave_name = VALUES(leave_name);
+
+-- Leave Requests
+INSERT INTO leave_request (leave_request_id, employee_id, leave_type_id, start_date, end_date, total_days, reason, status, approver_id, date_requested, date_approved) VALUES
+(1, 1, 1, '2025-12-20', '2025-12-22', 3, 'Year-end vacation with family', 'approved', 5, '2025-12-01', '2025-12-02'),
+(2, 3, 2, '2025-11-15', '2025-11-16', 2, 'Medical treatment', 'approved', 5, '2025-11-14', '2025-11-14'),
+(3, 7, 1, '2025-12-28', '2025-12-31', 4, 'Holiday vacation', 'pending', NULL, '2025-12-10', NULL),
+(4, 12, 6, '2025-11-10', '2025-11-11', 2, 'Family bereavement', 'approved', 2, '2025-11-09', '2025-11-09'),
+(5, 8, 3, '2025-01-15', '2025-03-15', 60, 'Maternity leave', 'approved', 2, '2024-12-01', '2024-12-02'),
+(6, 15, 5, '2025-12-05', '2025-12-05', 1, 'Family emergency', 'approved', 5, '2025-12-04', '2025-12-04'),
+(7, 20, 1, '2025-12-25', '2025-12-27', 3, 'Holiday vacation', 'pending', NULL, '2025-12-15', NULL)
+ON DUPLICATE KEY UPDATE status = VALUES(status);
+
+-- Contracts
+INSERT INTO contract (contract_id, employee_id, contract_type, start_date, end_date, salary, benefits) VALUES
+(1, 1, 'Regular Employment', '2020-01-15', NULL, 65000.00, 'Health insurance, 13th month pay, retirement plan'),
+(2, 2, 'Regular Employment', '2019-06-01', NULL, 200000.00, 'Executive benefits package, health insurance, car allowance'),
+(3, 16, 'Contractual', '2022-05-01', '2025-04-30', 28000.00, 'Health insurance'),
+(4, 17, 'Contractual', '2022-04-15', '2025-04-14', 38000.00, 'Health insurance'),
+(5, 19, 'Contractual', '2022-06-01', '2025-05-31', 30000.00, 'Health insurance'),
+(6, 20, 'Part-time', '2022-07-01', NULL, 25000.00, 'Pro-rated benefits'),
+(7, 24, 'Contractual', '2022-08-01', '2025-07-31', 35000.00, 'Health insurance'),
+(8, 3, 'Regular Employment', '2021-02-01', NULL, 220000.00, 'Executive benefits package, health insurance, technology allowance')
+ON DUPLICATE KEY UPDATE salary = VALUES(salary);
+
+-- Onboarding Records
+INSERT INTO onboarding (onboarding_id, employee_id, start_date, department_id, completion_status) VALUES
+(1, 11, '2022-01-15', 1, 'completed'),
+(2, 12, '2022-02-01', 3, 'completed'),
+(3, 16, '2022-05-01', 4, 'completed'),
+(4, 24, '2022-08-01', 4, 'completed'),
+(5, 25, '2021-12-01', 7, 'completed')
+ON DUPLICATE KEY UPDATE completion_status = VALUES(completion_status);
+
+-- Recruitment (Job Postings)
+INSERT INTO recruitment (recruitment_id, job_title, department_id, date_posted, status, posted_by) VALUES
+(1, 'Senior Software Developer', 1, '2025-11-01', 'open', 1),
+(2, 'Marketing Manager', 4, '2025-11-15', 'open', 1),
+(3, 'Finance Analyst', 3, '2025-12-01', 'closed', 1),
+(4, 'Customer Service Representative', 6, '2025-12-10', 'open', 1),
+(5, 'Operations Coordinator', 5, '2025-11-20', 'closed', 1)
+ON DUPLICATE KEY UPDATE status = VALUES(status);
+
+-- Applicants
+INSERT INTO applicant (applicant_id, recruitment_id, full_name, email, contact_number, resume_file, application_status, archived_at) VALUES
+(1, 1, 'John Michael Dela Cruz', 'john.delacruz@email.com', '09171234999', 'resume_john_delacruz.pdf', 'interview', NULL),
+(2, 1, 'Mary Grace Santos', 'mary.santos@email.com', '09171234998', 'resume_mary_santos.pdf', 'shortlisted', NULL),
+(3, 2, 'Peter James Garcia', 'peter.garcia@email.com', '09171234997', 'resume_peter_garcia.pdf', 'rejected', '2025-11-20'),
+(4, 3, 'Lisa Ann Reyes', 'lisa.reyes@email.com', '09171234996', 'resume_lisa_reyes.pdf', 'hired', NULL),
+(5, 4, 'Robert John Cruz', 'robert.cruz@email.com', '09171234995', 'resume_robert_cruz.pdf', 'pending', NULL)
+ON DUPLICATE KEY UPDATE application_status = VALUES(application_status);
+
+-- Interviews
+INSERT INTO interview (interview_id, applicant_id, interviewer_id, interview_date, interview_result, remarks) VALUES
+(1, 1, 9, '2025-11-20', 'passed', 'Strong technical skills, good communication'),
+(2, 1, 3, '2025-11-25', 'passed', 'Technical assessment completed successfully'),
+(3, 2, 9, '2025-11-18', 'pending', 'Scheduled for second round'),
+(4, 4, 2, '2025-12-05', 'passed', 'Excellent analytical skills, ready for hiring'),
+(5, 5, 6, '2025-12-15', 'pending', 'Initial screening completed')
+ON DUPLICATE KEY UPDATE interview_result = VALUES(interview_result);
+
+-- Attendance (Alternative attendance table using employee_id)
+INSERT INTO attendance (attendance_id, employee_id, date, time_in, time_out, total_hours, status, remarks) VALUES
+(1, 1, '2025-11-03', '2025-11-03 08:00:00', '2025-11-03 17:00:00', 8.00, 'Present', 'Regular work day'),
+(2, 2, '2025-11-03', '2025-11-03 08:15:00', '2025-11-03 17:30:00', 8.25, 'Present', 'Late arrival'),
+(3, 3, '2025-11-03', '2025-11-03 08:00:00', '2025-11-03 18:00:00', 9.00, 'Present', 'Overtime work'),
+(4, 1, '2025-11-04', '2025-11-04 08:20:00', '2025-11-04 17:00:00', 7.67, 'Late', 'Late arrival - 20 minutes'),
+(5, 5, '2025-11-05', NULL, NULL, 0.00, 'Absent', 'Absent without leave')
+ON DUPLICATE KEY UPDATE status = VALUES(status);
+
+-- System Logs
+INSERT INTO system_logs (log_level, log_type, user_id, employee_id, ip_address, user_agent, action, details, request_data, created_at) VALUES
+('INFO', 'authentication', 1, 1, '192.168.1.100', 'Mozilla/5.0', 'User Login', 'Admin user logged in successfully', '{"username":"admin"}', NOW() - INTERVAL 2 DAY),
+('INFO', 'payroll', 1, 1, '192.168.1.100', 'Mozilla/5.0', 'Payroll Run', 'Payroll processed for November 2025', '{"period":"2025-11","employees":25}', NOW() - INTERVAL 5 DAY),
+('WARNING', 'attendance', NULL, 5, '192.168.1.105', 'Mobile App', 'Late Arrival', 'Employee arrived 30 minutes late', '{"employee_id":5,"late_minutes":30}', NOW() - INTERVAL 3 DAY),
+('ERROR', 'integration', 1, NULL, '192.168.1.100', 'API Client', 'HRIS Sync Failed', 'Failed to sync employee data from external HRIS', '{"error":"Connection timeout"}', NOW() - INTERVAL 1 DAY),
+('INFO', 'loan', 1, 1, '192.168.1.100', 'Mozilla/5.0', 'Loan Created', 'New loan created for employee', '{"loan_no":"LN-1026","employee":"EMP001"}', NOW() - INTERVAL 7 DAY)
+ON DUPLICATE KEY UPDATE created_at = VALUES(created_at);
+
+-- Login Attempts
+INSERT INTO login_attempts (attempt_id, username, ip_address, attempt_time, success, failure_reason) VALUES
+(1, 'admin', '192.168.1.100', NOW() - INTERVAL 2 DAY, TRUE, NULL),
+(2, 'admin', '192.168.1.105', NOW() - INTERVAL 3 DAY, FALSE, 'Invalid password'),
+(3, 'admin', '192.168.1.100', NOW() - INTERVAL 1 DAY, TRUE, NULL),
+(4, 'juan.santos', '192.168.1.110', NOW() - INTERVAL 5 DAY, FALSE, 'User not found'),
+(5, 'admin', '10.0.0.50', NOW() - INTERVAL 6 DAY, FALSE, 'Account locked - too many attempts')
+ON DUPLICATE KEY UPDATE attempt_time = VALUES(attempt_time);
+
+-- ========================================
+-- 4F. BANKING MODULE SUPPORTING TABLES
+-- ========================================
+
+-- Genders (for customer profiles)
+INSERT INTO genders (gender_id, gender_name) VALUES
+(1, 'Male'),
+(2, 'Female'),
+(3, 'Other'),
+(4, 'Prefer not to say')
+ON DUPLICATE KEY UPDATE gender_name = VALUES(gender_name);
+
+-- Provinces (Philippine provinces)
+INSERT INTO provinces (province_id, province_name, country) VALUES
+(1, 'Metro Manila', 'Philippines'),
+(2, 'Cebu', 'Philippines'),
+(3, 'Davao', 'Philippines'),
+(4, 'Laguna', 'Philippines'),
+(5, 'Cavite', 'Philippines'),
+(6, 'Bulacan', 'Philippines'),
+(7, 'Rizal', 'Philippines'),
+(8, 'Pampanga', 'Philippines'),
+(9, 'Quezon', 'Philippines'),
+(10, 'Batangas', 'Philippines')
+ON DUPLICATE KEY UPDATE province_name = VALUES(province_name);
+
+-- Bank Account Types
+INSERT INTO bank_account_types (account_type_id, type_name, description) VALUES
+(1, 'Savings Account', 'Regular savings account with interest'),
+(2, 'Checking Account', 'Checking account for daily transactions'),
+(3, 'Time Deposit', 'Fixed-term deposit account'),
+(4, 'Current Account', 'Business current account'),
+(5, 'USD Account', 'Foreign currency savings account')
+ON DUPLICATE KEY UPDATE type_name = VALUES(type_name);
+
+-- Bank Employees (for customer account creation tracking)
+INSERT INTO bank_employees (employee_id, employee_name, created_at) VALUES
+(1, 'Bank Teller 001', NOW() - INTERVAL 30 DAY),
+(2, 'Bank Teller 002', NOW() - INTERVAL 25 DAY),
+(3, 'Account Manager 001', NOW() - INTERVAL 20 DAY),
+(4, 'Bank Officer 001', NOW() - INTERVAL 15 DAY)
+ON DUPLICATE KEY UPDATE employee_name = VALUES(employee_name);
+
+-- Bank Customers
+INSERT INTO bank_customers (customer_id, last_name, first_name, middle_name, password_hash, created_at, created_by_employee_id) VALUES
+(1, 'Reyes', 'Juan', 'Dela', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW() - INTERVAL 90 DAY, 1),
+(2, 'Santos', 'Maria', 'Garcia', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW() - INTERVAL 75 DAY, 1),
+(3, 'Cruz', 'Jose', 'Ramos', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW() - INTERVAL 60 DAY, 2),
+(4, 'Lopez', 'Anna', NULL, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW() - INTERVAL 45 DAY, 2),
+(5, 'Garcia', 'Roberto', 'Fernandez', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW() - INTERVAL 30 DAY, 3)
+ON DUPLICATE KEY UPDATE last_name = VALUES(last_name);
+
+-- Customer Profiles
+INSERT INTO customer_profiles (profile_id, customer_id, gender_id, date_of_birth, marital_status, national_id, occupation, company, income_range, preferred_language, nationality, loyalty_member, profile_created_at) VALUES
+(1, 1, 1, '1985-05-15', 'married', 'TIN-001-234-567-890', 'Software Engineer', 'Tech Solutions Inc.', '50000-100000', 'English', 'Filipino', TRUE, NOW() - INTERVAL 85 DAY),
+(2, 2, 2, '1988-03-20', 'single', 'TIN-002-345-678-901', 'Marketing Manager', 'Digital Marketing Co.', '30000-50000', 'English', 'Filipino', TRUE, NOW() - INTERVAL 70 DAY),
+(3, 3, 1, '1990-08-10', 'married', 'TIN-003-456-789-012', 'Business Owner', 'Small Business Corp', '100000-200000', 'Tagalog', 'Filipino', TRUE, NOW() - INTERVAL 55 DAY),
+(4, 4, 2, '1992-11-25', 'single', 'TIN-004-567-890-123', 'Teacher', 'Public School', '20000-30000', 'Tagalog', 'Filipino', FALSE, NOW() - INTERVAL 40 DAY),
+(5, 5, 1, '1987-07-30', 'married', 'TIN-005-678-901-234', 'Accountant', 'Accounting Firm', '40000-60000', 'English', 'Filipino', TRUE, NOW() - INTERVAL 25 DAY)
+ON DUPLICATE KEY UPDATE marital_status = VALUES(marital_status);
+
+-- Addresses
+INSERT INTO addresses (address_id, customer_id, address_line, city, province_id, postal_code, address_type, is_primary, created_at) VALUES
+(1, 1, '123 Main Street, Barangay San Antonio', 'Makati City', 1, '1200', 'home', TRUE, NOW() - INTERVAL 85 DAY),
+(2, 2, '456 Rizal Avenue', 'Quezon City', 1, '1100', 'home', TRUE, NOW() - INTERVAL 70 DAY),
+(3, 3, '789 EDSA Extension', 'Mandaluyong City', 1, '1550', 'home', TRUE, NOW() - INTERVAL 55 DAY),
+(4, 4, '321 P. Burgos Street', 'Manila', 1, '1000', 'home', TRUE, NOW() - INTERVAL 40 DAY),
+(5, 5, '654 Ayala Avenue', 'Makati City', 1, '1200', 'home', TRUE, NOW() - INTERVAL 25 DAY)
+ON DUPLICATE KEY UPDATE address_line = VALUES(address_line);
+
+-- Emails
+INSERT INTO emails (email_id, customer_id, email, is_primary, created_at) VALUES
+(1, 1, 'juan.reyes@email.com', TRUE, NOW() - INTERVAL 85 DAY),
+(2, 2, 'maria.santos@email.com', TRUE, NOW() - INTERVAL 70 DAY),
+(3, 3, 'jose.cruz@email.com', TRUE, NOW() - INTERVAL 55 DAY),
+(4, 4, 'anna.lopez@email.com', TRUE, NOW() - INTERVAL 40 DAY),
+(5, 5, 'roberto.garcia@email.com', TRUE, NOW() - INTERVAL 25 DAY)
+ON DUPLICATE KEY UPDATE email = VALUES(email);
+
+-- Phones
+INSERT INTO phones (phone_id, customer_id, phone_number, phone_type, is_primary, created_at) VALUES
+(1, 1, '09171234111', 'mobile', TRUE, NOW() - INTERVAL 85 DAY),
+(2, 2, '09171234112', 'mobile', TRUE, NOW() - INTERVAL 70 DAY),
+(3, 3, '09171234113', 'mobile', TRUE, NOW() - INTERVAL 55 DAY),
+(4, 4, '09171234114', 'mobile', TRUE, NOW() - INTERVAL 40 DAY),
+(5, 5, '09171234115', 'mobile', TRUE, NOW() - INTERVAL 25 DAY)
+ON DUPLICATE KEY UPDATE phone_number = VALUES(phone_number);
+
+-- Customer Accounts
+INSERT INTO customer_accounts (account_id, customer_id, account_number, account_type_id, interest_rate, last_interest_date, is_locked, created_at, created_by_employee_id) VALUES
+(1, 1, 'SA-001-2024', 1, 2.50, '2025-11-30', FALSE, NOW() - INTERVAL 80 DAY, 1),
+(2, 2, 'CA-002-2024', 2, 1.00, '2025-11-30', FALSE, NOW() - INTERVAL 65 DAY, 1),
+(3, 3, 'TD-003-2024', 3, 3.50, '2025-11-30', FALSE, NOW() - INTERVAL 50 DAY, 2),
+(4, 4, 'SA-004-2024', 1, 2.50, '2025-11-30', FALSE, NOW() - INTERVAL 35 DAY, 2),
+(5, 5, 'CA-005-2024', 4, 1.50, '2025-11-30', FALSE, NOW() - INTERVAL 20 DAY, 3)
+ON DUPLICATE KEY UPDATE account_number = VALUES(account_number);
+
+-- Customer Linked Accounts
+INSERT INTO customer_linked_accounts (link_id, customer_id, account_id, linked_at, is_active) VALUES
+(1, 1, 1, NOW() - INTERVAL 80 DAY, TRUE),
+(2, 2, 2, NOW() - INTERVAL 65 DAY, TRUE),
+(3, 3, 3, NOW() - INTERVAL 50 DAY, TRUE),
+(4, 4, 4, NOW() - INTERVAL 35 DAY, TRUE),
+(5, 5, 5, NOW() - INTERVAL 20 DAY, TRUE)
+ON DUPLICATE KEY UPDATE is_active = VALUES(is_active);
+
+-- Transaction Types
+INSERT INTO transaction_types (transaction_type_id, type_name, description) VALUES
+(1, 'Deposit', 'Cash or check deposit to account'),
+(2, 'Withdrawal', 'Cash withdrawal from account'),
+(3, 'Transfer', 'Transfer between accounts'),
+(4, 'Interest Credit', 'Interest payment credited'),
+(5, 'Service Charge', 'Bank service fee charged'),
+(6, 'Loan Disbursement', 'Loan amount disbursed to account'),
+(7, 'Loan Payment', 'Loan payment received')
+ON DUPLICATE KEY UPDATE type_name = VALUES(type_name);
+
+-- Bank Transactions
+INSERT INTO bank_transactions (transaction_id, transaction_ref, account_id, transaction_type_id, amount, related_account_id, description, employee_id, created_at) VALUES
+(1, 'TXN-2025-001', 1, 1, 50000.00, NULL, 'Initial deposit', 1, NOW() - INTERVAL 75 DAY),
+(2, 'TXN-2025-002', 2, 1, 100000.00, NULL, 'Salary deposit', 1, NOW() - INTERVAL 60 DAY),
+(3, 'TXN-2025-003', 1, 2, 5000.00, NULL, 'Cash withdrawal', 1, NOW() - INTERVAL 70 DAY),
+(4, 'TXN-2025-004', 3, 1, 500000.00, NULL, 'Time deposit opening', 2, NOW() - INTERVAL 45 DAY),
+(5, 'TXN-2025-005', 1, 4, 125.00, NULL, 'Monthly interest credit', 1, NOW() - INTERVAL 30 DAY),
+(6, 'TXN-2025-006', 2, 2, 25000.00, NULL, 'Withdrawal', 1, NOW() - INTERVAL 55 DAY),
+(7, 'TXN-2025-007', 1, 3, 10000.00, 2, 'Transfer to checking account', 1, NOW() - INTERVAL 65 DAY),
+(8, 'TXN-2025-008', 5, 5, 100.00, NULL, 'Monthly service charge', 3, NOW() - INTERVAL 15 DAY)
+ON DUPLICATE KEY UPDATE transaction_ref = VALUES(transaction_ref);
+
+-- Payroll Payslips (Alternative payslip table using employee_id)
+INSERT INTO payroll_payslips (payslip_id, employee_id, pay_period_start, pay_period_end, gross_salary, deduction, net_pay, release_date) VALUES
+(1, 1, '2024-11-01', '2024-11-30', 65000.00, 11700.00, 53300.00, '2024-12-05'),
+(2, 2, '2024-11-01', '2024-11-30', 200000.00, 36000.00, 164000.00, '2024-12-05'),
+(3, 3, '2024-11-01', '2024-11-30', 220000.00, 39600.00, 180400.00, '2024-12-05'),
+(4, 8, '2024-11-01', '2024-11-30', 48000.00, 8640.00, 39360.00, '2024-12-05'),
+(5, 12, '2024-11-01', '2024-11-30', 35000.00, 6300.00, 28700.00, '2024-12-05')
+ON DUPLICATE KEY UPDATE gross_salary = VALUES(gross_salary);
+
+-- Reports (HRIS Reports)
+INSERT INTO reports (report_id, attendance_summary, recruitment_summary, leave_summary, payroll_summary) VALUES
+(1, 'Total attendance: 450 days, Present: 380, Absent: 50, Late: 20', 'Active postings: 3, Applications: 15, Hired: 2', 'Total leave requests: 25, Approved: 20, Pending: 5', 'November 2025 payroll: 25 employees, Total gross: 2,500,000 PHP'),
+(2, 'Total attendance: 480 days, Present: 420, Absent: 40, Late: 20', 'Active postings: 2, Applications: 10, Hired: 1', 'Total leave requests: 30, Approved: 28, Pending: 2', 'December 2025 payroll: 25 employees, Total gross: 2,600,000 PHP')
+ON DUPLICATE KEY UPDATE attendance_summary = VALUES(attendance_summary);
+
+-- ========================================
+-- 4G. BANKING MODULE - MISSIONS & BANK USERS
+-- ========================================
+
+-- Missions (Banking rewards/missions)
+INSERT INTO missions (id, mission_text, points_value, created_at) VALUES
+(1, 'Complete your first transaction', 100.00, NOW() - INTERVAL 90 DAY),
+(2, 'Maintain minimum balance for 3 months', 500.00, NOW() - INTERVAL 60 DAY),
+(3, 'Refer a friend to open an account', 1000.00, NOW() - INTERVAL 45 DAY),
+(4, 'Use mobile banking 10 times', 300.00, NOW() - INTERVAL 30 DAY),
+(5, 'Set up automatic bill payment', 200.00, NOW() - INTERVAL 20 DAY)
+ON DUPLICATE KEY UPDATE mission_text = VALUES(mission_text);
+
+-- Bank Users (Banking system users - different from employee users)
+INSERT INTO bank_users (id, first_name, middle_name, last_name, address, city_province, email, contact_number, birthday, password, verification_code, bank_id, total_points, created_at, is_verified) VALUES
+(1, 'Juan', 'Dela', 'Reyes', '123 Main Street, Barangay San Antonio', 'Makati City, Metro Manila', 'juan.reyes@bank.com', '09171234111', '1985-05-15', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'VER001', 'BANK-001', 1500.00, NOW() - INTERVAL 85 DAY, TRUE),
+(2, 'Maria', 'Garcia', 'Santos', '456 Rizal Avenue', 'Quezon City, Metro Manila', 'maria.santos@bank.com', '09171234112', '1988-03-20', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'VER002', 'BANK-002', 800.00, NOW() - INTERVAL 70 DAY, TRUE),
+(3, 'Jose', 'Ramos', 'Cruz', '789 EDSA Extension', 'Mandaluyong City, Metro Manila', 'jose.cruz@bank.com', '09171234113', '1990-08-10', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'VER003', 'BANK-003', 2000.00, NOW() - INTERVAL 55 DAY, TRUE)
+ON DUPLICATE KEY UPDATE email = VALUES(email);
+
+-- User Missions (Banking mission completions)
+INSERT INTO user_missions (id, user_id, mission_id, points_earned, completed_at) VALUES
+(1, 1, 1, 100.00, NOW() - INTERVAL 80 DAY),
+(2, 1, 2, 500.00, NOW() - INTERVAL 60 DAY),
+(3, 1, 4, 300.00, NOW() - INTERVAL 30 DAY),
+(4, 2, 1, 100.00, NOW() - INTERVAL 65 DAY),
+(5, 2, 5, 200.00, NOW() - INTERVAL 15 DAY),
+(6, 3, 1, 100.00, NOW() - INTERVAL 50 DAY),
+(7, 3, 2, 500.00, NOW() - INTERVAL 45 DAY),
+(8, 3, 3, 1000.00, NOW() - INTERVAL 40 DAY),
+(9, 3, 4, 300.00, NOW() - INTERVAL 25 DAY),
+(10, 3, 5, 200.00, NOW() - INTERVAL 20 DAY)
+ON DUPLICATE KEY UPDATE points_earned = VALUES(points_earned);
+
+-- ========================================
 -- 5. BANK ACCOUNTS
 -- ========================================
 
@@ -2197,14 +2479,26 @@ SELECT '=== ACCOUNTING & FINANCE SYSTEM IS READY FOR TESTING ===' AS ready_statu
 -- ✅ Admin user and roles
 -- ✅ Complete chart of accounts (80+ accounts)
 -- ✅ HRIS Module: 7 departments, 24 positions, 25 employees (fully connected)
+-- ✅ HRIS Additional: 10 leave types, 7 leave requests, 8 contracts, 5 onboarding records
+-- ✅ HRIS Recruitment: 5 job postings, 5 applicants, 5 interviews
 -- ✅ HRIS-Payroll Integration: employee_refs linking to payroll system
--- ✅ 8 bank accounts
+-- ✅ Attendance: employee_attendance (550+ records) and attendance (5 records)
+-- ✅ System Logs: 5 system log entries for tracking
+-- ✅ Login Attempts: 5 login attempt records
+-- ✅ Banking Module: 5 missions, 3 bank users, 10 user missions
+-- ✅ Banking Customers: 5 customers with profiles, addresses, emails, phones
+-- ✅ Banking Accounts: 5 customer accounts with transaction types
+-- ✅ Banking Transactions: 8 bank transaction records
+-- ✅ Banking Support: 4 genders, 10 provinces, 5 bank account types, 4 bank employees
+-- ✅ 8 bank accounts (company accounts)
 -- ✅ 20+ journal entries with balanced transactions
 -- ✅ 35+ loans across different types (merged from Sampled_data.sql and sample_loan_data.sql)
 -- ✅ 130+ loan payments (includes payments from both data files)
 -- ✅ 43+ expense claims (includes expense tracking module data)
 -- ✅ 40+ payment records
 -- ✅ 13 payroll periods with comprehensive payslips
+-- ✅ 5 payroll_payslips records (alternative payslip table)
+-- ✅ 2 HRIS reports
 -- ✅ Integration logs and audit trails
 -- ✅ Compliance reports (GAAP, SOX, BIR, IFRS)
 -- ✅ Account balances calculated from transactions
