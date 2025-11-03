@@ -90,9 +90,11 @@ body {
 
 .employee-selector-header {
     width: 100%;
+    text-align: left;
 }
 
 .employee-selector-header .form-label {
+    text-align: left;
     font-weight: 600;
     color: var(--text-dark);
     font-size: 13px;
@@ -107,9 +109,12 @@ body {
     font-size: 14px;
     transition: all 0.3s ease;
     width: 100%;
+    max-width: 400px;
     background: var(--card-bg);
     color: var(--text-dark);
     cursor: pointer;
+    margin-left: 0;
+    text-align: left;
 }
 
 .employee-selector-header .form-select:hover {
