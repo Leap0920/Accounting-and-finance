@@ -30,8 +30,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($result->num_rows == 1) {
             $user = $result->fetch_assoc();
             
-            // Verify password
-            if (password_verify($password, $user['password_hash'])) {
+            // Check if password hash is valid (starts with $2y$ or $2a$ for bcrypt)
+            $hash_valid = strpos($user['password_hash'], '$2y$') === 0 || strpos($user['password_hash'], '$2a$') === 0;
+            
+            if (!$hash_valid) {
+                // Password hash format is invalid - likely needs fixing
+                $error_message = "Password format error detected. Please run <a href='../database/fix_user_passwords.php' style='color: #0A3D3D; text-decoration: underline;'>Fix User Passwords</a> to resolve this issue.";
+            } elseif (password_verify($password, $user['password_hash'])) {
                 if ($user['is_active']) {
                     // Set session
                     setUserSession($user);

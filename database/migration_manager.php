@@ -41,6 +41,8 @@ if (!$isAdmin) {
                             <p>If you're setting up the database for the first time, follow these steps:</p>
                             <ol>
                                 <li><strong>Import Base Schema:</strong> Run the <code>database/unified_schema.sql</code> file in your MySQL database</li>
+                                <li><strong>Import Sample Data (Optional):</strong> Run the <code>database/sql/Sampled_data.sql</code> file to populate with test data</li>
+                                <li><strong>Fix User Passwords:</strong> After importing sample data, run <a href="fix_user_passwords.php" target="_blank">Fix User Passwords</a> to ensure login works</li>
                                 <li><strong>Run Migrations:</strong> Use the "Run Migrations" button below to add additional features</li>
                                 <li><strong>Verify Setup:</strong> Check the migration status to ensure everything is working</li>
                             </ol>

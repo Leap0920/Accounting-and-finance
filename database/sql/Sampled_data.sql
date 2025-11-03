@@ -25,16 +25,19 @@ USE BankingDB;
 -- ========================================
 
 -- Insert the admin user
+-- Password: admin123 (properly hashed with PASSWORD_DEFAULT)
 INSERT INTO users (id, username, password_hash, email, full_name, is_active, created_at) 
 VALUES (
     1,
     'admin',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '$2y$10$0G6Iza9uWgZ1y0ea/5lf7.P3qcY6CVgisAdKlNvq.ZnYYc6F.xDXS',
     'admin@system.com',
     'System Administrator',
     TRUE,
     NOW()
-) ON DUPLICATE KEY UPDATE username = VALUES(username);
+) ON DUPLICATE KEY UPDATE 
+    username = VALUES(username),
+    password_hash = VALUES(password_hash);
 
 -- Insert default roles
 INSERT INTO roles (name, description) VALUES
