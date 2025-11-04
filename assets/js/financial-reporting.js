@@ -248,7 +248,7 @@ function displayReportInModal(reportType, data) {
     }
     
     html += `
-            <div class="d-flex justify-content-end gap-2 mt-4">
+            <div class="d-flex justify-content-end gap-2 mt-4 no-print">
                 <button class="btn btn-success" onclick="exportReport('excel')">
                     <i class="fas fa-file-excel me-2"></i>Export Excel
                 </button>
@@ -320,24 +320,148 @@ function generateTrialBalanceHTML(data) {
  * Generate Balance Sheet HTML
  */
 function generateBalanceSheetHTML(data) {
-    let html = '<h5 class="mt-4 mb-3 text-teal">ASSETS</h5>';
-    html += generateAccountTable(data.assets, data.total_assets, 'TOTAL ASSETS');
+    let html = '<div class="balance-sheet-report">';
     
-    html += '<h5 class="mt-4 mb-3 text-teal">LIABILITIES</h5>';
-    html += generateAccountTable(data.liabilities, data.total_liabilities, 'TOTAL LIABILITIES');
+    // ASSETS Section
+    html += '<div class="report-section">';
+    html += '<h5 class="section-header-financial">ASSETS</h5>';
+    html += `
+        <table class="report-table-financial">
+            <thead>
+                <tr>
+                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT CODE</th>
+                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT NAME</th>
+                    <th style="text-align: right; background-color: #1e3a3a; color: white;">AMOUNT</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
     
-    html += '<h5 class="mt-4 mb-3 text-teal">EQUITY</h5>';
-    html += generateAccountTable(data.equity, data.total_equity, 'TOTAL EQUITY');
+    if (data.assets && data.assets.length > 0) {
+        data.assets.forEach(account => {
+            html += `
+                <tr>
+                    <td>${account.code}</td>
+                    <td>${account.name}</td>
+                    <td style="text-align: right;">${formatCurrency(account.balance)}</td>
+                </tr>
+            `;
+        });
+    } else {
+        html += '<tr><td colspan="3" style="text-align: center; color: #999;">No assets found</td></tr>';
+    }
     
     html += `
-        <div class="alert alert-info mt-3">
-            <strong>Total Liabilities & Equity:</strong> ${formatCurrency(data.total_liabilities_equity)}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="2" style="background-color: #f0f0f0;"><strong>TOTAL ASSETS</strong></td>
+                    <td style="text-align: right; background-color: #f0f0f0;"><strong>${formatCurrency(data.total_assets)}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    `;
+    
+    // LIABILITIES Section
+    html += '<div class="report-section">';
+    html += '<h5 class="section-header-financial">LIABILITIES</h5>';
+    html += `
+        <table class="report-table-financial">
+            <thead>
+                <tr>
+                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT CODE</th>
+                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT NAME</th>
+                    <th style="text-align: right; background-color: #1e3a3a; color: white;">AMOUNT</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    if (data.liabilities && data.liabilities.length > 0) {
+        data.liabilities.forEach(account => {
+            html += `
+                <tr>
+                    <td>${account.code}</td>
+                    <td>${account.name}</td>
+                    <td style="text-align: right;">${formatCurrency(account.balance)}</td>
+                </tr>
+            `;
+        });
+    } else {
+        html += '<tr><td colspan="3" style="text-align: center; color: #999;">No liabilities found</td></tr>';
+    }
+    
+    html += `
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="2" style="background-color: #f0f0f0;"><strong>TOTAL LIABILITIES</strong></td>
+                    <td style="text-align: right; background-color: #f0f0f0;"><strong>${formatCurrency(data.total_liabilities)}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    `;
+    
+    // EQUITY Section
+    html += '<div class="report-section">';
+    html += '<h5 class="section-header-financial">EQUITY</h5>';
+    html += `
+        <table class="report-table-financial">
+            <thead>
+                <tr>
+                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT CODE</th>
+                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT NAME</th>
+                    <th style="text-align: right; background-color: #1e3a3a; color: white;">AMOUNT</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    if (data.equity && data.equity.length > 0) {
+        data.equity.forEach(account => {
+            html += `
+                <tr>
+                    <td>${account.code}</td>
+                    <td>${account.name}</td>
+                    <td style="text-align: right;">${formatCurrency(account.balance)}</td>
+                </tr>
+            `;
+        });
+    } else {
+        html += '<tr><td colspan="3" style="text-align: center; color: #999;">No equity found</td></tr>';
+    }
+    
+    html += `
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="2" style="background-color: #f0f0f0;"><strong>TOTAL EQUITY</strong></td>
+                    <td style="text-align: right; background-color: #f0f0f0;"><strong>${formatCurrency(data.total_equity)}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    `;
+    
+    // Final Total
+    html += `
+        <div class="final-total-section">
+            <div class="final-total-box">
+                <span class="final-total-label">Total Liabilities & Equity:</span>
+                <span class="final-total-value">${formatCurrency(data.total_liabilities_equity)}</span>
+            </div>
         </div>
     `;
     
     if (data.is_balanced) {
-        html += '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>Balance Sheet is balanced!</div>';
+        html += '<div class="alert alert-success mt-3 no-print"><i class="fas fa-check-circle me-2"></i>Balance Sheet is balanced!</div>';
+    } else {
+        html += '<div class="alert alert-warning mt-3 no-print"><i class="fas fa-exclamation-triangle me-2"></i>Warning: Balance Sheet is not balanced!</div>';
     }
+    
+    html += '</div>'; // Close balance-sheet-report
     
     return html;
 }
@@ -587,7 +711,148 @@ function exportReport(format) {
         return;
     }
     
-    alert(`Exporting ${currentReportType} report as ${format.toUpperCase()}...\nThis feature will download the report in the selected format.`);
+    if (format === 'pdf') {
+        // For PDF, use print dialog
+        window.print();
+    } else if (format === 'excel') {
+        // Prepare data for Excel export
+        exportToExcel();
+    } else {
+        alert(`Exporting ${currentReportType} report as ${format.toUpperCase()}...\nThis feature will download the report in the selected format.`);
+    }
+}
+
+/**
+ * Export report to Excel
+ */
+function exportToExcel() {
+    if (!currentReportData || !currentReportType) {
+        alert('No report data available to export.');
+        return;
+    }
+    
+    // Create CSV content based on report type
+    let csvContent = '';
+    
+    if (currentReportType === 'balance-sheet') {
+        csvContent = generateBalanceSheetCSV(currentReportData);
+    } else if (currentReportType === 'income-statement') {
+        csvContent = generateIncomeStatementCSV(currentReportData);
+    } else if (currentReportType === 'trial-balance') {
+        csvContent = generateTrialBalanceCSV(currentReportData);
+    } else {
+        alert('Excel export not supported for this report type yet.');
+        return;
+    }
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${currentReportType}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Report exported successfully!', 'success');
+}
+
+/**
+ * Generate Balance Sheet CSV
+ */
+function generateBalanceSheetCSV(data) {
+    let csv = 'EVERGREEN ACCOUNTING & FINANCE\n';
+    csv += 'BALANCE SHEET\n';
+    csv += `${data.as_of_date}\n\n`;
+    
+    // Assets
+    csv += 'ASSETS\n';
+    csv += 'Account Code,Account Name,Amount\n';
+    if (data.assets && data.assets.length > 0) {
+        data.assets.forEach(acc => {
+            csv += `${acc.code},${acc.name},${acc.balance}\n`;
+        });
+    }
+    csv += `,,${data.total_assets}\n`;
+    csv += `TOTAL ASSETS,,${data.total_assets}\n\n`;
+    
+    // Liabilities
+    csv += 'LIABILITIES\n';
+    csv += 'Account Code,Account Name,Amount\n';
+    if (data.liabilities && data.liabilities.length > 0) {
+        data.liabilities.forEach(acc => {
+            csv += `${acc.code},${acc.name},${acc.balance}\n`;
+        });
+    }
+    csv += `TOTAL LIABILITIES,,${data.total_liabilities}\n\n`;
+    
+    // Equity
+    csv += 'EQUITY\n';
+    csv += 'Account Code,Account Name,Amount\n';
+    if (data.equity && data.equity.length > 0) {
+        data.equity.forEach(acc => {
+            csv += `${acc.code},${acc.name},${acc.balance}\n`;
+        });
+    }
+    csv += `TOTAL EQUITY,,${data.total_equity}\n\n`;
+    
+    csv += `Total Liabilities & Equity,,${data.total_liabilities_equity}\n`;
+    
+    return csv;
+}
+
+/**
+ * Generate Income Statement CSV
+ */
+function generateIncomeStatementCSV(data) {
+    let csv = 'EVERGREEN ACCOUNTING & FINANCE\n';
+    csv += 'INCOME STATEMENT\n';
+    csv += `${data.period}\n\n`;
+    
+    csv += 'REVENUE\n';
+    csv += 'Account Code,Account Name,Amount\n';
+    if (data.revenue && data.revenue.length > 0) {
+        data.revenue.forEach(acc => {
+            csv += `${acc.code},${acc.name},${acc.balance}\n`;
+        });
+    }
+    csv += `TOTAL REVENUE,,${data.total_revenue}\n\n`;
+    
+    csv += 'EXPENSES\n';
+    csv += 'Account Code,Account Name,Amount\n';
+    if (data.expenses && data.expenses.length > 0) {
+        data.expenses.forEach(acc => {
+            csv += `${acc.code},${acc.name},${acc.balance}\n`;
+        });
+    }
+    csv += `TOTAL EXPENSES,,${data.total_expenses}\n\n`;
+    
+    csv += `NET INCOME,,${data.net_income}\n`;
+    
+    return csv;
+}
+
+/**
+ * Generate Trial Balance CSV
+ */
+function generateTrialBalanceCSV(data) {
+    let csv = 'EVERGREEN ACCOUNTING & FINANCE\n';
+    csv += 'TRIAL BALANCE\n';
+    csv += `${data.period}\n\n`;
+    
+    csv += 'Account Code,Account Name,Type,Debit,Credit\n';
+    if (data.accounts && data.accounts.length > 0) {
+        data.accounts.forEach(acc => {
+            csv += `${acc.code},${acc.name},${acc.account_type},${acc.total_debit},${acc.total_credit}\n`;
+        });
+    }
+    csv += `TOTAL,,,${data.total_debit},${data.total_credit}\n`;
+    
+    return csv;
 }
 
 /**

@@ -248,10 +248,15 @@ function getLoanDetails() {
     // Get payment schedule if table exists
     if (tableExists('loan_payments')) {
         $sql = "SELECT 
-                    lp.*
+                    lp.*,
+                    lp.payment_date as due_date,
+                    lp.amount as total_payment,
+                    (lp.principal_amount + lp.interest_amount) as calculated_total,
+                    l.current_balance
                 FROM loan_payments lp
+                INNER JOIN loans l ON lp.loan_id = l.id
                 WHERE lp.loan_id = ?
-                ORDER BY lp.due_date ASC";
+                ORDER BY lp.payment_date ASC";
         
         $stmt = $conn->prepare($sql);
         $stmt->bind_param('i', $loanId);
@@ -259,8 +264,27 @@ function getLoanDetails() {
         $result = $stmt->get_result();
         
         $paymentSchedule = [];
+        $runningBalance = $loan['loan_amount'];
+        
         while ($row = $result->fetch_assoc()) {
-            $paymentSchedule[] = $row;
+            // Calculate balance after this payment
+            $paymentAmount = floatval($row['principal_amount']);
+            $runningBalance -= $paymentAmount;
+            
+            $paymentSchedule[] = [
+                'due_date' => $row['payment_date'],
+                'payment_date' => $row['payment_date'],
+                'principal' => $row['principal_amount'],
+                'principal_amount' => $row['principal_amount'],
+                'interest' => $row['interest_amount'],
+                'interest_amount' => $row['interest_amount'],
+                'total_payment' => $row['amount'] ? $row['amount'] : ($row['principal_amount'] + $row['interest_amount']),
+                'total_amount' => $row['amount'] ? $row['amount'] : ($row['principal_amount'] + $row['interest_amount']),
+                'balance' => max(0, $runningBalance),
+                'status' => $row['payment_date'] <= date('Y-m-d') ? 'paid' : 'pending',
+                'payment_reference' => $row['payment_reference'] ?? null,
+                'created_at' => $row['created_at'] ?? null
+            ];
         }
         
         $loan['payment_schedule'] = $paymentSchedule;

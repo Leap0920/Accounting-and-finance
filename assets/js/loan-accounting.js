@@ -149,7 +149,7 @@
         
         // Show loading
         showLoading('Preparing Excel export...');
-        
+
         // Get filter information
         const urlParams = new URLSearchParams(window.location.search);
         const dateFrom = urlParams.get('date_from') || '';
@@ -309,7 +309,7 @@
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        hideLoading();
+            hideLoading();
         showNotification('Excel file exported successfully!', 'success');
     };
 
@@ -350,36 +350,42 @@
         
         // Fetch loan details from API
         fetch('api/loan-data.php?action=get_loan_details&id=' + loanId)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.success) {
+                if (data.success && data.data) {
                     displayLoanDetails(data.data);
                 } else {
                     modalBody.innerHTML = `
                         <div class="alert alert-danger">
                             <i class="fas fa-exclamation-circle me-2"></i>
-                            Error: ${data.error || 'Failed to load loan details'}
+                            <strong>Error:</strong> ${data.error || 'Failed to load loan details'}
                         </div>
+                        <p class="text-muted">Please check the console for more details.</p>
                     `;
                 }
             })
             .catch(error => {
                 console.error('Error fetching loan details:', error);
                 modalBody.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Loan details will be loaded from the database when connected.
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Error Loading Loan Details</strong>
+                        <p class="mb-2 mt-2">Unable to fetch loan details from the server.</p>
+                        <p class="mb-0"><small>Error: ${error.message}</small></p>
                     </div>
-                    <dl class="row">
-                        <dt class="col-sm-3">Loan ID:</dt>
-                        <dd class="col-sm-9">${loanId}</dd>
-                        
-                        <dt class="col-sm-3">Note:</dt>
-                        <dd class="col-sm-9 text-muted">
-                            Connect to database to view complete loan details including payment schedule, 
-                            transaction history, and borrower information.
-                        </dd>
-                    </dl>
+                    <div class="mt-3">
+                        <p class="text-muted">Please ensure:</p>
+                        <ul class="text-muted">
+                            <li>The database is properly connected</li>
+                            <li>The loan record exists in the database</li>
+                            <li>You have proper permissions to view loan details</li>
+                        </ul>
+                    </div>
                 `;
             });
     };
@@ -390,68 +396,112 @@
     function displayLoanDetails(loan) {
         const modalBody = document.getElementById('loanDetailsBody');
         
+        // Calculate values safely
+        const loanAmount = parseFloat(loan.loan_amount || 0);
+        const outstandingBalance = parseFloat(loan.outstanding_balance || 0);
+        const interestRate = parseFloat(loan.interest_rate || 0);
+        const amountPaid = loanAmount - outstandingBalance;
+        const paymentPercentage = loanAmount > 0 ? ((amountPaid / loanAmount) * 100).toFixed(2) : '0.00';
+        
         let html = `
+            <div class="row mb-4">
+                <div class="col-md-6">
             <div class="loan-detail-section">
-                <h6>Loan Information</h6>
+                        <h6 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Loan Information</h6>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Loan Number:</span>
-                    <span class="loan-detail-value"><strong>${loan.loan_number}</strong></span>
+                            <span class="loan-detail-value"><strong>${loan.loan_number || loan.loan_no || 'N/A'}</strong></span>
                 </div>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Borrower Name:</span>
-                    <span class="loan-detail-value">${loan.borrower_name}</span>
+                            <span class="loan-detail-value">${loan.borrower_name || loan.borrower_external_no || 'N/A'}</span>
                 </div>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Loan Type:</span>
-                    <span class="loan-detail-value">${loan.loan_type_name || 'N/A'}</span>
+                            <span class="loan-detail-value">${loan.loan_type_name || loan.loan_type || 'N/A'}</span>
+                        </div>
+                        ${loan.loan_type_description ? `
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Description:</span>
+                            <span class="loan-detail-value"><small>${loan.loan_type_description}</small></span>
                 </div>
+                        ` : ''}
+                        ${loan.account_code || loan.account_name ? `
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Account:</span>
-                    <span class="loan-detail-value">${loan.account_code || 'N/A'} - ${loan.account_name || 'N/A'}</span>
+                            <span class="loan-detail-value">${loan.account_code || ''} ${loan.account_code && loan.account_name ? '- ' : ''}${loan.account_name || ''}</span>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
-            </div>
-            
+                <div class="col-md-6">
             <div class="loan-detail-section">
-                <h6>Loan Terms</h6>
+                        <h6 class="text-primary mb-3"><i class="fas fa-file-contract me-2"></i>Loan Terms</h6>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Loan Amount:</span>
-                    <span class="loan-detail-value"><strong>₱${parseFloat(loan.loan_amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>
+                            <span class="loan-detail-value"><strong class="text-primary">₱${loanAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
                 </div>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Interest Rate:</span>
-                    <span class="loan-detail-value">${parseFloat(loan.interest_rate).toFixed(2)}% per annum</span>
+                            <span class="loan-detail-value">${interestRate.toFixed(2)}% per annum</span>
                 </div>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Loan Term:</span>
-                    <span class="loan-detail-value">${loan.loan_term} months</span>
+                            <span class="loan-detail-value">${loan.loan_term || loan.term_months || 'N/A'} months</span>
                 </div>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Start Date:</span>
-                    <span class="loan-detail-value">${formatDate(loan.start_date)}</span>
+                            <span class="loan-detail-value">${loan.start_date ? formatDate(loan.start_date) : 'N/A'}</span>
                 </div>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Maturity Date:</span>
-                    <span class="loan-detail-value">${formatDate(loan.maturity_date)}</span>
+                            <span class="loan-detail-value">${loan.maturity_date ? formatDate(loan.maturity_date) : 'N/A'}</span>
+                        </div>
+                        ${loan.created_by_name ? `
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Created By:</span>
+                            <span class="loan-detail-value">${loan.created_by_name}</span>
+                        </div>
+                        ` : ''}
+                        ${loan.created_at ? `
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Created At:</span>
+                            <span class="loan-detail-value"><small>${new Date(loan.created_at).toLocaleString('en-US')}</small></span>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
             
             <div class="loan-detail-section">
-                <h6>Current Status</h6>
+                <h6 class="text-primary mb-3"><i class="fas fa-chart-line me-2"></i>Current Status</h6>
+                <div class="row">
+                    <div class="col-md-6">
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Outstanding Balance:</span>
-                    <span class="loan-detail-value"><strong class="text-danger">₱${parseFloat(loan.outstanding_balance).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>
+                            <span class="loan-detail-value"><strong class="text-danger">₱${outstandingBalance.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
                 </div>
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Amount Paid:</span>
-                    <span class="loan-detail-value"><strong class="text-success">₱${(parseFloat(loan.loan_amount) - parseFloat(loan.outstanding_balance)).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></span>
+                            <span class="loan-detail-value"><strong class="text-success">₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
                 </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Payment Progress:</span>
+                            <span class="loan-detail-value">${paymentPercentage}%</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Status:</span>
-                    <span class="loan-detail-value"><span class="badge status-${loan.status.toLowerCase()}">${loan.status.toUpperCase()}</span></span>
+                            <span class="loan-detail-value"><span class="badge status-${(loan.status || '').toLowerCase()}">${(loan.status || 'N/A').toUpperCase()}</span></span>
                 </div>
+                        ${loan.transaction_type ? `
                 <div class="loan-detail-row">
                     <span class="loan-detail-label">Transaction Type:</span>
-                    <span class="loan-detail-value"><span class="badge badge-type-${(loan.transaction_type || 'other').toLowerCase()}">${loan.transaction_type || 'N/A'}</span></span>
+                            <span class="loan-detail-value"><span class="badge badge-type-${loan.transaction_type.toLowerCase()}">${loan.transaction_type}</span></span>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         `;
@@ -459,32 +509,103 @@
         // Add payment schedule if available
         if (loan.payment_schedule && loan.payment_schedule.length > 0) {
             html += `
-                <div class="loan-detail-section">
-                    <h6>Payment Schedule</h6>
+                <div class="loan-detail-section mt-4">
+                    <h6 class="text-primary mb-3"><i class="fas fa-calendar-check me-2"></i>Payment Schedule</h6>
                     <div class="table-responsive">
-                        <table class="table table-sm table-striped payment-schedule-table">
-                            <thead>
+                        <table class="table table-sm table-striped table-hover payment-schedule-table">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Due Date</th>
-                                    <th>Principal</th>
-                                    <th>Interest</th>
-                                    <th>Total Payment</th>
-                                    <th>Balance</th>
-                                    <th>Status</th>
+                                    <th class="text-end">Principal</th>
+                                    <th class="text-end">Interest</th>
+                                    <th class="text-end">Total Payment</th>
+                                    <th class="text-end">Balance</th>
+                                    <th class="text-center">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
             `;
             
+            let totalPrincipal = 0;
+            let totalInterest = 0;
+            let totalPayment = 0;
+            
             loan.payment_schedule.forEach(payment => {
+                const principal = parseFloat(payment.principal_amount || payment.principal || 0);
+                const interest = parseFloat(payment.interest_amount || payment.interest || 0);
+                const total = parseFloat(payment.total_amount || payment.total_payment || 0);
+                const balance = parseFloat(payment.balance || 0);
+                
+                totalPrincipal += principal;
+                totalInterest += interest;
+                totalPayment += total;
+                
                 html += `
                     <tr>
-                        <td>${formatDate(payment.due_date)}</td>
-                        <td class="text-end">₱${parseFloat(payment.principal).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
-                        <td class="text-end">₱${parseFloat(payment.interest).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
-                        <td class="text-end"><strong>₱${parseFloat(payment.total_payment).toLocaleString('en-PH', {minimumFractionDigits: 2})}</strong></td>
-                        <td class="text-end">₱${parseFloat(payment.balance).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
-                        <td><span class="badge bg-${payment.status === 'paid' ? 'success' : 'warning'}">${payment.status}</span></td>
+                        <td>${payment.due_date ? formatDate(payment.due_date) : 'N/A'}</td>
+                        <td class="text-end">₱${principal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="text-end">₱${interest.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="text-end"><strong>₱${total.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
+                        <td class="text-end">₱${balance.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="text-center"><span class="badge bg-${(payment.status || '').toLowerCase() === 'paid' ? 'success' : (payment.status || '').toLowerCase() === 'overdue' ? 'danger' : 'warning'}">${(payment.status || 'Pending').toUpperCase()}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th>Total</th>
+                                    <th class="text-end">₱${totalPrincipal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
+                                    <th class="text-end">₱${totalInterest.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
+                                    <th class="text-end">₱${totalPayment.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
+                                    <th class="text-end">-</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="loan-detail-section mt-4">
+                    <h6 class="text-primary mb-3"><i class="fas fa-calendar-check me-2"></i>Payment Schedule</h6>
+                    <p class="text-muted">No payment schedule available for this loan.</p>
+                </div>
+            `;
+        }
+        
+        // Add transaction history if available
+        if (loan.transactions && loan.transactions.length > 0) {
+            html += `
+                <div class="loan-detail-section mt-4">
+                    <h6 class="text-primary mb-3"><i class="fas fa-history me-2"></i>Transaction History</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Description</th>
+                                    <th>Processed By</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            
+            loan.transactions.forEach(transaction => {
+                html += `
+                    <tr>
+                        <td>${transaction.transaction_date ? formatDate(transaction.transaction_date) : 'N/A'}</td>
+                        <td><span class="badge badge-type-${(transaction.transaction_type || 'other').toLowerCase()}">${(transaction.transaction_type || 'N/A').toUpperCase()}</span></td>
+                        <td class="text-end">₱${parseFloat(transaction.amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td>${transaction.description || '-'}</td>
+                        <td>${transaction.processed_by_name || 'System'}</td>
+                        <td class="text-center"><span class="badge bg-${(transaction.status || '').toLowerCase() === 'completed' ? 'success' : 'warning'}">${(transaction.status || 'Pending').toUpperCase()}</span></td>
                     </tr>
                 `;
             });
@@ -575,14 +696,42 @@
         let html = '';
         
         logs.forEach(log => {
+            // Format details - try to parse JSON, otherwise show plain text
+            let detailsHtml = '-';
+            if (log.additional_info || log.details) {
+                const detailsText = log.additional_info || log.details;
+                try {
+                    // Try to parse as JSON
+                    const parsed = JSON.parse(detailsText);
+                    if (typeof parsed === 'object') {
+                        // Format as readable list
+                        const detailItems = Object.entries(parsed)
+                            .map(([key, value]) => `<strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value}`)
+                            .join('<br>');
+                        detailsHtml = `<small>${detailItems}</small>`;
+                    } else {
+                        detailsHtml = detailsText;
+                    }
+                } catch (e) {
+                    // Not JSON, show as plain text
+                    detailsHtml = detailsText;
+                }
+            }
+            
+            // Format action - uppercase and clean
+            const action = (log.action || '').toUpperCase().replace(/_/g, ' ');
+            
+            // Format loan number - show loan number if available, otherwise object ID
+            const loanNo = log.loan_number || (log.object_id ? `#${log.object_id}` : '-');
+            
             html += `
                 <tr>
                     <td>${formatDateTime(log.created_at)}</td>
                     <td>${log.full_name || log.username || 'System'}</td>
-                    <td><span class="badge bg-${getActionBadgeColor(log.action)}">${log.action}</span></td>
-                    <td>${log.loan_number || log.object_id}</td>
-                    <td>${log.additional_info || '-'}</td>
-                    <td><small>${log.ip_address || '-'}</small></td>
+                    <td><span class="badge bg-${getActionBadgeColor(log.action)}">${action}</span></td>
+                    <td>${loanNo}</td>
+                    <td>${detailsHtml}</td>
+                    <td><small class="text-muted">${log.ip_address || '-'}</small></td>
                 </tr>
             `;
         });
@@ -608,22 +757,101 @@
      * Get badge color for action type
      */
     function getActionBadgeColor(action) {
+        if (!action) return 'secondary';
+        
+        const actionUpper = action.toUpperCase();
         const actionColors = {
             'CREATE': 'success',
+            'CREATED': 'success',
             'UPDATE': 'info',
+            'UPDATED': 'info',
             'DELETE': 'danger',
+            'DELETED': 'danger',
             'RESTORE': 'warning',
+            'RESTORED': 'warning',
             'PAYMENT': 'primary',
-            'DISBURSEMENT': 'info'
+            'PAID': 'primary',
+            'DISBURSEMENT': 'info',
+            'DISBURSED': 'info',
+            'POST': 'primary',
+            'POSTED': 'primary',
+            'VOID': 'dark',
+            'VOIDED': 'dark',
+            'REVERSE': 'warning',
+            'REVERSED': 'warning'
         };
-        return actionColors[action] || 'secondary';
+        return actionColors[actionUpper] || 'secondary';
     }
 
     /**
      * Export audit trail
      */
     window.exportAuditTrail = function() {
-        showNotification('Audit trail export feature will be available when connected to database', 'info');
+        const modalBody = document.getElementById('auditTrailBody');
+        const rows = modalBody.querySelectorAll('tr');
+        
+        if (rows.length === 0 || (rows.length === 1 && rows[0].querySelector('td[colspan]'))) {
+            showNotification('No audit trail data to export', 'warning');
+            return;
+        }
+        
+        // Build CSV content
+        let csvContent = '';
+        
+        // Header Section
+        csvContent += 'EVERGREEN ACCOUNTING & FINANCE SYSTEM\n';
+        csvContent += 'LOAN AUDIT TRAIL REPORT\n';
+        csvContent += '\n';
+        csvContent += `Report Generated: ${new Date().toLocaleString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        })}\n`;
+        csvContent += '\n';
+        
+        // Column Headers
+        csvContent += 'Date & Time,User,Action,Loan No.,Details,IP Address\n';
+        
+        // Data Rows
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length === 6) {
+                const dateTime = cells[0].textContent.trim().replace(/,/g, '');
+                const user = cells[1].textContent.trim().replace(/,/g, '');
+                const action = cells[2].textContent.trim().replace(/,/g, '');
+                const loanNo = cells[3].textContent.trim().replace(/,/g, '');
+                // Get plain text from details (remove HTML)
+                const detailsText = cells[4].textContent.trim().replace(/,/g, ';').replace(/\n/g, ' ');
+                const ipAddress = cells[5].textContent.trim().replace(/,/g, '');
+                
+                csvContent += `"${dateTime}","${user}","${action}","${loanNo}","${detailsText}","${ipAddress}"\n`;
+            }
+        });
+        
+        csvContent += '\n';
+        csvContent += '"This report was generated by the Evergreen Accounting & Finance System"\n';
+        csvContent += `"Export Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}"\n`;
+        csvContent += '\n';
+        csvContent += '"© ' + new Date().getFullYear() + ' Evergreen Accounting & Finance. All rights reserved."\n';
+        
+        // Create and download file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        const dateStr = new Date().toISOString().split('T')[0];
+        const filename = `loan_audit_trail_${dateStr}.csv`;
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showNotification('Audit trail exported successfully!', 'success');
     };
 
     /**

@@ -494,6 +494,37 @@
     padding: 20px 25px;
 }
 
+/* Audit Trail Modal Styling */
+#auditTrailModal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+#auditTrailModal .table th {
+    background-color: #f8f9fa;
+    color: #0A3D3D;
+    font-weight: 600;
+    border-bottom: 2px solid #0A3D3D;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#auditTrailModal .table td {
+    vertical-align: middle;
+}
+
+#auditTrailModal .table td:nth-child(5) {
+    max-width: 300px;
+    word-wrap: break-word;
+    font-size: 0.9em;
+}
+
+#auditTrailModal .table td small {
+    display: block;
+    line-height: 1.4;
+}
+
 .modal-body {
     padding: 25px;
 }

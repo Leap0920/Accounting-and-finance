@@ -1735,13 +1735,16 @@ body {
    PRINT STYLES
    ======================================== */
 
+/* Hide elements in print */
+.no-print {
+    display: block;
+}
+
 @media print {
     .navbar-custom,
     .page-header-simple,
     .modern-tabs-container,
     .btn-generate,
-    .btn-primary,
-    .btn-outline-secondary,
     .beautiful-page-header,
     .filtering-section-modern,
     .results-actions-simple,
@@ -1752,21 +1755,52 @@ body {
     .report-action-buttons,
     .flow-step,
     footer,
-    .alert,
-    .alert-dismissible,
-    .alert-success,
-    .alert-danger,
-    .alert-warning,
-    .alert-info,
     .notification,
     .toast,
     .toast-container,
-    [role="alert"],
     .position-fixed,
-    .position-fixed.alert,
     .print-hide-notification,
+    .no-print,
+    button,
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-success,
+    .btn-danger,
+    .btn-outline-secondary,
     div[style*="position: fixed"],
-    div[style*="position:fixed"] {
+    div[style*="position:fixed"],
+    .form-control,
+    .form-select,
+    select,
+    input[type="date"],
+    input[type="text"],
+    .row.g-3,
+    .row.g-3.mb-4,
+    label,
+    .form-label,
+    .reports-section,
+    .report-card-modern,
+    .report-cards-grid,
+    .section-header-simple,
+    .filtering-section-modern,
+    .beautiful-page-header,
+    .header-actions,
+    .header-info-card,
+    .page-title-beautiful,
+    .page-subtitle-beautiful,
+    .card-header-modern,
+    .card-body-modern,
+    .card-footer-modern,
+    .report-icon,
+    .report-title,
+    .report-subtitle,
+    .report-summary,
+    .summary-item,
+    .summary-label,
+    .summary-value,
+    main > .container-fluid > .reports-section,
+    main > .container-fluid > div:not(.report-display):not(.balance-sheet-report):not(.modal) {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
@@ -1777,30 +1811,89 @@ body {
         left: -9999px !important;
     }
     
+    /* Hide alerts ONLY in print for reports, not the balance check message */
+    .alert-dismissible,
+    div.alert.position-fixed,
+    [role="alert"].position-fixed {
+        display: none !important;
+    }
+    
     body {
         background: #fff !important;
-        margin: 0;
-        padding: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    html {
+        height: auto !important;
+        overflow: visible !important;
     }
     
     body.printing-report {
         background: #fff !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    /* Prevent page duplication */
+    body > *:not(.modal):not(.balance-sheet-report):not(.report-display):not(.report-header) {
+        page-break-inside: avoid !important;
+    }
+    
+    /* Ensure only one instance of content */
+    .modal.show .modal-dialog {
+        position: static !important;
+    }
+    
+    .modal.show {
+        display: block !important;
+        position: static !important;
     }
     
     /* Remove modal styling for print */
     .modal-dialog {
         max-width: 100% !important;
         margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        position: static !important;
+        transform: none !important;
     }
     
     .modal-content {
         border: none !important;
         box-shadow: none !important;
         background: #fff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    .modal-header {
+        display: none !important;
     }
     
     .modal-body {
         padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure report content is not constrained */
+    #report-content {
+        height: auto !important;
+        overflow: visible !important;
+        max-height: none !important;
+    }
+    
+    .report-display {
+        height: auto !important;
+        overflow: visible !important;
+        max-height: none !important;
     }
     
     /* Print header for filtered results */
@@ -1817,48 +1910,108 @@ body {
         border-bottom: 2px solid #000;
     }
     
-    /* Report display styling */
+    /* Report display styling - make it more visible */
     .report-display {
         box-shadow: none !important;
         background: #fff !important;
-        padding: 10px;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     
     .report-header {
         text-align: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #000;
+        margin-bottom: 25px !important;
+        padding: 15px 0 12px 0 !important;
+        border-bottom: 3px solid #0A3D3D !important;
+        background: linear-gradient(to bottom, #FFFFFF 0%, #F5F9FA 100%) !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
     
     .company-name {
-        font-size: 20px;
-        font-weight: 700;
-        color: #000;
-        margin-bottom: 5px;
+        font-size: 20px !important;
+        font-weight: 700 !important;
+        color: #0A3D3D !important;
+        margin-bottom: 8px !important;
+        letter-spacing: 0.5px !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
     }
     
     .report-header h3 {
-        font-size: 18px;
-        font-weight: 600;
-        color: #000;
-        margin: 10px 0;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #0A3D3D !important;
+        margin: 10px 0 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
     }
     
     .report-period {
-        font-size: 14px;
-        color: #333;
+        font-size: 13px !important;
+        color: #165A5A !important;
+        font-weight: 500 !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
     }
     
-    /* Remove backgrounds from all elements */
-    * {
-        background: transparent !important;
+    /* Balance Sheet Report - ensure visibility and allow page breaks */
+    .balance-sheet-report {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        page-break-inside: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        min-height: auto !important;
     }
     
-    .report-display,
-    .report-header,
+    .balance-sheet-report .report-section {
+        display: block !important;
+        visibility: visible !important;
+        page-break-inside: auto !important;
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+        margin-bottom: 20px !important;
+        height: auto !important;
+        overflow: visible !important;
+        min-height: auto !important;
+    }
+    
+    .balance-sheet-report .report-section:first-child {
+        margin-top: 0 !important;
+        page-break-before: avoid !important;
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    /* Report display - ensure white background */
+    .report-display {
+        background: #fff !important;
+        padding: 0 !important;
+    }
+    
+    .report-header {
+        background: #fff !important;
+    }
+    
+    .report-table-financial,
     .report-table,
-    .table-modern,
+    .table-modern {
+        background: #fff !important;
+    }
+    
     .card,
     .alert {
         background: #fff !important;
@@ -2233,6 +2386,47 @@ body {
         marks: none;
     }
     
+    /* Ensure crisp rendering for all print elements */
+    * {
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: crisp-edges !important;
+    }
+    
+    body, html {
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    /* Ensure crisp borders and lines - but preserve colors */
+    .report-table-financial {
+        border-width: 2px !important;
+        border-style: solid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .report-table-financial th,
+    .report-table-financial td {
+        border-style: solid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Ensure high contrast for readability */
+    .report-table-financial tbody td {
+        color: #000 !important;
+        background: #fff !important;
+    }
+    
+    .report-table-financial tbody tr:nth-child(even) td {
+        background: #F5F9FA !important;
+        color: #000 !important;
+    }
+    
     /* Hide any page numbering or indicators that browsers add */
     @page :first {
         marks: none;
@@ -2354,4 +2548,417 @@ body {
 
 .card-body ul li:last-child {
     border-bottom: none;
+}
+
+/* ========================================
+   BALANCE SHEET SPECIFIC STYLES
+   ======================================== */
+
+.balance-sheet-report {
+    margin: 0;
+    padding: 0;
+}
+
+.report-section {
+    margin-bottom: 30px;
+    page-break-inside: avoid;
+}
+
+.section-header-financial {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 2px solid var(--primary-teal);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.report-table-financial {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    background: #fff;
+}
+
+.report-table-financial thead th {
+    background-color: #1e3a3a;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 12px;
+    text-align: left;
+    text-transform: uppercase;
+    border: 1px solid #1e3a3a;
+}
+
+.report-table-financial thead th:last-child {
+    text-align: right;
+}
+
+.report-table-financial tbody td {
+    padding: 10px 12px;
+    border: 1px solid #dee2e6;
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+.report-table-financial tbody tr:hover {
+    background-color: rgba(10, 61, 61, 0.05);
+}
+
+.report-table-financial tfoot td {
+    padding: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    background-color: #f0f0f0;
+    border: 1px solid #dee2e6;
+    border-top: 2px solid #1e3a3a;
+}
+
+.final-total-section {
+    margin-top: 30px;
+    padding: 20px 0;
+    border-top: 3px solid var(--primary-teal);
+    page-break-inside: avoid;
+}
+
+.final-total-box {
+    background: linear-gradient(135deg, #e9f7f7 0%, #d4eded 100%);
+    border: 2px solid var(--primary-teal);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(10, 61, 61, 0.1);
+}
+
+.final-total-label {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-teal);
+    letter-spacing: 0.5px;
+}
+
+.final-total-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-teal);
+    font-family: 'Courier New', monospace;
+}
+
+/* Print-specific Balance Sheet styles */
+@media print {
+    /* CRITICAL: Ensure ASSETS section is visible and not cut off */
+    .balance-sheet-report {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        overflow: visible !important;
+        page-break-inside: auto !important;
+    }
+    
+    /* ASSETS SECTION - MUST BE VISIBLE */
+    .balance-sheet-report .report-section:first-child,
+    .balance-sheet-report .report-section:nth-child(1),
+    .balance-sheet-report .report-section:first-of-type {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        overflow: visible !important;
+        min-height: auto !important;
+        max-height: none !important;
+        page-break-before: avoid !important;
+        page-break-after: auto !important;
+        page-break-inside: auto !important;
+        margin: 0 0 20px 0 !important;
+        padding: 0 !important;
+        position: static !important;
+        transform: none !important;
+    }
+    
+    /* Section headers - make colorful and visible with crisp rendering */
+    .section-header-financial {
+        color: #0A3D3D !important;
+        border-bottom: 3px solid #0A3D3D !important;
+        font-size: 17px !important;
+        padding: 12px 0 !important;
+        margin: 25px 0 15px 0 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        height: auto !important;
+        overflow: visible !important;
+        font-weight: 700 !important;
+        letter-spacing: 1.5px !important;
+        text-transform: uppercase !important;
+        background: linear-gradient(to right, #E9F7F7 0%, transparent 100%) !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    /* ASSETS header specifically - green/teal color */
+    .balance-sheet-report .report-section:first-child .section-header-financial,
+    .balance-sheet-report .report-section:first-of-type .section-header-financial {
+        display: block !important;
+        visibility: visible !important;
+        margin-top: 10px !important;
+        margin-bottom: 15px !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #0A3D3D !important;
+        border-bottom: 3px solid #0A3D3D !important;
+        page-break-before: avoid !important;
+        page-break-after: avoid !important;
+        padding: 12px 0 !important;
+        background: linear-gradient(to right, #E9F7F7 0%, transparent 100%) !important;
+    }
+    
+    /* LIABILITIES header - orange/warm color */
+    .balance-sheet-report .report-section:nth-child(2) .section-header-financial {
+        color: #C17817 !important;
+        border-bottom: 3px solid #C17817 !important;
+        background: linear-gradient(to right, #FFF8E7 0%, transparent 100%) !important;
+    }
+    
+    /* EQUITY header - blue color */
+    .balance-sheet-report .report-section:nth-child(3) .section-header-financial {
+        color: #165A5A !important;
+        border-bottom: 3px solid #165A5A !important;
+        background: linear-gradient(to right, #E0F2F7 0%, transparent 100%) !important;
+    }
+    
+    /* Tables - make highly readable and visible with crisp rendering */
+    .report-table-financial {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto !important;
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+        margin: 0 0 25px 0 !important;
+        font-size: 13px !important;
+        display: table !important;
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        border: 2px solid #000 !important;
+        background: #fff !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    .report-table-financial thead {
+        display: table-header-group !important;
+        page-break-inside: avoid !important;
+    }
+    
+    .report-table-financial thead th {
+        background-color: #1e3a3a !important;
+        color: #fff !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        padding: 10px 12px !important;
+        border: 2px solid #000 !important;
+        text-align: left !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        letter-spacing: 0.8px !important;
+        text-transform: uppercase !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    .report-table-financial thead th:last-child {
+        text-align: right !important;
+    }
+    
+    .report-table-financial tbody {
+        display: table-row-group !important;
+    }
+    
+    .report-table-financial tbody tr {
+        page-break-inside: avoid !important;
+        page-break-after: auto !important;
+        display: table-row !important;
+        visibility: visible !important;
+    }
+    
+    .report-table-financial tbody td {
+        padding: 8px 12px !important;
+        border: 1px solid #333 !important;
+        font-size: 13px !important;
+        color: #000 !important;
+        background: #fff !important;
+        line-height: 1.5 !important;
+        display: table-cell !important;
+        visibility: visible !important;
+        font-weight: 400 !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    .report-table-financial tbody td:first-child {
+        font-weight: 600 !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        font-size: 13px !important;
+    }
+    
+    .report-table-financial tbody td:last-child {
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
+    }
+    
+    .report-table-financial tbody tr:nth-child(even) td {
+        background: #F5F9FA !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .report-table-financial tbody tr:nth-child(odd) td {
+        background: #FFFFFF !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .report-table-financial tbody tr:hover td {
+        background: #E9F7F7 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .report-table-financial tfoot {
+        display: table-footer-group !important;
+        page-break-inside: avoid !important;
+    }
+    
+    .report-table-financial tfoot tr {
+        display: table-row !important;
+        visibility: visible !important;
+    }
+    
+    .report-table-financial tfoot td {
+        padding: 10px 12px !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        background: linear-gradient(to bottom, #E9F7F7 0%, #D4EDED 100%) !important;
+        color: #0A3D3D !important;
+        border: 2px solid #0A3D3D !important;
+        border-top: 3px solid #0A3D3D !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        display: table-cell !important;
+        visibility: visible !important;
+        letter-spacing: 0.5px !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    /* Colorful totals for different sections */
+    .balance-sheet-report .report-section:first-child .report-table-financial tfoot td {
+        background: linear-gradient(to bottom, #E9F7F7 0%, #D4EDED 100%) !important;
+        color: #0A3D3D !important;
+        border-color: #0A3D3D !important;
+    }
+    
+    .balance-sheet-report .report-section:nth-child(2) .report-table-financial tfoot td {
+        background: linear-gradient(to bottom, #FFF8E7 0%, #FFE8B8 100%) !important;
+        color: #C17817 !important;
+        border-color: #C17817 !important;
+    }
+    
+    .balance-sheet-report .report-section:nth-child(3) .report-table-financial tfoot td {
+        background: linear-gradient(to bottom, #E0F2F7 0%, #B8E5F0 100%) !important;
+        color: #165A5A !important;
+        border-color: #165A5A !important;
+    }
+    
+    .report-table-financial tfoot td:last-child {
+        font-family: 'Courier New', monospace !important;
+        font-weight: 700 !important;
+        text-align: right !important;
+    }
+    
+    /* Right alignment */
+    .report-table-financial td[style*="text-align: right"],
+    .report-table-financial th[style*="text-align: right"] {
+        text-align: right !important;
+    }
+    
+    /* Other sections */
+    .balance-sheet-report .report-section {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin: 0 0 20px 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+        page-break-inside: auto !important;
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+    }
+    
+    /* Final total */
+    .final-total-section {
+        margin-top: 15px !important;
+        padding: 8px 0 !important;
+        border-top: 2px solid #000 !important;
+        page-break-inside: avoid !important;
+        page-break-before: avoid !important;
+        display: block !important;
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .final-total-box {
+        background: linear-gradient(135deg, #E9F7F7 0%, #D4EDED 50%, #B8E5F0 100%) !important;
+        border: 3px solid #0A3D3D !important;
+        border-radius: 0 !important;
+        padding: 12px 20px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        box-shadow: none !important;
+        margin-top: 10px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .final-total-label {
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        color: #0A3D3D !important;
+        letter-spacing: 0.5px !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    .final-total-value {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: #0A3D3D !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        letter-spacing: 0.5px !important;
+        -webkit-font-smoothing: antialiased !important;
+        text-rendering: optimizeLegibility !important;
+    }
 }
