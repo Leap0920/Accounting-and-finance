@@ -1732,7 +1732,16 @@ body {
 }
 
 /* ========================================
-   PRINT STYLES
+   PRINT STYLES - COMPLETE REDESIGN
+   
+   ENHANCED FEATURES:
+   - Professional, clean print layout for all financial reports
+   - Zero dark backgrounds - all headers, sections, and tables use white/light backgrounds
+   - Optimized typography and spacing for readability
+   - Smart page breaks to prevent content cutoff
+   - Consistent styling across all report types
+   - Better user experience with print preview
+   - Uses body classes for report-specific styling
    ======================================== */
 
 /* Hide elements in print */
@@ -1741,7 +1750,114 @@ body {
 }
 
 @media print {
-    /* Narrower page margins for filtered results */
+    /* ========================================
+       CRITICAL: FORCE WHITE BACKGROUNDS ON EVERYTHING
+       ======================================== */
+    
+    /* Universal rule to remove ALL dark/colored backgrounds */
+    *,
+    *::before,
+    *::after {
+        /* First, remove any dark backgrounds */
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Specifically target elements with dark color values */
+    [style*="background-color: #1e3a3a"],
+    [style*="background: #1e3a3a"],
+    [style*="background-color: #0A3D3D"],
+    [style*="background: #0A3D3D"],
+    [style*="background-color: #165A5A"],
+    [style*="background: #165A5A"],
+    [style*="background-color: rgb(30, 58, 58)"],
+    [style*="background: rgb(30, 58, 58)"],
+    [style*="background-color: rgb(10, 61, 61)"],
+    [style*="background: rgb(10, 61, 61)"],
+    [style*="background-color: #000"],
+    [style*="background: #000"],
+    [style*="background-color: black"],
+    [style*="background: black"] {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    
+    /* Then allow specific light backgrounds */
+    *,
+    *::before,
+    *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* Then selectively allow light backgrounds for specific elements */
+    body,
+    html,
+    main,
+    .container,
+    .container-fluid,
+    .modal-content,
+    .modal-body,
+    .report-display,
+    .balance-sheet-report,
+    .report-section,
+    .report-table,
+    .report-table-financial,
+    .table-modern,
+    table,
+    thead,
+    tbody,
+    tfoot,
+    tr,
+    td,
+    th {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    
+    /* CRITICAL: Override inline styles on table headers */
+    th[style],
+    thead th[style],
+    .report-table-financial th[style],
+    .report-table th[style],
+    table th[style] {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    
+    /* Allow light gray only for table footers and totals */
+    .report-table-financial tfoot td,
+    .report-table tfoot td,
+    .table-modern tfoot td,
+    table tfoot td,
+    .final-total-box,
+    .total-row td {
+        background: #F5F5F5 !important;
+        background-color: #F5F5F5 !important;
+    }
+    
+    /* Allow light gray for alternating rows */
+    .report-table-financial tbody tr:nth-child(even) td,
+    .report-table tbody tr:nth-child(even) td,
+    .table-modern tbody tr:nth-child(even) td,
+    table tbody tr:nth-child(even) td {
+        background: #F9F9F9 !important;
+        background-color: #F9F9F9 !important;
+    }
+    /* ========================================
+       PAGE SETUP
+       ======================================== */
+    @page {
+        size: A4 portrait;
+        margin: 1.2cm 1.5cm;
+        marks: none;
+    }
+    
+    /* Narrower margins for filtered results */
     body.printing-filtered-results {
         @page {
             size: A4 portrait;
@@ -1749,6 +1865,46 @@ body {
         }
     }
     
+    /* ========================================
+       GLOBAL RESETS
+       ======================================== */
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+    
+    /* Base white background */
+    body,
+    html,
+    main,
+    .container,
+    .container-fluid,
+    .modal-content,
+    .modal-body,
+    .report-display {
+        background: #fff !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Remove ALL dark backgrounds from UI elements */
+    nav,
+    header,
+    footer,
+    .navbar,
+    .card-header,
+    .modal-header,
+    .btn,
+    button,
+    .badge,
+    .alert {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+    
+    /* Hide navigation and UI elements */
     .navbar-custom,
     .page-header-simple,
     .modern-tabs-container,
@@ -1826,21 +1982,23 @@ body {
         display: none !important;
     }
     
-    body {
+    /* Body and HTML - clean white background */
+    body,
+    html {
         background: #fff !important;
+        background-color: #fff !important;
         margin: 0 !important;
         padding: 0 !important;
         height: auto !important;
         overflow: visible !important;
-    }
-    
-    html {
-        height: auto !important;
-        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     body.printing-report {
         background: #fff !important;
+        background-color: #fff !important;
         height: auto !important;
         overflow: visible !important;
     }
@@ -1916,50 +2074,49 @@ body {
         max-width: 100% !important;
     }
     
+    /* ========================================
+       REPORT HEADER - CLEAN WHITE DESIGN
+       ======================================== */
     .report-header {
-        text-align: center;
-        margin-bottom: 30px !important;
+        text-align: center !important;
+        margin: 0 0 25px 0 !important;
         padding: 20px 0 15px 0 !important;
-        border-bottom: 4px double #0A3D3D !important;
+        border-bottom: 3px solid #000 !important;
         background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
         page-break-after: avoid !important;
         page-break-inside: avoid !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
     }
     
     .company-name {
-        font-size: 24px !important;
-        font-weight: 800 !important;
+        font-size: 22px !important;
+        font-weight: 900 !important;
         color: #000 !important;
-        margin-bottom: 10px !important;
-        letter-spacing: 1.5px !important;
-        font-family: 'Arial Black', 'Arial', 'Helvetica', sans-serif !important;
-        -webkit-font-smoothing: antialiased !important;
-        text-rendering: optimizeLegibility !important;
+        margin: 0 0 8px 0 !important;
+        letter-spacing: 2px !important;
+        font-family: 'Arial Black', 'Arial', sans-serif !important;
         text-transform: uppercase !important;
+        line-height: 1.2 !important;
     }
     
     .report-header h3 {
-        font-size: 20px !important;
+        font-size: 18px !important;
         font-weight: 700 !important;
         color: #000 !important;
-        margin: 12px 0 8px 0 !important;
+        margin: 8px 0 6px 0 !important;
         text-transform: uppercase !important;
-        letter-spacing: 1.5px !important;
+        letter-spacing: 1px !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
-        -webkit-font-smoothing: antialiased !important;
-        text-rendering: optimizeLegibility !important;
+        line-height: 1.3 !important;
     }
     
     .report-period {
-        font-size: 14px !important;
+        font-size: 13px !important;
         color: #333 !important;
-        font-weight: 600 !important;
+        font-weight: 500 !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
-        -webkit-font-smoothing: antialiased !important;
-        text-rendering: optimizeLegibility !important;
-        margin-top: 5px !important;
+        margin: 4px 0 0 0 !important;
+        line-height: 1.4 !important;
     }
     
     /* Balance Sheet Report - ensure visibility and allow page breaks */
@@ -2032,14 +2189,16 @@ body {
     
     .report-table thead th,
     .table-modern thead th {
-        background: #f8f9fa !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
         color: #000 !important;
-        font-weight: 600 !important;
-        border: 1px solid #333 !important;
+        font-weight: 700 !important;
+        border: 2px solid #000 !important;
         padding: 8px !important;
-        text-align: left !important;
+        text-align: center !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .report-table tbody td,
@@ -2053,13 +2212,16 @@ body {
     .report-table tfoot td,
     .table-modern tfoot th,
     .table-modern tfoot td {
-        border: 1px solid #333 !important;
+        border: 2px solid #000 !important;
+        border-top: 3px solid #000 !important;
         padding: 8px !important;
-        font-weight: 600 !important;
-        background: #f8f9fa !important;
+        font-weight: 700 !important;
+        background: #F0F0F0 !important;
+        background-color: #F0F0F0 !important;
         color: #000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .report-table tr,
@@ -2397,32 +2559,71 @@ body {
         font-family: 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* Global color printing for all report elements */
+    .balance-sheet-report,
+    .report-display,
+    .report-table-financial,
+    .section-header-financial,
+    .report-header,
+    .final-total-section,
+    .final-total-box {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     /* Ensure crisp borders and lines - but preserve colors */
     .report-table-financial {
         border-width: 2px !important;
         border-style: solid !important;
+        border-color: #000 !important;
+        background: #fff !important;
+        background-color: #fff !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .report-table-financial th,
     .report-table-financial td {
         border-style: solid !important;
+        border-color: #666 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     /* Ensure high contrast for readability */
     .report-table-financial tbody td {
         color: #000 !important;
         background: #fff !important;
+        background-color: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .report-table-financial tbody tr:nth-child(even) td {
         background: #F5F9FA !important;
+        background-color: #F5F9FA !important;
         color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    .report-table-financial tbody tr:nth-child(odd) td {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     /* Hide any page numbering or indicators that browsers add */
@@ -2447,6 +2648,8 @@ body {
         display: block !important;
         margin: 0 !important;
         padding: 0 !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
     }
     
     body.printing-filtered-results .filtering-section-modern,
@@ -2498,6 +2701,10 @@ body {
         padding-left: 0 !important;
         padding-right: 0 !important;
         padding: 0 !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        border: none !important;
+        box-shadow: none !important;
     }
     
     body.printing-filtered-results .filtered-results-modern .table-responsive {
@@ -2506,6 +2713,9 @@ body {
         padding-top: 0 !important;
         padding-bottom: 0 !important;
         padding: 0 !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        border: none !important;
     }
     
     /* Aggressive spacing removal - target all possible spacing sources */
@@ -2549,20 +2759,23 @@ body {
     
     /* Optimize filtered results table for print */
     body.printing-filtered-results .table {
-        font-size: 10px !important;
+        font-size: 9px !important;
         width: 100% !important;
         border-collapse: collapse !important;
         margin: 0 !important;
         padding: 0 !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
     }
     
     body.printing-filtered-results .table thead th {
-        background: #1e3a3a !important;
-        background-color: #1e3a3a !important;
-        color: #fff !important;
-        border: 1px solid #000 !important;
-        padding: 6px 4px !important;
-        font-size: 9px !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000 !important;
+        border: 2px solid #000 !important;
+        border-bottom: 3px solid #000 !important;
+        padding: 6px 8px !important;
+        font-size: 8px !important;
         font-weight: 700 !important;
         text-align: center !important;
         -webkit-print-color-adjust: exact !important;
@@ -2571,27 +2784,35 @@ body {
     }
     
     body.printing-filtered-results .table tbody td {
-        border: 1px solid #666 !important;
-        padding: 4px 6px !important;
-        font-size: 9px !important;
-        line-height: 1.2 !important;
+        border: 1px solid #ccc !important;
+        padding: 5px 8px !important;
+        font-size: 8px !important;
+        line-height: 1.3 !important;
         vertical-align: middle !important;
         page-break-inside: avoid !important;
-    }
-    
-    body.printing-filtered-results .table tbody tr {
-        page-break-inside: avoid !important;
-    }
-    
-    body.printing-filtered-results .table tbody tr:nth-child(even) {
-        background: #F0F3F5 !important;
-        background-color: #F0F3F5 !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
     }
     
-    body.printing-filtered-results .table tbody tr:nth-child(odd) {
+    body.printing-filtered-results .table tbody tr {
+        page-break-inside: avoid !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    body.printing-filtered-results .table tbody tr:nth-child(even) td {
+        background: #F8F8F8 !important;
+        background-color: #F8F8F8 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    body.printing-filtered-results .table tbody tr:nth-child(odd) td {
         background: #FFFFFF !important;
         background-color: #FFFFFF !important;
         -webkit-print-color-adjust: exact !important;
@@ -2607,18 +2828,206 @@ body {
     
     /* Hide badges and styling in print */
     body.printing-filtered-results .badge {
-        background: transparent !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
         color: #000 !important;
         border: none !important;
         padding: 0 !important;
-        font-weight: 600 !important;
+        font-weight: 400 !important;
     }
     
     body.printing-filtered-results code {
         color: #000 !important;
-        background: transparent !important;
-        font-size: 9px !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        font-size: 8px !important;
         font-weight: 600 !important;
+    }
+    
+    /* ========================================
+       UNIFIED PRINT STYLES FOR ALL REPORTS
+       ======================================== */
+    
+    /* Apply white backgrounds to report content */
+    body.printing-report .report-display,
+    body.printing-report .balance-sheet-report,
+    body.printing-report .report-header,
+    body.printing-report .report-section,
+    body.printing-report #report-content,
+    body.printing-report #regulatory-report-table,
+    body.printing-report .card,
+    body.printing-report .card-body {
+        background: #fff !important;
+        background-color: #fff !important;
+    }
+    
+    /* Hide regulatory report card headers in print */
+    body.printing-regulatory-reports .card-header,
+    body.printing-regulatory-reports .flow-step {
+        display: none !important;
+    }
+    
+    /* Make regulatory tables print-friendly */
+    body.printing-regulatory-reports #regulatory-data-table {
+        background: #fff !important;
+        background-color: #fff !important;
+    }
+    
+    body.printing-regulatory-reports #regulatory-data-table thead th {
+        background: #F8F8F8 !important;
+        background-color: #F8F8F8 !important;
+        color: #000 !important;
+        border: 1px solid #333 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    body.printing-regulatory-reports #regulatory-data-table tbody td {
+        background: #fff !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    /* Income Statement and Cash Flow print styles */
+    body.printing-income-statement h5,
+    body.printing-cash-flow h5 {
+        color: #000 !important;
+        border-bottom: 2px solid #000 !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        margin-top: 20px !important;
+        padding-bottom: 8px !important;
+    }
+    
+    body.printing-income-statement .alert,
+    body.printing-cash-flow .alert {
+        border: 1px solid #333 !important;
+        background: #F8F8F8 !important;
+        background-color: #F8F8F8 !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Trial Balance print styles */
+    body.printing-trial-balance .report-table {
+        background: #fff !important;
+        background-color: #fff !important;
+    }
+    
+    body.printing-trial-balance .report-table thead th {
+        background: #F8F8F8 !important;
+        background-color: #F8F8F8 !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    body.printing-trial-balance .report-table tbody td {
+        background: #fff !important;
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+    
+    body.printing-trial-balance .report-table tfoot td {
+        background: #F0F0F0 !important;
+        background-color: #F0F0F0 !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Ensure badges don't print with color backgrounds */
+    body.printing-report .badge {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #000 !important;
+        border: 1px solid #333 !important;
+        padding: 2px 6px !important;
+        font-size: 10px !important;
+    }
+    
+    /* Hide all icons in print */
+    body.printing-report .fas,
+    body.printing-report .far,
+    body.printing-report .fab,
+    body.printing-report i.fas,
+    body.printing-report i.far,
+    body.printing-report i.fab {
+        display: none !important;
+    }
+    
+    /* Progress bars in regulatory reports */
+    body.printing-regulatory-reports .progress {
+        display: none !important;
+    }
+    
+    /* Ensure all table headers are white/light gray */
+    body.printing-report table thead th,
+    body.printing-report .report-table thead th,
+    body.printing-report .report-table-financial thead th,
+    body.printing-report .table-modern thead th {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000 !important;
+        border: 1px solid #333 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* Ensure all table bodies are white */
+    body.printing-report table tbody td,
+    body.printing-report .report-table tbody td,
+    body.printing-report .report-table-financial tbody td,
+    body.printing-report .table-modern tbody td {
+        background: #fff !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    /* Alternating row colors for readability */
+    body.printing-report table tbody tr:nth-child(even) td,
+    body.printing-report .report-table tbody tr:nth-child(even) td,
+    body.printing-report .report-table-financial tbody tr:nth-child(even) td {
+        background: #F8F8F8 !important;
+        background-color: #F8F8F8 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Table footers */
+    body.printing-report table tfoot th,
+    body.printing-report table tfoot td,
+    body.printing-report .report-table tfoot th,
+    body.printing-report .report-table tfoot td,
+    body.printing-report .report-table-financial tfoot td {
+        background: #F0F0F0 !important;
+        background-color: #F0F0F0 !important;
+        color: #000 !important;
+        border: 1px solid #333 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Section headers in reports */
+    body.printing-report .section-header-financial,
+    body.printing-report h5.section-header-financial {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000 !important;
+        border-bottom: 2px solid #000 !important;
+    }
+    
+    /* Final total boxes */
+    body.printing-report .final-total-box {
+        background: #F0F0F0 !important;
+        background-color: #F0F0F0 !important;
+        border: 2px solid #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
     
     /* Text alignment */
@@ -2659,6 +3068,8 @@ body {
     body.printing-filtered-results .filtered-results-modern::before {
         margin-bottom: 0 !important;
         padding-bottom: 3px !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
     }
     
     body.printing-filtered-results .table {
@@ -2721,8 +3132,58 @@ body {
     body.printing-filtered-results {
         margin: 0 !important;
         padding: 0 !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Force white background on all elements in filtered results print */
+    body.printing-filtered-results * {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Re-apply specific backgrounds for table elements */
+    body.printing-filtered-results .table thead th {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000 !important;
+    }
+    
+    body.printing-filtered-results .table tbody tr:nth-child(even) td {
+        background: #F8F8F8 !important;
+        background-color: #F8F8F8 !important;
+    }
+    
+    /* ========================================
+       FINAL OVERRIDE - REMOVE ALL DARK BACKGROUNDS
+       This catches any remaining dark backgrounds
+       ======================================== */
+    body.printing-report *[style*="background-color: #1e3a3a"],
+    body.printing-report *[style*="background: #1e3a3a"],
+    body.printing-report *[style*="background-color: #0A3D3D"],
+    body.printing-report *[style*="background: #0A3D3D"],
+    body.printing-report *[style*="background-color: #165A5A"],
+    body.printing-report *[style*="background: #165A5A"],
+    body.printing-report *[style*="background-color: rgb(30, 58, 58)"],
+    body.printing-report *[style*="background: rgb(30, 58, 58)"],
+    body.printing-report .report-header,
+    body.printing-report .report-header * {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000 !important;
+    }
+    
+    /* Ensure report header is always white */
+    body.printing-report .report-header,
+    body.printing-report .company-name,
+    body.printing-report .report-header h3,
+    body.printing-report .report-period {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #000 !important;
     }
 }
+
 
 /* ========================================
    UTILITY CLASSES
@@ -2966,72 +3427,66 @@ body {
         transform: none !important;
     }
     
-    /* Section headers - make colorful and visible with crisp rendering */
-    .section-header-financial {
-        color: #000 !important;
-        border-bottom: 3px solid #000 !important;
-        font-size: 16px !important;
-        padding: 10px 15px !important;
-        margin: 30px 0 15px 0 !important;
+    /* ========================================
+       SECTION HEADERS - WHITE BACKGROUND
+       CRITICAL: Override ALL possible dark backgrounds
+       ======================================== */
+    .section-header-financial,
+    h5.section-header-financial,
+    h5[style*="background"],
+    h5[style*="background-color"],
+    .report-section h5,
+    .report-section .section-header-financial,
+    h5.mt-4,
+    h5.text-teal,
+    .report-section h5,
+    .balance-sheet-report h5,
+    h5 {
+        color: #000000 !important;
+        border-bottom: 3px solid #000000 !important;
+        font-size: 15px !important;
+        padding: 10px 0 8px 0 !important;
+        margin: 25px 0 12px 0 !important;
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
         page-break-after: avoid !important;
         page-break-inside: avoid !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
         height: auto !important;
         overflow: visible !important;
         font-weight: 800 !important;
-        letter-spacing: 2px !important;
+        letter-spacing: 1.5px !important;
         text-transform: uppercase !important;
-        background: #E9F7F7 !important;
-        background-color: #E9F7F7 !important;
-        font-family: 'Arial Black', 'Arial', 'Helvetica', sans-serif !important;
-        -webkit-font-smoothing: antialiased !important;
-        text-rendering: optimizeLegibility !important;
-        border-radius: 0 !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        line-height: 1.4 !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
-    /* ASSETS header specifically - green/teal color */
+    /* All section headers - clean uniform style */
     .balance-sheet-report .report-section:first-child .section-header-financial,
-    .balance-sheet-report .report-section:first-of-type .section-header-financial {
+    .balance-sheet-report .report-section:first-of-type .section-header-financial,
+    .balance-sheet-report .report-section:nth-child(2) .section-header-financial,
+    .balance-sheet-report .report-section:nth-child(3) .section-header-financial {
         display: block !important;
         visibility: visible !important;
         margin-top: 5px !important;
-        margin-bottom: 15px !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
+        margin-bottom: 10px !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
         color: #000 !important;
-        border-bottom: 3px solid #0A3D3D !important;
+        border-bottom: 2px solid #000 !important;
         page-break-before: avoid !important;
         page-break-after: avoid !important;
-        padding: 10px 15px !important;
-        background: #E9F7F7 !important;
-        background-color: #E9F7F7 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-    
-    /* LIABILITIES header - orange/warm color */
-    .balance-sheet-report .report-section:nth-child(2) .section-header-financial {
-        color: #000 !important;
-        border-bottom: 3px solid #C17817 !important;
-        background: #FFF8E7 !important;
-        background-color: #FFF8E7 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-    
-    /* EQUITY header - blue color */
-    .balance-sheet-report .report-section:nth-child(3) .section-header-financial {
-        color: #000 !important;
-        border-bottom: 3px solid #165A5A !important;
-        background: #E0F2F7 !important;
-        background-color: #E0F2F7 !important;
+        padding: 8px 10px !important;
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -3064,24 +3519,48 @@ body {
         page-break-inside: avoid !important;
     }
     
-    .report-table-financial thead th {
-        background: #1e3a3a !important;
-        background-color: #1e3a3a !important;
-        color: #fff !important;
-        font-weight: 700 !important;
+    /* ========================================
+       TABLE HEADERS - WHITE BACKGROUND
+       CRITICAL: Override ALL possible dark backgrounds
+       ======================================== */
+    .report-table-financial thead th,
+    .report-table-financial thead tr th,
+    .report-table thead th,
+    .report-table thead tr th,
+    .table-modern thead th,
+    .table-modern thead tr th,
+    table thead th,
+    table thead tr th,
+    th[style*="background"],
+    th[style*="background-color"],
+    thead th,
+    thead tr th,
+    .report-table-financial thead,
+    .report-table thead,
+    .table-modern thead,
+    table thead {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        font-weight: 800 !important;
         font-size: 11px !important;
-        padding: 12px 15px !important;
-        border: 2px solid #000 !important;
+        padding: 10px 12px !important;
+        border: 2px solid #000000 !important;
         text-align: left !important;
+        letter-spacing: 0.8px !important;
+        text-transform: uppercase !important;
+        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        vertical-align: middle !important;
+        line-height: 1.4 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
-        letter-spacing: 1.2px !important;
-        text-transform: uppercase !important;
-        font-family: 'Arial', 'Helvetica', sans-serif !important;
-        -webkit-font-smoothing: antialiased !important;
-        text-rendering: optimizeLegibility !important;
-        vertical-align: middle !important;
+    }
+    
+    .report-table-financial thead th:last-child,
+    .report-table thead th:last-child,
+    table thead th:last-child {
+        text-align: right !important;
     }
     
     .report-table-financial thead th:last-child {
@@ -3138,8 +3617,8 @@ body {
     }
     
     .report-table-financial tbody tr:nth-child(even) td {
-        background: #F0F3F5 !important;
-        background-color: #F0F3F5 !important;
+        background: #F8F8F8 !important;
+        background-color: #F8F8F8 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -3164,55 +3643,35 @@ body {
     }
     
     .report-table-financial tfoot td {
-        padding: 12px 15px !important;
-        font-weight: 800 !important;
-        font-size: 13px !important;
-        background: #D4EDED !important;
-        background-color: #D4EDED !important;
+        padding: 10px 12px !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        background: #F0F0F0 !important;
+        background-color: #F0F0F0 !important;
         color: #000 !important;
-        border: 2px solid #000 !important;
-        border-top: 3px double #000 !important;
+        border: 1px solid #000 !important;
+        border-top: 2px solid #000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
         display: table-cell !important;
         visibility: visible !important;
-        letter-spacing: 0.8px !important;
+        letter-spacing: 0.5px !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
         text-transform: uppercase !important;
     }
     
-    /* Colorful totals for different sections */
-    .balance-sheet-report .report-section:first-child .report-table-financial tfoot td {
-        background: #D4EDED !important;
-        background-color: #D4EDED !important;
-        color: #000 !important;
-        border-color: #000 !important;
-        border-top: 3px double #0A3D3D !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-    
-    .balance-sheet-report .report-section:nth-child(2) .report-table-financial tfoot td {
-        background: #FFE8B8 !important;
-        background-color: #FFE8B8 !important;
-        color: #000 !important;
-        border-color: #000 !important;
-        border-top: 3px double #C17817 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-    }
-    
+    /* Clean totals for all sections */
+    .balance-sheet-report .report-section:first-child .report-table-financial tfoot td,
+    .balance-sheet-report .report-section:nth-child(2) .report-table-financial tfoot td,
     .balance-sheet-report .report-section:nth-child(3) .report-table-financial tfoot td {
-        background: #B8E5F0 !important;
-        background-color: #B8E5F0 !important;
+        background: #F0F0F0 !important;
+        background-color: #F0F0F0 !important;
         color: #000 !important;
         border-color: #000 !important;
-        border-top: 3px double #165A5A !important;
+        border-top: 2px solid #000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -3259,16 +3718,23 @@ body {
     }
     
     .final-total-box {
-        background: #D4EDED !important;
-        background-color: #D4EDED !important;
-        border: 3px solid #000 !important;
+        background: #F0F0F0 !important;
+        background-color: #F0F0F0 !important;
+        border: 2px solid #000 !important;
         border-radius: 0 !important;
-        padding: 15px 20px !important;
+        padding: 12px 15px !important;
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
         box-shadow: none !important;
         margin-top: 15px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    .final-total-label,
+    .final-total-value {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
@@ -3293,5 +3759,56 @@ body {
         letter-spacing: 0.5px !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+    }
+    
+    /* ========================================
+       FINAL CATCH-ALL: Remove ANY remaining dark backgrounds
+       ======================================== */
+    * {
+        /* Remove any dark colors from any element */
+        background-image: none !important;
+    }
+    
+    /* Force white on any element that might have been missed */
+    [class*="bg-"],
+    [class*="background"],
+    [style*="background-color"],
+    [style*="background:"] {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Final override for table-related elements - but exclude footers */
+    thead *,
+    tbody *,
+    thead td,
+    thead th,
+    tbody td,
+    tbody th {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    
+    /* Headers are always white */
+    th,
+    thead th,
+    table th,
+    .report-table-financial th,
+    .report-table th {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    
+    /* Exception: Allow light gray only for footers and totals (must come after general rules) */
+    tfoot td,
+    tfoot th,
+    .total-row td,
+    .final-total-box,
+    .final-total-box * {
+        background: #F5F5F5 !important;
+        background-color: #F5F5F5 !important;
+        color: #000000 !important;
     }
 }

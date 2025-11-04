@@ -258,7 +258,7 @@ function displayReportInModal(reportType, data) {
                 <button class="btn btn-danger" onclick="exportReport('pdf')">
                     <i class="fas fa-file-pdf me-2"></i>Export PDF
                 </button>
-                <button class="btn btn-secondary" onclick="window.print()">
+                <button class="btn btn-secondary" onclick="printCurrentReport()">
                     <i class="fas fa-print me-2"></i>Print
                 </button>
             </div>
@@ -329,14 +329,14 @@ function generateBalanceSheetHTML(data) {
     
     // ASSETS Section
     html += '<div class="report-section">';
-    html += '<h5 class="section-header-financial" style="background: #E9F7F7; background-color: #E9F7F7; color: #000; font-weight: 800; border-bottom: 3px solid #0A3D3D; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ASSETS</h5>';
+    html += '<h5 class="section-header-financial">ASSETS</h5>';
     html += `
         <table class="report-table-financial">
             <thead>
                 <tr>
-                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT CODE</th>
-                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT NAME</th>
-                    <th style="text-align: right; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">AMOUNT</th>
+                    <th style="text-align: left;">ACCOUNT CODE</th>
+                    <th style="text-align: left;">ACCOUNT NAME</th>
+                    <th style="text-align: right;">AMOUNT</th>
                 </tr>
             </thead>
             <tbody>
@@ -360,8 +360,8 @@ function generateBalanceSheetHTML(data) {
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="2" style="background: #D4EDED; background-color: #D4EDED; color: #000; font-weight: 800; border-top: 3px double #0A3D3D; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>TOTAL ASSETS</strong></td>
-                    <td style="text-align: right; background: #D4EDED; background-color: #D4EDED; color: #000; font-weight: 800; border-top: 3px double #0A3D3D; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(data.total_assets)}</strong></td>
+                    <td colspan="2"><strong>TOTAL ASSETS</strong></td>
+                    <td style="text-align: right;"><strong>${formatCurrency(data.total_assets)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -370,14 +370,14 @@ function generateBalanceSheetHTML(data) {
     
     // LIABILITIES Section
     html += '<div class="report-section">';
-    html += '<h5 class="section-header-financial" style="background: #FFF8E7; background-color: #FFF8E7; color: #000; font-weight: 800; border-bottom: 3px solid #C17817; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">LIABILITIES</h5>';
+    html += '<h5 class="section-header-financial">LIABILITIES</h5>';
     html += `
         <table class="report-table-financial">
             <thead>
                 <tr>
-                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT CODE</th>
-                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT NAME</th>
-                    <th style="text-align: right; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">AMOUNT</th>
+                    <th style="text-align: left;">ACCOUNT CODE</th>
+                    <th style="text-align: left;">ACCOUNT NAME</th>
+                    <th style="text-align: right;">AMOUNT</th>
                 </tr>
             </thead>
             <tbody>
@@ -401,8 +401,8 @@ function generateBalanceSheetHTML(data) {
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="2" style="background: #FFE8B8; background-color: #FFE8B8; color: #000; font-weight: 800; border-top: 3px double #C17817; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>TOTAL LIABILITIES</strong></td>
-                    <td style="text-align: right; background: #FFE8B8; background-color: #FFE8B8; color: #000; font-weight: 800; border-top: 3px double #C17817; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(data.total_liabilities)}</strong></td>
+                    <td colspan="2"><strong>TOTAL LIABILITIES</strong></td>
+                    <td style="text-align: right;"><strong>${formatCurrency(data.total_liabilities)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -411,14 +411,14 @@ function generateBalanceSheetHTML(data) {
     
     // EQUITY Section
     html += '<div class="report-section">';
-    html += '<h5 class="section-header-financial" style="background: #E0F2F7; background-color: #E0F2F7; color: #000; font-weight: 800; border-bottom: 3px solid #165A5A; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">EQUITY</h5>';
+    html += '<h5 class="section-header-financial">EQUITY</h5>';
     html += `
         <table class="report-table-financial">
             <thead>
                 <tr>
-                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT CODE</th>
-                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT NAME</th>
-                    <th style="text-align: right; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">AMOUNT</th>
+                    <th style="text-align: left;">ACCOUNT CODE</th>
+                    <th style="text-align: left;">ACCOUNT NAME</th>
+                    <th style="text-align: right;">AMOUNT</th>
                 </tr>
             </thead>
             <tbody>
@@ -442,8 +442,8 @@ function generateBalanceSheetHTML(data) {
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="2" style="background: #B8E5F0; background-color: #B8E5F0; color: #000; font-weight: 800; border-top: 3px double #165A5A; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>TOTAL EQUITY</strong></td>
-                    <td style="text-align: right; background: #B8E5F0; background-color: #B8E5F0; color: #000; font-weight: 800; border-top: 3px double #165A5A; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(data.total_equity)}</strong></td>
+                    <td colspan="2"><strong>TOTAL EQUITY</strong></td>
+                    <td style="text-align: right;"><strong>${formatCurrency(data.total_equity)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -452,10 +452,10 @@ function generateBalanceSheetHTML(data) {
     
     // Final Total
     html += `
-        <div class="final-total-section" style="border-top: 4px double #000; margin-top: 25px;">
-            <div class="final-total-box" style="background: #D4EDED; background-color: #D4EDED; border: 3px solid #000; padding: 15px 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                <span class="final-total-label" style="color: #000; font-weight: 800; font-size: 15px; text-transform: uppercase;">Total Liabilities & Equity:</span>
-                <span class="final-total-value" style="color: #000; font-weight: 800; font-size: 16px;">${formatCurrency(data.total_liabilities_equity)}</span>
+        <div class="final-total-section">
+            <div class="final-total-box">
+                <span class="final-total-label">Total Liabilities & Equity:</span>
+                <span class="final-total-value">${formatCurrency(data.total_liabilities_equity)}</span>
             </div>
         </div>
     `;
@@ -475,16 +475,18 @@ function generateBalanceSheetHTML(data) {
  * Generate Income Statement HTML
  */
 function generateIncomeStatementHTML(data) {
-    let html = '<h5 class="mt-4 mb-3 text-teal">REVENUE</h5>';
+    let html = '<h5 class="mt-4 mb-3 text-teal" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">REVENUE</h5>';
     html += generateAccountTable(data.revenue, data.total_revenue, 'TOTAL REVENUE');
     
-    html += '<h5 class="mt-4 mb-3 text-teal">EXPENSES</h5>';
+    html += '<h5 class="mt-4 mb-3 text-teal" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">EXPENSES</h5>';
     html += generateAccountTable(data.expenses, data.total_expenses, 'TOTAL EXPENSES');
     
+    const alertClass = data.net_income >= 0 ? 'alert-success' : 'alert-warning';
+    const alertBg = data.net_income >= 0 ? '#d4edda' : '#fff3cd';
     html += `
-        <div class="alert ${data.net_income >= 0 ? 'alert-success' : 'alert-warning'} mt-3">
-            <h5><strong>NET INCOME:</strong> ${formatCurrency(data.net_income)}</h5>
-            <p class="mb-0">Profit Margin: ${data.net_income_percentage.toFixed(2)}%</p>
+        <div class="alert ${alertClass} mt-3" style="background: ${alertBg}; background-color: ${alertBg}; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+            <h5 style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>NET INCOME:</strong> ${formatCurrency(data.net_income)}</h5>
+            <p class="mb-0" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">Profit Margin: ${data.net_income_percentage.toFixed(2)}%</p>
         </div>
     `;
     
@@ -496,25 +498,25 @@ function generateIncomeStatementHTML(data) {
  */
 function generateCashFlowHTML(data) {
     let html = `
-        <table class="report-table">
+        <table class="report-table" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
             <tbody>
-                <tr>
-                    <td><strong>Cash from Operating Activities</strong></td>
-                    <td class="amount">${formatCurrency(data.cash_from_operations)}</td>
+                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>Cash from Operating Activities</strong></td>
+                    <td class="amount" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${formatCurrency(data.cash_from_operations)}</td>
                 </tr>
-                <tr>
-                    <td><strong>Cash from Investing Activities</strong></td>
-                    <td class="amount">${formatCurrency(data.cash_from_investing)}</td>
+                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>Cash from Investing Activities</strong></td>
+                    <td class="amount" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${formatCurrency(data.cash_from_investing)}</td>
                 </tr>
-                <tr>
-                    <td><strong>Cash from Financing Activities</strong></td>
-                    <td class="amount">${formatCurrency(data.cash_from_financing)}</td>
+                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>Cash from Financing Activities</strong></td>
+                    <td class="amount" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${formatCurrency(data.cash_from_financing)}</td>
                 </tr>
             </tbody>
-            <tfoot>
-                <tr>
-                    <td><strong>NET CASH CHANGE</strong></td>
-                    <td class="amount"><strong>${formatCurrency(data.net_cash_change)}</strong></td>
+            <tfoot style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                    <td style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>NET CASH CHANGE</strong></td>
+                    <td class="amount" style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(data.net_cash_change)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -591,10 +593,10 @@ function generateRegulatoryReportsHTML(data) {
                                 <button class="btn btn-success" onclick="exportRegulatoryReport()">
                                     <i class="fas fa-file-excel me-2"></i>Export Excel
                                 </button>
-                                <button class="btn btn-danger" onclick="exportReport('pdf')">
+                                <button class="btn btn-danger" onclick="printRegulatoryReportPDF()">
                                     <i class="fas fa-file-pdf me-2"></i>Export PDF
                                 </button>
-                                <button class="btn btn-secondary" onclick="window.print()">
+                                <button class="btn btn-secondary" onclick="printRegulatoryReportPDF()">
                                     <i class="fas fa-print me-2"></i>Print
                                 </button>
                             </div>
@@ -640,37 +642,38 @@ function generateGenericReportHTML(data) {
  */
 function generateAccountTable(accounts, total, totalLabel) {
     let html = `
-        <table class="report-table">
+        <table class="report-table" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
             <thead>
-                <tr>
-                    <th>Account Code</th>
-                    <th>Account Name</th>
-                    <th style="text-align: right;">Amount</th>
+                <tr style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                    <th style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">Account Code</th>
+                    <th style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">Account Name</th>
+                    <th style="text-align: right; background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">Amount</th>
                 </tr>
             </thead>
             <tbody>
     `;
     
     if (accounts && accounts.length > 0) {
-        accounts.forEach(account => {
+        accounts.forEach((account, index) => {
+            const bgColor = index % 2 === 0 ? '#FFFFFF' : '#F5F9FA';
             html += `
-                <tr>
-                    <td><strong>${account.code}</strong></td>
-                    <td>${account.name}</td>
-                    <td class="amount">${formatCurrency(account.balance)}</td>
+                <tr style="background: ${bgColor}; background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${account.code}</strong></td>
+                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${account.name}</td>
+                    <td class="amount" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${formatCurrency(account.balance)}</td>
                 </tr>
             `;
         });
     } else {
-        html += '<tr><td colspan="3" class="text-center text-muted">No accounts found</td></tr>';
+        html += '<tr><td colspan="3" class="text-center text-muted" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">No accounts found</td></tr>';
     }
     
     html += `
             </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="2"><strong>${totalLabel}</strong></td>
-                    <td class="amount"><strong>${formatCurrency(total)}</strong></td>
+            <tfoot style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                    <td colspan="2" style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${totalLabel}</strong></td>
+                    <td class="amount" style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(total)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -704,6 +707,56 @@ function formatCurrency(amount) {
 }
 
 /**
+ * Print current report with proper styling - Enhanced UX
+ */
+function printCurrentReport() {
+    if (!currentReportData) {
+        showNotification('Please generate a report first.', 'warning');
+        return;
+    }
+    
+    if (!currentReportType) {
+        showNotification('Report type not identified. Please regenerate the report.', 'warning');
+        return;
+    }
+    
+    showNotification('Preparing report for printing...', 'info');
+    
+    // Add print-specific body classes based on report type
+    document.body.classList.add('printing-report');
+    document.body.classList.add(`printing-${currentReportType}`);
+    
+    // Ensure modal is visible if printing from modal
+    const modal = document.querySelector('.modal.show, .modal');
+    if (modal) {
+        modal.style.display = 'block';
+        modal.classList.add('show');
+    }
+    
+    // Small delay to ensure CSS is applied
+    setTimeout(() => {
+        // Focus on print content
+        const reportContent = document.querySelector('.report-display, .balance-sheet-report, #report-content');
+        if (reportContent) {
+            reportContent.focus();
+        }
+        
+        // Trigger print dialog
+        window.print();
+        
+        // Clean up after print dialog closes
+        setTimeout(() => {
+            // Remove print classes
+            document.body.classList.remove('printing-report');
+            document.body.classList.remove(`printing-${currentReportType}`);
+            
+            // Show success message
+            showNotification('Print dialog opened. Use your browser\'s print options to save as PDF or print.', 'success');
+        }, 100);
+    }, 300);
+}
+
+/**
  * Export report
  */
 function exportReport(format) {
@@ -713,8 +766,8 @@ function exportReport(format) {
     }
     
     if (format === 'pdf') {
-        // For PDF, use print dialog
-        window.print();
+        // For PDF, use print dialog with proper styling
+        printCurrentReport();
     } else if (format === 'excel') {
         // Prepare data for Excel export
         exportToExcel();
@@ -1196,11 +1249,45 @@ function printRegulatoryReport() {
     
     showNotification('Preparing report for printing...', 'info');
     
-    // Simulate print process
+    // Add print-specific body class
+    document.body.classList.add('printing-report');
+    document.body.classList.add('printing-regulatory-reports');
+    
+    // Trigger print dialog
     setTimeout(() => {
-        showNotification('Report sent to printer successfully!', 'success');
-        console.log('Regulatory report printed');
-    }, 1500);
+        window.print();
+        
+        // Remove print classes after printing
+        document.body.classList.remove('printing-report');
+        document.body.classList.remove('printing-regulatory-reports');
+    }, 500);
+}
+
+/**
+ * Print Regulatory Report as PDF
+ */
+function printRegulatoryReportPDF() {
+    const reportTable = document.getElementById('regulatory-report-table');
+    
+    if (!reportTable || reportTable.style.display === 'none') {
+        showNotification('No report data to print', 'warning');
+        return;
+    }
+    
+    showNotification('Preparing PDF export...', 'info');
+    
+    // Add print-specific body class
+    document.body.classList.add('printing-report');
+    document.body.classList.add('printing-regulatory-reports');
+    
+    // Trigger print dialog
+    setTimeout(() => {
+        window.print();
+        
+        // Remove print classes after printing
+        document.body.classList.remove('printing-report');
+        document.body.classList.remove('printing-regulatory-reports');
+    }, 500);
 }
 
 // ===== FILTERING FUNCTIONS =====
