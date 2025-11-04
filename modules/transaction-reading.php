@@ -595,7 +595,7 @@ try {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-info" onclick="viewAuditTrail()">
+                    <button type="button" class="btn btn-info" onclick="viewAuditTrail(currentTransactionId)">
                         <i class="fas fa-history me-1"></i>View Audit Trail
                     </button>
                 </div>
