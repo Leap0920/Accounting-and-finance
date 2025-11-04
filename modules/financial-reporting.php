@@ -566,9 +566,6 @@ $current_user = getCurrentUser();
 
             <!-- Action Buttons -->
             <div class="results-actions-simple mb-3">
-                <button class="btn btn-outline-primary btn-sm me-2" onclick="showMoreInformation()" id="show-more-btn">
-                    <i class="fas fa-expand me-1"></i>Show More
-                </button>
                 <button class="btn btn-success btn-sm me-2" onclick="exportFilteredData('excel')">
                     <i class="fas fa-file-excel me-1"></i>Excel
                 </button>

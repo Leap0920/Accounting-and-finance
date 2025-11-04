@@ -1742,17 +1742,508 @@ body {
     .btn-generate,
     .btn-primary,
     .btn-outline-secondary,
-    footer {
+    .beautiful-page-header,
+    .filtering-section-modern,
+    .results-actions-simple,
+    .pagination-controls,
+    .no-results-modern,
+    .modal-header,
+    .modal-footer,
+    .report-action-buttons,
+    .flow-step,
+    footer,
+    .alert,
+    .alert-dismissible,
+    .alert-success,
+    .alert-danger,
+    .alert-warning,
+    .alert-info,
+    .notification,
+    .toast,
+    .toast-container,
+    [role="alert"],
+    .position-fixed,
+    .position-fixed.alert,
+    .print-hide-notification,
+    div[style*="position: fixed"],
+    div[style*="position:fixed"] {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
     }
     
     body {
-        background: #fff;
+        background: #fff !important;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body.printing-report {
+        background: #fff !important;
+    }
+    
+    /* Remove modal styling for print */
+    .modal-dialog {
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+    
+    .modal-content {
+        border: none !important;
+        box-shadow: none !important;
+        background: #fff !important;
+    }
+    
+    .modal-body {
+        padding: 0 !important;
+    }
+    
+    /* Print header for filtered results */
+    .filtered-results-modern::before {
+        content: "EVERGREEN ACCOUNTING & FINANCE SYSTEM\AFINANCIAL REPORTING - FILTERED RESULTS\A";
+        white-space: pre;
+        display: block;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        color: #000;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #000;
+    }
+    
+    /* Report display styling */
+    .report-display {
+        box-shadow: none !important;
+        background: #fff !important;
+        padding: 10px;
+    }
+    
+    .report-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #000;
+    }
+    
+    .company-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #000;
+        margin-bottom: 5px;
+    }
+    
+    .report-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #000;
+        margin: 10px 0;
+    }
+    
+    .report-period {
+        font-size: 14px;
+        color: #333;
+    }
+    
+    /* Remove backgrounds from all elements */
+    * {
+        background: transparent !important;
     }
     
     .report-display,
-    .table-container {
-        box-shadow: none;
+    .report-header,
+    .report-table,
+    .table-modern,
+    .card,
+    .alert {
+        background: #fff !important;
+    }
+    
+    /* Table styling for print */
+    .report-table,
+    .table-modern {
+        width: 100% !important;
+        font-size: 11px !important;
+        page-break-inside: auto;
+        border-collapse: collapse !important;
+        background: #fff !important;
+    }
+    
+    .report-table thead,
+    .table-modern thead {
+        display: table-header-group;
+    }
+    
+    .report-table thead th,
+    .table-modern thead th {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        font-weight: 600 !important;
+        border: 1px solid #333 !important;
+        padding: 8px !important;
+        text-align: left !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .report-table tbody td,
+    .table-modern tbody td {
+        border: 1px solid #333 !important;
+        padding: 6px !important;
+        color: #000 !important;
+    }
+    
+    .report-table tfoot th,
+    .report-table tfoot td,
+    .table-modern tfoot th,
+    .table-modern tfoot td {
+        border: 1px solid #333 !important;
+        padding: 8px !important;
+        font-weight: 600 !important;
+        background: #f8f9fa !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .report-table tr,
+    .table-modern tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    
+    /* Amount/number alignment */
+    .amount {
+        text-align: right !important;
+    }
+    
+    /* Report content wrapper */
+    .report-content-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Section headers for print */
+    .section-header-print {
+        margin-top: 25px !important;
+        margin-bottom: 15px !important;
+        padding: 10px 0 !important;
+        border-bottom: 2px solid #000 !important;
+    }
+    
+    .section-title-print {
+        color: #000 !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    /* Section headers */
+    h5.mt-4,
+    h5.text-teal {
+        color: #000 !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        margin-top: 15px !important;
+        padding-top: 10px !important;
+        border-top: 1px solid #333 !important;
+    }
+    
+    /* Report table enhancements */
+    .report-table.account-table tbody tr td:first-child {
+        font-weight: 600 !important;
+    }
+    
+    .report-table.cash-flow-table .section-row {
+        background: #f8f9fa !important;
+        font-weight: 600 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .report-table.cash-flow-table .section-row td {
+        padding: 10px 8px !important;
+        border-top: 2px solid #333 !important;
+        border-bottom: 1px solid #333 !important;
+    }
+    
+    .report-table.cash-flow-table .indent-item {
+        padding-left: 30px !important;
+    }
+    
+    .report-table .total-row {
+        background: #f8f9fa !important;
+        border-top: 2px solid #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .report-table .total-row td {
+        padding: 10px 8px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Report summary boxes */
+    .report-summary {
+        margin-top: 20px !important;
+        page-break-inside: avoid !important;
+    }
+    
+    .summary-box {
+        border: 2px solid #000 !important;
+        padding: 15px !important;
+        background: #fff !important;
+        text-align: center !important;
+    }
+    
+    .summary-box.success {
+        border-color: #28a745 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .summary-box.warning {
+        border-color: #ffc107 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .summary-box.info {
+        border-color: #17a2b8 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .summary-box i {
+        font-size: 16px !important;
+        color: #000 !important;
+    }
+    
+    .summary-box strong {
+        font-size: 14px !important;
+        color: #000 !important;
+    }
+    
+    .summary-box p {
+        margin: 5px 0 0 0 !important;
+        color: #333 !important;
+        font-size: 12px !important;
+    }
+    
+    .summary-item-large {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .summary-label-large {
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        color: #000 !important;
+    }
+    
+    .summary-value-large {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        color: #000 !important;
+    }
+    
+    .summary-item-small {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+    
+    .summary-label-small {
+        font-size: 12px !important;
+        color: #333 !important;
+    }
+    
+    .summary-value-small {
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: #000 !important;
+    }
+    
+    /* Alerts and info boxes */
+    .alert {
+        border: 1px solid #333 !important;
+        padding: 10px !important;
+        margin: 10px 0 !important;
+        background: #fff !important;
+        color: #000 !important;
+    }
+    
+    .alert strong {
+        color: #000 !important;
+    }
+    
+    /* Badges in print */
+    .badge {
+        border: 1px solid #333 !important;
+        padding: 2px 6px !important;
+        font-size: 10px !important;
+        color: #000 !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Regulatory report specific */
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header {
+        display: none !important;
+    }
+    
+    .card-body {
+        padding: 0 !important;
+    }
+    
+    /* Regulatory report table styling */
+    #regulatory-data-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+    
+    #regulatory-data-table thead th {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        font-weight: 600 !important;
+        border: 1px solid #333 !important;
+        padding: 10px !important;
+        text-align: left !important;
+        font-size: 11px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    #regulatory-data-table tbody td {
+        border: 1px solid #333 !important;
+        padding: 8px !important;
+        color: #000 !important;
+        font-size: 10px !important;
+    }
+    
+    #regulatory-data-table code {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        padding: 2px 6px !important;
+        border: 1px solid #ddd !important;
+        font-size: 10px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Progress bars in print */
+    .progress {
+        border: 1px solid #333 !important;
+        background: #fff !important;
+    }
+    
+    .progress-bar {
+        background: #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Ensure container uses full width */
+    .container,
+    .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 10px !important;
+        margin: 0 !important;
+    }
+    
+    /* Avoid page breaks in important sections */
+    .report-table,
+    .table-modern,
+    .alert {
+        page-break-inside: avoid;
+    }
+    
+    /* Hide all scrollbars in print */
+    * {
+        scrollbar-width: none !important; /* Firefox */
+        -ms-overflow-style: none !important; /* IE/Edge */
+    }
+    
+    *::-webkit-scrollbar {
+        display: none !important; /* Chrome, Safari, Opera */
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
+    *::-webkit-scrollbar-track,
+    *::-webkit-scrollbar-thumb {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
+    body,
+    html,
+    .modal-body,
+    .modal-content,
+    .report-display,
+    .table-responsive,
+    .card-body,
+    .modal-dialog {
+        overflow: visible !important;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    
+    body::-webkit-scrollbar,
+    html::-webkit-scrollbar,
+    .modal-body::-webkit-scrollbar,
+    .modal-content::-webkit-scrollbar,
+    .report-display::-webkit-scrollbar,
+    .table-responsive::-webkit-scrollbar,
+    .modal-dialog::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    
+    /* Remove any browser-generated page numbers or indicators */
+    body::after,
+    html::after,
+    .modal-content::after,
+    .report-display::after {
+        display: none !important;
+        content: none !important;
+    }
+    
+    /* Page setup - Hide print marks and page indicators */
+    @page {
+        size: A4 portrait;
+        margin: 1cm;
+        marks: none;
+    }
+    
+    /* Hide any page numbering or indicators that browsers add */
+    @page :first {
+        marks: none;
+    }
+    
+    @page :left {
+        marks: none;
+    }
+    
+    @page :right {
+        marks: none;
     }
 }
 
