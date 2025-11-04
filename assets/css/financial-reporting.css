@@ -1741,6 +1741,14 @@ body {
 }
 
 @media print {
+    /* Narrower page margins for filtered results */
+    body.printing-filtered-results {
+        @page {
+            size: A4 portrait;
+            margin: 0.8cm 1cm;
+        }
+    }
+    
     .navbar-custom,
     .page-header-simple,
     .modern-tabs-container,
@@ -1896,19 +1904,7 @@ body {
         max-height: none !important;
     }
     
-    /* Print header for filtered results */
-    .filtered-results-modern::before {
-        content: "EVERGREEN ACCOUNTING & FINANCE SYSTEM\AFINANCIAL REPORTING - FILTERED RESULTS\A";
-        white-space: pre;
-        display: block;
-        text-align: center;
-        font-size: 18px;
-        font-weight: bold;
-        color: #000;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #000;
-    }
+
     
     /* Report display styling - make it more visible */
     .report-display {
@@ -1922,10 +1918,10 @@ body {
     
     .report-header {
         text-align: center;
-        margin-bottom: 25px !important;
-        padding: 15px 0 12px 0 !important;
-        border-bottom: 3px solid #0A3D3D !important;
-        background: linear-gradient(to bottom, #FFFFFF 0%, #F5F9FA 100%) !important;
+        margin-bottom: 30px !important;
+        padding: 20px 0 15px 0 !important;
+        border-bottom: 4px double #0A3D3D !important;
+        background: #FFFFFF !important;
         page-break-after: avoid !important;
         page-break-inside: avoid !important;
         -webkit-print-color-adjust: exact !important;
@@ -1933,35 +1929,37 @@ body {
     }
     
     .company-name {
-        font-size: 20px !important;
-        font-weight: 700 !important;
-        color: #0A3D3D !important;
-        margin-bottom: 8px !important;
-        letter-spacing: 0.5px !important;
-        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        font-size: 24px !important;
+        font-weight: 800 !important;
+        color: #000 !important;
+        margin-bottom: 10px !important;
+        letter-spacing: 1.5px !important;
+        font-family: 'Arial Black', 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+        text-transform: uppercase !important;
     }
     
     .report-header h3 {
-        font-size: 18px !important;
+        font-size: 20px !important;
         font-weight: 700 !important;
-        color: #0A3D3D !important;
-        margin: 10px 0 !important;
+        color: #000 !important;
+        margin: 12px 0 8px 0 !important;
         text-transform: uppercase !important;
-        letter-spacing: 1px !important;
+        letter-spacing: 1.5px !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
     }
     
     .report-period {
-        font-size: 13px !important;
-        color: #165A5A !important;
-        font-weight: 500 !important;
+        font-size: 14px !important;
+        color: #333 !important;
+        font-weight: 600 !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+        margin-top: 5px !important;
     }
     
     /* Balance Sheet Report - ensure visibility and allow page breaks */
@@ -2382,7 +2380,7 @@ body {
     /* Page setup - Hide print marks and page indicators */
     @page {
         size: A4 portrait;
-        margin: 1cm;
+        margin: 1.5cm 2cm;
         marks: none;
     }
     
@@ -2438,6 +2436,291 @@ body {
     
     @page :right {
         marks: none;
+    }
+    
+    /* ========================================
+       FILTERED RESULTS PRINT OPTIMIZATION
+       ======================================== */
+    
+    /* Filtered Results Print Styles */
+    body.printing-filtered-results .filtered-results-modern {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    body.printing-filtered-results .filtering-section-modern,
+    body.printing-filtered-results .beautiful-page-header,
+    body.printing-filtered-results .reports-section,
+    body.printing-filtered-results .results-actions-simple button,
+    body.printing-filtered-results .pagination-controls {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    body.printing-filtered-results .filtered-results-modern .section-header-simple {
+        display: none !important;
+        visibility: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 0 !important;
+        line-height: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    body.printing-filtered-results .filtered-results-modern .section-title-simple {
+        display: none !important;
+    }
+    
+    body.printing-filtered-results .filtered-results-modern #results-summary {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 0 !important;
+    }
+    
+    body.printing-filtered-results .filtered-results-modern #filter-status {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 0 !important;
+    }
+    
+    body.printing-filtered-results .filtered-results-modern .results-table-container {
+        margin-top: -5px !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        padding: 0 !important;
+    }
+    
+    body.printing-filtered-results .filtered-results-modern .table-responsive {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Aggressive spacing removal - target all possible spacing sources */
+    body.printing-filtered-results .filtered-results-modern > div {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Hide ALL elements between header and table */
+    body.printing-filtered-results .filtered-results-modern > .section-header-simple ~ *:not(.results-table-container) {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Ensure table container is right after header */
+    body.printing-filtered-results .filtered-results-modern .results-table-container {
+        position: relative;
+        top: -2px;
+    }
+    
+    /* Override Bootstrap margin classes in print */
+    body.printing-filtered-results .mb-1,
+    body.printing-filtered-results .mb-2,
+    body.printing-filtered-results .mb-3,
+    body.printing-filtered-results .mb-4,
+    body.printing-filtered-results .mb-5 {
+        margin-bottom: 0 !important;
+    }
+    
+    body.printing-filtered-results .mt-1,
+    body.printing-filtered-results .mt-2,
+    body.printing-filtered-results .mt-3,
+    body.printing-filtered-results .mt-4,
+    body.printing-filtered-results .mt-5 {
+        margin-top: 0 !important;
+    }
+    
+    /* Optimize filtered results table for print */
+    body.printing-filtered-results .table {
+        font-size: 10px !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    body.printing-filtered-results .table thead th {
+        background: #1e3a3a !important;
+        background-color: #1e3a3a !important;
+        color: #fff !important;
+        border: 1px solid #000 !important;
+        padding: 6px 4px !important;
+        font-size: 9px !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    body.printing-filtered-results .table tbody td {
+        border: 1px solid #666 !important;
+        padding: 4px 6px !important;
+        font-size: 9px !important;
+        line-height: 1.2 !important;
+        vertical-align: middle !important;
+        page-break-inside: avoid !important;
+    }
+    
+    body.printing-filtered-results .table tbody tr {
+        page-break-inside: avoid !important;
+    }
+    
+    body.printing-filtered-results .table tbody tr:nth-child(even) {
+        background: #F0F3F5 !important;
+        background-color: #F0F3F5 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    body.printing-filtered-results .table tbody tr:nth-child(odd) {
+        background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* Hide icons in table headers */
+    body.printing-filtered-results .table thead th i,
+    body.printing-filtered-results .table thead th .fas {
+        display: none !important;
+    }
+    
+    /* Hide badges and styling in print */
+    body.printing-filtered-results .badge {
+        background: transparent !important;
+        color: #000 !important;
+        border: none !important;
+        padding: 0 !important;
+        font-weight: 600 !important;
+    }
+    
+    body.printing-filtered-results code {
+        color: #000 !important;
+        background: transparent !important;
+        font-size: 9px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Text alignment */
+    body.printing-filtered-results .text-end {
+        text-align: right !important;
+    }
+    
+    body.printing-filtered-results .text-danger,
+    body.printing-filtered-results .text-success,
+    body.printing-filtered-results .text-primary,
+    body.printing-filtered-results .text-muted {
+        color: #000 !important;
+    }
+    
+    /* Ensure proper page breaks */
+    body.printing-filtered-results thead {
+        display: table-header-group !important;
+    }
+    
+    body.printing-filtered-results tfoot {
+        display: table-footer-group !important;
+    }
+    
+    /* Reduce container padding and margins */
+    body.printing-filtered-results .container-fluid,
+    body.printing-filtered-results .container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    body.printing-filtered-results .filtered-results-modern {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Reduce gap between header and table */
+    body.printing-filtered-results .filtered-results-modern::before {
+        margin-bottom: 0 !important;
+        padding-bottom: 3px !important;
+    }
+    
+    body.printing-filtered-results .table {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    
+    /* Ensure no spacing between header and first table element */
+    body.printing-filtered-results .filtered-results-modern > *:first-of-type {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    /* Hide pagination completely - no space */
+    body.printing-filtered-results .pagination-controls,
+    body.printing-filtered-results .pagination-controls * {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    /* Ensure section-header takes no space at all */
+    body.printing-filtered-results .section-header-simple,
+    body.printing-filtered-results .section-header-simple * {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    /* Direct child spacing removal */
+    body.printing-filtered-results .filtered-results-modern > .section-header-simple,
+    body.printing-filtered-results .filtered-results-modern > .pagination-controls {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 0 !important;
+        overflow: hidden !important;
+    }
+    
+    /* Remove any spacing from d-flex containers */
+    body.printing-filtered-results .d-flex {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Optimize page layout for filtered results - narrower margins */
+    body.printing-filtered-results {
+        margin: 0 !important;
+        padding: 0 !important;
     }
 }
 
@@ -2685,11 +2968,11 @@ body {
     
     /* Section headers - make colorful and visible with crisp rendering */
     .section-header-financial {
-        color: #0A3D3D !important;
-        border-bottom: 3px solid #0A3D3D !important;
-        font-size: 17px !important;
-        padding: 12px 0 !important;
-        margin: 25px 0 15px 0 !important;
+        color: #000 !important;
+        border-bottom: 3px solid #000 !important;
+        font-size: 16px !important;
+        padding: 10px 15px !important;
+        margin: 30px 0 15px 0 !important;
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -2697,15 +2980,18 @@ body {
         page-break-inside: avoid !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
         height: auto !important;
         overflow: visible !important;
-        font-weight: 700 !important;
-        letter-spacing: 1.5px !important;
+        font-weight: 800 !important;
+        letter-spacing: 2px !important;
         text-transform: uppercase !important;
-        background: linear-gradient(to right, #E9F7F7 0%, transparent 100%) !important;
-        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        background: #E9F7F7 !important;
+        background-color: #E9F7F7 !important;
+        font-family: 'Arial Black', 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+        border-radius: 0 !important;
     }
     
     /* ASSETS header specifically - green/teal color */
@@ -2713,30 +2999,42 @@ body {
     .balance-sheet-report .report-section:first-of-type .section-header-financial {
         display: block !important;
         visibility: visible !important;
-        margin-top: 10px !important;
+        margin-top: 5px !important;
         margin-bottom: 15px !important;
-        font-size: 15px !important;
-        font-weight: 700 !important;
-        color: #0A3D3D !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+        color: #000 !important;
         border-bottom: 3px solid #0A3D3D !important;
         page-break-before: avoid !important;
         page-break-after: avoid !important;
-        padding: 12px 0 !important;
-        background: linear-gradient(to right, #E9F7F7 0%, transparent 100%) !important;
+        padding: 10px 15px !important;
+        background: #E9F7F7 !important;
+        background-color: #E9F7F7 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     /* LIABILITIES header - orange/warm color */
     .balance-sheet-report .report-section:nth-child(2) .section-header-financial {
-        color: #C17817 !important;
+        color: #000 !important;
         border-bottom: 3px solid #C17817 !important;
-        background: linear-gradient(to right, #FFF8E7 0%, transparent 100%) !important;
+        background: #FFF8E7 !important;
+        background-color: #FFF8E7 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     /* EQUITY header - blue color */
     .balance-sheet-report .report-section:nth-child(3) .section-header-financial {
-        color: #165A5A !important;
+        color: #000 !important;
         border-bottom: 3px solid #165A5A !important;
-        background: linear-gradient(to right, #E0F2F7 0%, transparent 100%) !important;
+        background: #E0F2F7 !important;
+        background-color: #E0F2F7 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     /* Tables - make highly readable and visible with crisp rendering */
@@ -2746,8 +3044,8 @@ body {
         page-break-inside: auto !important;
         page-break-before: auto !important;
         page-break-after: auto !important;
-        margin: 0 0 25px 0 !important;
-        font-size: 13px !important;
+        margin: 0 0 30px 0 !important;
+        font-size: 12px !important;
         display: table !important;
         visibility: visible !important;
         -webkit-print-color-adjust: exact !important;
@@ -2758,6 +3056,7 @@ body {
         -webkit-font-smoothing: antialiased !important;
         -moz-osx-font-smoothing: grayscale !important;
         text-rendering: optimizeLegibility !important;
+        line-height: 1.6 !important;
     }
     
     .report-table-financial thead {
@@ -2766,20 +3065,23 @@ body {
     }
     
     .report-table-financial thead th {
+        background: #1e3a3a !important;
         background-color: #1e3a3a !important;
         color: #fff !important;
         font-weight: 700 !important;
-        font-size: 14px !important;
-        padding: 10px 12px !important;
+        font-size: 11px !important;
+        padding: 12px 15px !important;
         border: 2px solid #000 !important;
         text-align: left !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        letter-spacing: 0.8px !important;
+        color-adjust: exact !important;
+        letter-spacing: 1.2px !important;
         text-transform: uppercase !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+        vertical-align: middle !important;
     }
     
     .report-table-financial thead th:last-child {
@@ -2798,48 +3100,57 @@ body {
     }
     
     .report-table-financial tbody td {
-        padding: 8px 12px !important;
-        border: 1px solid #333 !important;
-        font-size: 13px !important;
+        padding: 10px 15px !important;
+        border: 1px solid #666 !important;
+        font-size: 12px !important;
         color: #000 !important;
         background: #fff !important;
-        line-height: 1.5 !important;
+        background-color: #fff !important;
+        line-height: 1.6 !important;
         display: table-cell !important;
         visibility: visible !important;
         font-weight: 400 !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        vertical-align: middle !important;
     }
     
     .report-table-financial tbody td:first-child {
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
-        font-size: 13px !important;
+        font-size: 11px !important;
+    }
+    
+    .report-table-financial tbody td:nth-child(2) {
+        font-weight: 500 !important;
+        font-size: 12px !important;
     }
     
     .report-table-financial tbody td:last-child {
-        font-family: 'Arial', 'Helvetica', sans-serif !important;
-        font-weight: 500 !important;
-        font-size: 13px !important;
+        font-family: 'Courier New', 'Courier', monospace !important;
+        font-weight: 600 !important;
+        font-size: 12px !important;
+        text-align: right !important;
     }
     
     .report-table-financial tbody tr:nth-child(even) td {
-        background: #F5F9FA !important;
+        background: #F0F3F5 !important;
+        background-color: #F0F3F5 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .report-table-financial tbody tr:nth-child(odd) td {
         background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-    }
-    
-    .report-table-financial tbody tr:hover td {
-        background: #E9F7F7 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .report-table-financial tfoot {
@@ -2853,46 +3164,65 @@ body {
     }
     
     .report-table-financial tfoot td {
-        padding: 10px 12px !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        background: linear-gradient(to bottom, #E9F7F7 0%, #D4EDED 100%) !important;
-        color: #0A3D3D !important;
-        border: 2px solid #0A3D3D !important;
-        border-top: 3px solid #0A3D3D !important;
+        padding: 12px 15px !important;
+        font-weight: 800 !important;
+        font-size: 13px !important;
+        background: #D4EDED !important;
+        background-color: #D4EDED !important;
+        color: #000 !important;
+        border: 2px solid #000 !important;
+        border-top: 3px double #000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
         display: table-cell !important;
         visibility: visible !important;
-        letter-spacing: 0.5px !important;
+        letter-spacing: 0.8px !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+        text-transform: uppercase !important;
     }
     
     /* Colorful totals for different sections */
     .balance-sheet-report .report-section:first-child .report-table-financial tfoot td {
-        background: linear-gradient(to bottom, #E9F7F7 0%, #D4EDED 100%) !important;
-        color: #0A3D3D !important;
-        border-color: #0A3D3D !important;
+        background: #D4EDED !important;
+        background-color: #D4EDED !important;
+        color: #000 !important;
+        border-color: #000 !important;
+        border-top: 3px double #0A3D3D !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .balance-sheet-report .report-section:nth-child(2) .report-table-financial tfoot td {
-        background: linear-gradient(to bottom, #FFF8E7 0%, #FFE8B8 100%) !important;
-        color: #C17817 !important;
-        border-color: #C17817 !important;
+        background: #FFE8B8 !important;
+        background-color: #FFE8B8 !important;
+        color: #000 !important;
+        border-color: #000 !important;
+        border-top: 3px double #C17817 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .balance-sheet-report .report-section:nth-child(3) .report-table-financial tfoot td {
-        background: linear-gradient(to bottom, #E0F2F7 0%, #B8E5F0 100%) !important;
-        color: #165A5A !important;
-        border-color: #165A5A !important;
+        background: #B8E5F0 !important;
+        background-color: #B8E5F0 !important;
+        color: #000 !important;
+        border-color: #000 !important;
+        border-top: 3px double #165A5A !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .report-table-financial tfoot td:last-child {
-        font-family: 'Courier New', monospace !important;
-        font-weight: 700 !important;
+        font-family: 'Courier New', 'Courier', monospace !important;
+        font-weight: 800 !important;
         text-align: right !important;
+        font-size: 13px !important;
     }
     
     /* Right alignment */
@@ -2917,9 +3247,9 @@ body {
     
     /* Final total */
     .final-total-section {
-        margin-top: 15px !important;
-        padding: 8px 0 !important;
-        border-top: 2px solid #000 !important;
+        margin-top: 25px !important;
+        padding: 0 !important;
+        border-top: 4px double #000 !important;
         page-break-inside: avoid !important;
         page-break-before: avoid !important;
         display: block !important;
@@ -2929,34 +3259,37 @@ body {
     }
     
     .final-total-box {
-        background: linear-gradient(135deg, #E9F7F7 0%, #D4EDED 50%, #B8E5F0 100%) !important;
-        border: 3px solid #0A3D3D !important;
+        background: #D4EDED !important;
+        background-color: #D4EDED !important;
+        border: 3px solid #000 !important;
         border-radius: 0 !important;
-        padding: 12px 20px !important;
+        padding: 15px 20px !important;
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
         box-shadow: none !important;
-        margin-top: 10px !important;
+        margin-top: 15px !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        color-adjust: exact !important;
     }
     
     .final-total-label {
-        font-size: 14px !important;
-        font-weight: 700 !important;
-        color: #0A3D3D !important;
-        letter-spacing: 0.5px !important;
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        color: #000 !important;
+        letter-spacing: 1px !important;
         font-family: 'Arial', 'Helvetica', sans-serif !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;
+        text-transform: uppercase !important;
     }
     
     .final-total-value {
         font-size: 16px !important;
-        font-weight: 700 !important;
-        color: #0A3D3D !important;
-        font-family: 'Arial', 'Helvetica', sans-serif !important;
+        font-weight: 800 !important;
+        color: #000 !important;
+        font-family: 'Courier New', 'Courier', monospace !important;
         letter-spacing: 0.5px !important;
         -webkit-font-smoothing: antialiased !important;
         text-rendering: optimizeLegibility !important;

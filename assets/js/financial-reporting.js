@@ -242,12 +242,15 @@ function displayReportInModal(reportType, data) {
         html += generateCashFlowHTML(data);
     } else if (reportType === 'regulatory-reports') {
         html += generateRegulatoryReportsHTML(data);
+        // Don't add general export buttons for regulatory reports - they're inside the Display Report Table
     } else {
         // Fallback for any report type
         html += generateGenericReportHTML(data);
     }
     
-    html += `
+    // Only add export buttons for non-regulatory reports
+    if (reportType !== 'regulatory-reports') {
+        html += `
             <div class="d-flex justify-content-end gap-2 mt-4 no-print">
                 <button class="btn btn-success" onclick="exportReport('excel')">
                     <i class="fas fa-file-excel me-2"></i>Export Excel
@@ -259,8 +262,10 @@ function displayReportInModal(reportType, data) {
                     <i class="fas fa-print me-2"></i>Print
                 </button>
             </div>
-        </div>
-    `;
+        `;
+    }
+    
+    html += `</div>`;
     
     contentDiv.innerHTML = html;
 }
@@ -324,14 +329,14 @@ function generateBalanceSheetHTML(data) {
     
     // ASSETS Section
     html += '<div class="report-section">';
-    html += '<h5 class="section-header-financial">ASSETS</h5>';
+    html += '<h5 class="section-header-financial" style="background: #E9F7F7; background-color: #E9F7F7; color: #000; font-weight: 800; border-bottom: 3px solid #0A3D3D; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ASSETS</h5>';
     html += `
         <table class="report-table-financial">
             <thead>
                 <tr>
-                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT CODE</th>
-                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT NAME</th>
-                    <th style="text-align: right; background-color: #1e3a3a; color: white;">AMOUNT</th>
+                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT CODE</th>
+                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT NAME</th>
+                    <th style="text-align: right; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">AMOUNT</th>
                 </tr>
             </thead>
             <tbody>
@@ -355,8 +360,8 @@ function generateBalanceSheetHTML(data) {
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="2" style="background-color: #f0f0f0;"><strong>TOTAL ASSETS</strong></td>
-                    <td style="text-align: right; background-color: #f0f0f0;"><strong>${formatCurrency(data.total_assets)}</strong></td>
+                    <td colspan="2" style="background: #D4EDED; background-color: #D4EDED; color: #000; font-weight: 800; border-top: 3px double #0A3D3D; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>TOTAL ASSETS</strong></td>
+                    <td style="text-align: right; background: #D4EDED; background-color: #D4EDED; color: #000; font-weight: 800; border-top: 3px double #0A3D3D; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(data.total_assets)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -365,14 +370,14 @@ function generateBalanceSheetHTML(data) {
     
     // LIABILITIES Section
     html += '<div class="report-section">';
-    html += '<h5 class="section-header-financial">LIABILITIES</h5>';
+    html += '<h5 class="section-header-financial" style="background: #FFF8E7; background-color: #FFF8E7; color: #000; font-weight: 800; border-bottom: 3px solid #C17817; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">LIABILITIES</h5>';
     html += `
         <table class="report-table-financial">
             <thead>
                 <tr>
-                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT CODE</th>
-                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT NAME</th>
-                    <th style="text-align: right; background-color: #1e3a3a; color: white;">AMOUNT</th>
+                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT CODE</th>
+                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT NAME</th>
+                    <th style="text-align: right; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">AMOUNT</th>
                 </tr>
             </thead>
             <tbody>
@@ -396,8 +401,8 @@ function generateBalanceSheetHTML(data) {
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="2" style="background-color: #f0f0f0;"><strong>TOTAL LIABILITIES</strong></td>
-                    <td style="text-align: right; background-color: #f0f0f0;"><strong>${formatCurrency(data.total_liabilities)}</strong></td>
+                    <td colspan="2" style="background: #FFE8B8; background-color: #FFE8B8; color: #000; font-weight: 800; border-top: 3px double #C17817; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>TOTAL LIABILITIES</strong></td>
+                    <td style="text-align: right; background: #FFE8B8; background-color: #FFE8B8; color: #000; font-weight: 800; border-top: 3px double #C17817; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(data.total_liabilities)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -406,14 +411,14 @@ function generateBalanceSheetHTML(data) {
     
     // EQUITY Section
     html += '<div class="report-section">';
-    html += '<h5 class="section-header-financial">EQUITY</h5>';
+    html += '<h5 class="section-header-financial" style="background: #E0F2F7; background-color: #E0F2F7; color: #000; font-weight: 800; border-bottom: 3px solid #165A5A; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">EQUITY</h5>';
     html += `
         <table class="report-table-financial">
             <thead>
                 <tr>
-                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT CODE</th>
-                    <th style="text-align: left; background-color: #1e3a3a; color: white;">ACCOUNT NAME</th>
-                    <th style="text-align: right; background-color: #1e3a3a; color: white;">AMOUNT</th>
+                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT CODE</th>
+                    <th style="text-align: left; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">ACCOUNT NAME</th>
+                    <th style="text-align: right; background: #1e3a3a; background-color: #1e3a3a; color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">AMOUNT</th>
                 </tr>
             </thead>
             <tbody>
@@ -437,8 +442,8 @@ function generateBalanceSheetHTML(data) {
             </tbody>
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="2" style="background-color: #f0f0f0;"><strong>TOTAL EQUITY</strong></td>
-                    <td style="text-align: right; background-color: #f0f0f0;"><strong>${formatCurrency(data.total_equity)}</strong></td>
+                    <td colspan="2" style="background: #B8E5F0; background-color: #B8E5F0; color: #000; font-weight: 800; border-top: 3px double #165A5A; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>TOTAL EQUITY</strong></td>
+                    <td style="text-align: right; background: #B8E5F0; background-color: #B8E5F0; color: #000; font-weight: 800; border-top: 3px double #165A5A; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(data.total_equity)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -447,10 +452,10 @@ function generateBalanceSheetHTML(data) {
     
     // Final Total
     html += `
-        <div class="final-total-section">
-            <div class="final-total-box">
-                <span class="final-total-label">Total Liabilities & Equity:</span>
-                <span class="final-total-value">${formatCurrency(data.total_liabilities_equity)}</span>
+        <div class="final-total-section" style="border-top: 4px double #000; margin-top: 25px;">
+            <div class="final-total-box" style="background: #D4EDED; background-color: #D4EDED; border: 3px solid #000; padding: 15px 20px; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+                <span class="final-total-label" style="color: #000; font-weight: 800; font-size: 15px; text-transform: uppercase;">Total Liabilities & Equity:</span>
+                <span class="final-total-value" style="color: #000; font-weight: 800; font-size: 16px;">${formatCurrency(data.total_liabilities_equity)}</span>
             </div>
         </div>
     `;
@@ -559,7 +564,6 @@ function generateRegulatoryReportsHTML(data) {
                     <div class="card-header bg-success text-white">
                         <h5 class="mb-0">
                             <i class="fas fa-table me-2"></i>Display Report Table
-                            <span id="report-type-label">(BSP, SEC, or internal compliance templates)</span>
                         </h5>
                     </div>
                     <div class="card-body">
@@ -581,20 +585,17 @@ function generateRegulatoryReportsHTML(data) {
                             </table>
                         </div>
                         
-                        <!-- Step 3: Decision - Export/Print the display Table? -->
+                        <!-- Export Actions -->
                         <div class="mt-4 text-center">
-                            <h6 class="text-muted mb-3">
-                                <i class="fas fa-question-circle me-2"></i>Export/Print the display Table?
-                            </h6>
                             <div class="d-flex justify-content-center gap-2">
                                 <button class="btn btn-success" onclick="exportRegulatoryReport()">
                                     <i class="fas fa-file-excel me-2"></i>Export Excel
                                 </button>
-                                <button class="btn btn-danger" onclick="printRegulatoryReport()">
+                                <button class="btn btn-danger" onclick="exportReport('pdf')">
                                     <i class="fas fa-file-pdf me-2"></i>Export PDF
                                 </button>
-                                <button class="btn btn-secondary" onclick="printRegulatoryReport()">
-                                    <i class="fas fa-print me-2"></i>Print Report
+                                <button class="btn btn-secondary" onclick="window.print()">
+                                    <i class="fas fa-print me-2"></i>Print
                                 </button>
                             </div>
                         </div>
@@ -740,6 +741,10 @@ function exportToExcel() {
         csvContent = generateIncomeStatementCSV(currentReportData);
     } else if (currentReportType === 'trial-balance') {
         csvContent = generateTrialBalanceCSV(currentReportData);
+    } else if (currentReportType === 'cash-flow') {
+        csvContent = generateCashFlowCSV(currentReportData);
+    } else if (currentReportType === 'regulatory-reports') {
+        csvContent = generateRegulatoryReportsCSVFromData(currentReportData);
     } else {
         alert('Excel export not supported for this report type yet.');
         return;
@@ -757,6 +762,7 @@ function exportToExcel() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     
     showNotification('Report exported successfully!', 'success');
 }
@@ -856,21 +862,115 @@ function generateTrialBalanceCSV(data) {
 }
 
 /**
+ * Generate Cash Flow Statement CSV
+ */
+function generateCashFlowCSV(data) {
+    let csv = 'EVERGREEN ACCOUNTING & FINANCE\n';
+    csv += 'CASH FLOW STATEMENT\n';
+    csv += `${data.period || data.as_of_date || new Date().toLocaleDateString()}\n\n`;
+    
+    csv += 'Category,Amount\n';
+    csv += `Cash from Operating Activities,${data.cash_from_operations || 0}\n`;
+    csv += `Cash from Investing Activities,${data.cash_from_investing || 0}\n`;
+    csv += `Cash from Financing Activities,${data.cash_from_financing || 0}\n`;
+    csv += `\nNET CASH CHANGE,${data.net_cash_change || 0}\n`;
+    
+    return csv;
+}
+
+/**
+ * Generate Regulatory Reports CSV from modal data
+ */
+function generateRegulatoryReportsCSVFromData(data) {
+    let csv = 'EVERGREEN ACCOUNTING & FINANCE\n';
+    csv += 'REGULATORY REPORTS\n';
+    csv += `Generated: ${new Date().toLocaleDateString()}\n\n`;
+    
+    // If data contains reports array, use it
+    if (data.reports && Array.isArray(data.reports) && data.reports.length > 0) {
+        csv += 'Report ID,Report Type,Period,Status,Generated Date,Compliance Score (%)\n';
+        
+        data.reports.forEach(report => {
+            const escapeCSV = (field) => {
+                if (field === null || field === undefined) return '';
+                const str = String(field);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+            
+            csv += `${escapeCSV(report.id || '')},${escapeCSV(report.type || '')},${escapeCSV(report.period || '')},${escapeCSV(report.status || '')},${escapeCSV(report.generatedDate || '')},${escapeCSV(report.score || '')}\n`;
+        });
+        
+        // Add summary
+        csv += '\n';
+        csv += `Total Records,${data.reports.length}\n`;
+        
+        const compliantCount = data.reports.filter(r => r.status && r.status.toLowerCase().includes('compliant')).length;
+        const pendingCount = data.reports.filter(r => r.status && r.status.toLowerCase().includes('pending')).length;
+        
+        csv += `Compliant,${compliantCount}\n`;
+        csv += `Pending,${pendingCount}\n`;
+        
+        if (data.reports.length > 0) {
+            const avgScore = data.reports.reduce((sum, r) => sum + parseFloat(r.score || 0), 0) / data.reports.length;
+            csv += `Average Compliance Score,${avgScore.toFixed(2)}%\n`;
+        }
+    } else {
+        // Fallback: try to extract from table if available
+        const tbody = document.getElementById('regulatory-data-tbody');
+        if (tbody) {
+            const rows = tbody.querySelectorAll('tr');
+            if (rows.length > 0) {
+                csv += 'Report ID,Report Type,Period,Status,Generated Date,Compliance Score (%)\n';
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 6) {
+                        const reportId = cells[0].textContent.trim();
+                        const reportTypeCol = cells[1].textContent.trim();
+                        const period = cells[2].textContent.trim();
+                        const status = cells[3].textContent.trim();
+                        const generatedDate = cells[4].textContent.trim();
+                        const score = cells[5].textContent.trim().replace('%', '').trim();
+                        
+                        const escapeCSV = (field) => {
+                            if (field === null || field === undefined) return '';
+                            const str = String(field);
+                            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                                return `"${str.replace(/"/g, '""')}"`;
+                            }
+                            return str;
+                        };
+                        
+                        csv += `${escapeCSV(reportId)},${escapeCSV(reportTypeCol)},${escapeCSV(period)},${escapeCSV(status)},${escapeCSV(generatedDate)},${escapeCSV(score)}\n`;
+                    }
+                });
+            } else {
+                csv += 'No data available\n';
+            }
+        } else {
+            csv += 'No data available\n';
+        }
+    }
+    
+    return csv;
+}
+
+/**
  * View Regulatory Report - Step 1 of Flowchart
  */
 function viewRegulatoryReport(reportType) {
     const reportTable = document.getElementById('regulatory-report-table');
-    const reportTypeLabel = document.getElementById('report-type-label');
     const tbody = document.getElementById('regulatory-data-tbody');
     
-    // Update report type label
+    // Report type names for display
     const reportNames = {
         'bsp': 'BSP (Bangko Sentral ng Pilipinas) Reports',
         'sec': 'SEC (Securities and Exchange Commission) Filings',
         'internal': 'Internal Compliance Templates'
     };
-    
-    reportTypeLabel.textContent = `(${reportNames[reportType]})`;
     
     // Show loading state
     tbody.innerHTML = `
@@ -968,13 +1068,119 @@ function exportRegulatoryReport() {
         return;
     }
     
+    // Get report type from the table header or stored value
+    let reportType = 'regulatory';
+    const reportTypeLabel = document.querySelector('.card-header.bg-success h5');
+    if (reportTypeLabel) {
+        const text = reportTypeLabel.textContent.toLowerCase();
+        if (text.includes('bsp')) reportType = 'bsp';
+        else if (text.includes('sec')) reportType = 'sec';
+        else if (text.includes('internal')) reportType = 'internal';
+    }
+    
     showNotification('Exporting regulatory report...', 'info');
     
-    // Simulate export process
-    setTimeout(() => {
-        showNotification('Regulatory report exported successfully!', 'success');
-        console.log('Regulatory report exported with', rows.length, 'records');
-    }, 2000);
+    // Extract data from table rows
+    const reportData = [];
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 6) {
+            const reportId = cells[0].textContent.trim();
+            const reportTypeCol = cells[1].textContent.trim();
+            const period = cells[2].textContent.trim();
+            const status = cells[3].textContent.trim();
+            const generatedDate = cells[4].textContent.trim();
+            const score = cells[5].textContent.trim();
+            
+            reportData.push({
+                id: reportId,
+                type: reportTypeCol,
+                period: period,
+                status: status,
+                generatedDate: generatedDate,
+                score: score.replace('%', '').trim()
+            });
+        }
+    });
+    
+    // Generate CSV content
+    const csvContent = generateRegulatoryReportCSV(reportData, reportType);
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const reportTypeNames = {
+        'bsp': 'BSP',
+        'sec': 'SEC',
+        'internal': 'Internal',
+        'regulatory': 'Regulatory'
+    };
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${reportTypeNames[reportType]}_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Regulatory report exported successfully!', 'success');
+}
+
+/**
+ * Generate Regulatory Report CSV
+ */
+function generateRegulatoryReportCSV(data, reportType) {
+    const reportTypeNames = {
+        'bsp': 'BSP (Bangko Sentral ng Pilipinas) Reports',
+        'sec': 'SEC (Securities and Exchange Commission) Filings',
+        'internal': 'Internal Compliance Templates',
+        'regulatory': 'Regulatory Reports'
+    };
+    
+    let csv = 'EVERGREEN ACCOUNTING & FINANCE\n';
+    csv += `${reportTypeNames[reportType] || 'REGULATORY REPORTS'}\n`;
+    csv += `Generated: ${new Date().toLocaleDateString()}\n\n`;
+    
+    // CSV Headers
+    csv += 'Report ID,Report Type,Period,Status,Generated Date,Compliance Score (%)\n';
+    
+    // CSV Data Rows
+    if (data && data.length > 0) {
+        data.forEach(report => {
+            // Escape commas and quotes in CSV
+            const escapeCSV = (field) => {
+                if (field === null || field === undefined) return '';
+                const str = String(field);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+            
+            csv += `${escapeCSV(report.id)},${escapeCSV(report.type)},${escapeCSV(report.period)},${escapeCSV(report.status)},${escapeCSV(report.generatedDate)},${escapeCSV(report.score)}\n`;
+        });
+    }
+    
+    // Add summary
+    csv += '\n';
+    csv += `Total Records,${data.length}\n`;
+    
+    const compliantCount = data.filter(r => r.status.toLowerCase().includes('compliant')).length;
+    const pendingCount = data.filter(r => r.status.toLowerCase().includes('pending')).length;
+    
+    csv += `Compliant,${compliantCount}\n`;
+    csv += `Pending,${pendingCount}\n`;
+    
+    if (data.length > 0) {
+        const avgScore = data.reduce((sum, r) => sum + parseFloat(r.score || 0), 0) / data.length;
+        csv += `Average Compliance Score,${avgScore.toFixed(2)}%\n`;
+    }
+    
+    return csv;
 }
 
 /**
@@ -1245,14 +1451,15 @@ function displayFilteredInformation(data) {
     }
     
     try {
-        // Update summary
+        // Update summary with total count (not just page count)
+        const totalCount = filteredData ? filteredData.length : data.length;
         if (resultsSummary) {
-            resultsSummary.textContent = `Found ${data.length} record${data.length !== 1 ? 's' : ''} matching your criteria`;
+            resultsSummary.textContent = `Found ${totalCount} record${totalCount !== 1 ? 's' : ''} matching your criteria`;
         }
         
         if (filterStatus) {
-            filterStatus.textContent = `${data.length} result${data.length !== 1 ? 's' : ''} found`;
-            filterStatus.className = 'badge bg-success';
+            filterStatus.textContent = `${totalCount} result${totalCount !== 1 ? 's' : ''} found`;
+            filterStatus.className = 'badge bg-success text-white fs-6 px-3 py-2';
         }
         
         let html = '';
@@ -1397,11 +1604,122 @@ function testFilters() {
  */
 function exportFilteredData(format) {
     if (!filteredData || filteredData.length === 0) {
-        alert('No filtered data to export. Please apply filters first.');
+        showNotification('No filtered data to export. Please apply filters first.', 'warning');
         return;
     }
     
-    alert(`Exporting filtered data as ${format.toUpperCase()}...\nThis feature will download the filtered results.`);
+    if (format === 'excel') {
+        exportFilteredDataToExcel();
+    } else if (format === 'pdf') {
+        exportFilteredDataToPDF();
+    } else {
+        showNotification('Unsupported export format', 'error');
+    }
+}
+
+/**
+ * Export filtered data to Excel (CSV)
+ */
+function exportFilteredDataToExcel() {
+    if (!filteredData || filteredData.length === 0) {
+        showNotification('No data to export', 'warning');
+        return;
+    }
+    
+    showNotification('Exporting to Excel...', 'info');
+    
+    // Generate CSV content
+    let csv = 'EVERGREEN ACCOUNTING & FINANCE\n';
+    csv += 'FILTERED RESULTS REPORT\n';
+    csv += `Generated: ${new Date().toLocaleDateString()}\n\n`;
+    
+    // Get filter information
+    const dateFrom = document.getElementById('filter-date-from').value || 'All';
+    const dateTo = document.getElementById('filter-date-to').value || 'All';
+    const subsystem = document.getElementById('filter-subsystem').value || 'All';
+    const accountType = document.getElementById('filter-account-type').value || 'All';
+    
+    csv += 'Filter Criteria:\n';
+    csv += `Date From,${dateFrom}\n`;
+    csv += `Date To,${dateTo}\n`;
+    csv += `Subsystem,${subsystem}\n`;
+    csv += `Account Type,${accountType}\n\n`;
+    
+    // CSV Headers
+    csv += 'Date,Account Code,Account Name,Description,Debit,Credit,Balance\n';
+    
+    // CSV Data Rows
+    filteredData.forEach(record => {
+        const escapeCSV = (field) => {
+            if (field === null || field === undefined) return '';
+            const str = String(field);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
+        
+        const dateStr = record.date ? formatDate(record.date) : 'N/A';
+        const debit = record.debit || 0;
+        const credit = record.credit || 0;
+        const balance = record.balance || 0;
+        
+        csv += `${escapeCSV(dateStr)},${escapeCSV(record.account_code || 'N/A')},${escapeCSV(record.account_name || 'N/A')},${escapeCSV(record.description || '')},${debit},${credit},${balance}\n`;
+    });
+    
+    // Add summary
+    csv += '\n';
+    csv += `Total Records,${filteredData.length}\n`;
+    
+    const totalDebit = filteredData.reduce((sum, r) => sum + (parseFloat(r.debit) || 0), 0);
+    const totalCredit = filteredData.reduce((sum, r) => sum + (parseFloat(r.credit) || 0), 0);
+    
+    csv += `Total Debit,${totalDebit.toFixed(2)}\n`;
+    csv += `Total Credit,${totalCredit.toFixed(2)}\n`;
+    csv += `Net Balance,${(totalDebit - totalCredit).toFixed(2)}\n`;
+    
+    // Create blob and download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Filtered_Results_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Excel export completed successfully!', 'success');
+}
+
+/**
+ * Export filtered data to PDF (using print dialog)
+ */
+function exportFilteredDataToPDF() {
+    if (!filteredData || filteredData.length === 0) {
+        showNotification('No data to export', 'warning');
+        return;
+    }
+    
+    showNotification('Preparing PDF export...', 'info');
+    
+    // Temporarily display ALL filtered data (not just current page)
+    displayAllFilteredDataForPrint();
+    
+    // Add a class to body for print styling
+    document.body.classList.add('printing-filtered-results');
+    
+    // Trigger print dialog
+    setTimeout(() => {
+        window.print();
+        document.body.classList.remove('printing-filtered-results');
+        // Restore pagination after printing
+        displayCurrentPageData();
+        showNotification('PDF export ready. Use "Save as PDF" in the print dialog.', 'info');
+    }, 500);
 }
 
 /**
@@ -1409,11 +1727,72 @@ function exportFilteredData(format) {
  */
 function printFilteredData() {
     if (!filteredData || filteredData.length === 0) {
-        alert('No filtered data to print. Please apply filters first.');
+        showNotification('No filtered data to print. Please apply filters first.', 'warning');
         return;
     }
     
-    window.print();
+    showNotification('Preparing for printing...', 'info');
+    
+    // Temporarily display ALL filtered data (not just current page)
+    displayAllFilteredDataForPrint();
+    
+    // Add a class to body for print styling
+    document.body.classList.add('printing-filtered-results');
+    
+    // Trigger print dialog
+    setTimeout(() => {
+        window.print();
+        document.body.classList.remove('printing-filtered-results');
+        // Restore pagination after printing
+        displayCurrentPageData();
+    }, 500);
+}
+
+/**
+ * Display all filtered data for printing (without pagination)
+ */
+function displayAllFilteredDataForPrint() {
+    if (!filteredData || filteredData.length === 0) return;
+    
+    const tbody = document.getElementById('filtered-results-tbody');
+    if (!tbody) return;
+    
+    let html = '';
+    filteredData.forEach((record, index) => {
+        const rowClass = index % 2 === 0 ? '' : 'table-light';
+        const dateStr = record.date ? formatDate(record.date) : 'N/A';
+        const accountCode = record.account_code || 'N/A';
+        const accountName = record.account_name || 'N/A';
+        const description = record.description || 'No description';
+        
+        html += `
+            <tr class="${rowClass}">
+                <td>
+                    <span class="badge bg-light text-dark">${dateStr}</span>
+                </td>
+                <td>
+                    <code class="text-primary fw-bold">${accountCode}</code>
+                </td>
+                <td>
+                    <span class="fw-semibold">${accountName}</span>
+                </td>
+                <td>
+                    <span class="text-muted">${description}</span>
+                </td>
+                <td class="text-end">
+                    ${record.debit > 0 ? `<span class="text-danger fw-bold">${formatCurrency(record.debit)}</span>` : '<span class="text-muted">-</span>'}
+                </td>
+                <td class="text-end">
+                    ${record.credit > 0 ? `<span class="text-success fw-bold">${formatCurrency(record.credit)}</span>` : '<span class="text-muted">-</span>'}
+                </td>
+                <td class="text-end">
+                    <span class="text-primary fw-bold">${formatCurrency(record.balance)}</span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
 }
 
 /**

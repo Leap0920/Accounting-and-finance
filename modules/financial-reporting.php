@@ -557,25 +557,28 @@ $current_user = getCurrentUser();
         <!-- Filtered Results Section -->
         <div class="filtered-results-modern" id="filtered-results" style="display: none;">
             <div class="section-header-simple mb-4">
-                <h2 class="section-title-simple">
-                    <i class="fas fa-table me-2" style="color: var(--primary-teal);"></i>Filtered Results
-                </h2>
-                <p class="section-subtitle-simple" id="results-summary">Showing filtered results</p>
-                <span class="badge bg-light text-dark" id="filter-status">No filters applied</span>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="results-actions-simple mb-3">
-                <button class="btn btn-success btn-sm me-2" onclick="exportFilteredData('excel')">
-                    <i class="fas fa-file-excel me-1"></i>Excel
-                </button>
-                <button class="btn btn-danger btn-sm me-2" onclick="exportFilteredData('pdf')">
-                    <i class="fas fa-file-pdf me-1"></i>PDF
-                </button>
-                <button class="btn btn-secondary btn-sm" onclick="printFilteredData()">
-                    <i class="fas fa-print me-1"></i>Print
-                                </button>
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h2 class="section-title-simple mb-2">
+                            <i class="fas fa-table me-2" style="color: var(--primary-teal);"></i>Filtered Results
+                        </h2>
+                        <p class="section-subtitle-simple mb-2" id="results-summary">Showing filtered results</p>
+                        <span class="badge bg-success text-white fs-6 px-3 py-2" id="filter-status">No filters applied</span>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="results-actions-simple mt-2">
+                        <button class="btn btn-success btn-lg me-2" onclick="exportFilteredData('excel')">
+                            <i class="fas fa-file-excel me-2"></i>Export Excel
+                        </button>
+                        <button class="btn btn-danger btn-lg me-2" onclick="exportFilteredData('pdf')">
+                            <i class="fas fa-file-pdf me-2"></i>Export PDF
+                        </button>
+                        <button class="btn btn-secondary btn-lg" onclick="printFilteredData()">
+                            <i class="fas fa-print me-2"></i>Print
+                        </button>
+                    </div>
                 </div>
+            </div>
 
             <!-- Pagination Controls -->
             <div class="pagination-controls mb-3">
