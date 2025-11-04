@@ -474,33 +474,39 @@
             </div>
             
             <div class="loan-detail-section">
-                <h6 class="text-primary mb-3"><i class="fas fa-chart-line me-2"></i>Current Status</h6>
+                <h6 class="text-primary mb-3"><i class="fas fa-chart-line me-2"></i>Payment Information</h6>
                 <div class="row">
                     <div class="col-md-6">
-                <div class="loan-detail-row">
-                    <span class="loan-detail-label">Outstanding Balance:</span>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Total Paid:</span>
+                            <span class="loan-detail-value"><strong class="text-success">₱${(loan.total_paid || amountPaid || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Remaining Balance:</span>
                             <span class="loan-detail-value"><strong class="text-danger">₱${outstandingBalance.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
-                </div>
-                <div class="loan-detail-row">
-                    <span class="loan-detail-label">Amount Paid:</span>
-                            <span class="loan-detail-value"><strong class="text-success">₱${amountPaid.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
-                </div>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Last Payment Date:</span>
+                            <span class="loan-detail-value">${loan.last_payment_date ? formatDate(loan.last_payment_date) : 'No payments yet'}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Payment Status:</span>
+                            <span class="loan-detail-value">
+                                <span class="badge ${getPaymentStatusBadge(loan.payment_status || loan.status)}">
+                                    ${loan.payment_status || (loan.status === 'paid' ? 'Fully Paid' : loan.status === 'defaulted' ? 'Overdue' : 'Active')}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Loan Status:</span>
+                            <span class="loan-detail-value"><span class="badge status-${(loan.status || '').toLowerCase()}">${(loan.status || 'N/A').toUpperCase()}</span></span>
+                        </div>
                         <div class="loan-detail-row">
                             <span class="loan-detail-label">Payment Progress:</span>
                             <span class="loan-detail-value">${paymentPercentage}%</span>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                <div class="loan-detail-row">
-                    <span class="loan-detail-label">Status:</span>
-                            <span class="loan-detail-value"><span class="badge status-${(loan.status || '').toLowerCase()}">${(loan.status || 'N/A').toUpperCase()}</span></span>
-                </div>
-                        ${loan.transaction_type ? `
-                <div class="loan-detail-row">
-                    <span class="loan-detail-label">Transaction Type:</span>
-                            <span class="loan-detail-value"><span class="badge badge-type-${loan.transaction_type.toLowerCase()}">${loan.transaction_type}</span></span>
-                        </div>
-                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -619,6 +625,22 @@
         }
         
         modalBody.innerHTML = html;
+    }
+    
+    /**
+     * Get badge class for payment status
+     */
+    function getPaymentStatusBadge(status) {
+        if (!status) return 'bg-secondary';
+        const statusLower = status.toLowerCase();
+        if (statusLower.includes('fully paid') || statusLower === 'paid') {
+            return 'bg-success';
+        } else if (statusLower.includes('overdue') || statusLower === 'defaulted') {
+            return 'bg-danger';
+        } else if (statusLower === 'active') {
+            return 'bg-primary';
+        }
+        return 'bg-secondary';
     }
 
     /**

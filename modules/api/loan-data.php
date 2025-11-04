@@ -94,6 +94,10 @@ try {
             exportToExcel();
             break;
         
+        case 'process_payment':
+            processPayment();
+            break;
+        
         default:
             throw new Exception('Invalid action');
     }
@@ -245,7 +249,7 @@ function getLoanDetails() {
         throw new Exception('Loan not found');
     }
     
-    // Get payment schedule if table exists
+    // Get payment schedule and calculate payment summary if table exists
     if (tableExists('loan_payments')) {
         $sql = "SELECT 
                     lp.*,
@@ -265,11 +269,19 @@ function getLoanDetails() {
         
         $paymentSchedule = [];
         $runningBalance = $loan['loan_amount'];
+        $totalPaid = 0;
+        $lastPaymentDate = null;
         
         while ($row = $result->fetch_assoc()) {
             // Calculate balance after this payment
             $paymentAmount = floatval($row['principal_amount']);
             $runningBalance -= $paymentAmount;
+            $totalPaid += floatval($row['principal_amount']);
+            
+            // Track last payment date
+            if (!$lastPaymentDate || $row['payment_date'] > $lastPaymentDate) {
+                $lastPaymentDate = $row['payment_date'];
+            }
             
             $paymentSchedule[] = [
                 'due_date' => $row['payment_date'],
@@ -288,6 +300,36 @@ function getLoanDetails() {
         }
         
         $loan['payment_schedule'] = $paymentSchedule;
+        
+        // Calculate payment summary
+        $loan['total_paid'] = $totalPaid;
+        $loan['last_payment_date'] = $lastPaymentDate;
+        
+        // Calculate payment status
+        $remainingBalance = floatval($loan['current_balance']);
+        $loanAmount = floatval($loan['loan_amount']);
+        
+        if ($remainingBalance <= 0.01) {
+            $loan['payment_status'] = 'Fully Paid';
+        } elseif ($loan['status'] === 'defaulted') {
+            $loan['payment_status'] = 'Overdue';
+        } elseif ($loan['status'] === 'active' || $loan['status'] === 'pending') {
+            // Check if overdue based on maturity date
+            $maturityDate = strtotime($loan['maturity_date']);
+            $today = strtotime(date('Y-m-d'));
+            if ($maturityDate < $today && $remainingBalance > 0.01) {
+                $loan['payment_status'] = 'Overdue';
+            } else {
+                $loan['payment_status'] = 'Active';
+            }
+        } else {
+            $loan['payment_status'] = ucfirst($loan['status']);
+        }
+    } else {
+        // No payments table, set defaults
+        $loan['total_paid'] = 0;
+        $loan['last_payment_date'] = null;
+        $loan['payment_status'] = $loan['status'] === 'paid' ? 'Fully Paid' : ($loan['status'] === 'defaulted' ? 'Overdue' : 'Active');
     }
     
     // Get transaction history if table exists
@@ -649,6 +691,162 @@ function exportToExcel() {
     // This would require PHPSpreadsheet library
     // For now, return a message
     throw new Exception('Excel export requires PHPSpreadsheet library to be installed');
+}
+
+/**
+ * Process a loan payment
+ * Records payment in loan_payments table and updates loan balance
+ */
+function processPayment() {
+    global $conn;
+    
+    $loanId = $_POST['loan_id'] ?? '';
+    $paymentDate = $_POST['payment_date'] ?? date('Y-m-d');
+    $amount = $_POST['amount'] ?? '';
+    $principalAmount = $_POST['principal_amount'] ?? '';
+    $interestAmount = $_POST['interest_amount'] ?? '';
+    $paymentReference = $_POST['payment_reference'] ?? '';
+    $currentUser = getCurrentUser();
+    
+    if (empty($loanId)) {
+        throw new Exception('Loan ID is required');
+    }
+    
+    if (empty($amount) || floatval($amount) <= 0) {
+        throw new Exception('Payment amount must be greater than zero');
+    }
+    
+    // Calculate principal and interest if not provided
+    if (empty($principalAmount) || empty($interestAmount)) {
+        // Get loan details to calculate interest
+        $loanSql = "SELECT principal_amount, interest_rate, current_balance, monthly_payment 
+                    FROM loans WHERE id = ?";
+        $loanStmt = $conn->prepare($loanSql);
+        $loanStmt->bind_param('i', $loanId);
+        $loanStmt->execute();
+        $loanResult = $loanStmt->get_result();
+        $loan = $loanResult->fetch_assoc();
+        
+        if (!$loan) {
+            throw new Exception('Loan not found');
+        }
+        
+        // Calculate interest based on outstanding balance
+        $monthlyInterestRate = floatval($loan['interest_rate']) / 12 / 100;
+        $outstandingBalance = floatval($loan['current_balance']);
+        
+        // If only total amount provided, split it proportionally
+        $totalPayment = floatval($amount);
+        if (empty($principalAmount)) {
+            $interestAmount = min($outstandingBalance * $monthlyInterestRate, $totalPayment * 0.3); // Interest shouldn't exceed 30% of payment
+            $principalAmount = $totalPayment - $interestAmount;
+        } elseif (empty($interestAmount)) {
+            $principalAmount = floatval($principalAmount);
+            $interestAmount = $totalPayment - $principalAmount;
+        }
+    } else {
+        $principalAmount = floatval($principalAmount);
+        $interestAmount = floatval($interestAmount);
+        $totalPayment = floatval($amount);
+        
+        // Validate that amounts add up
+        if (abs(($principalAmount + $interestAmount) - $totalPayment) > 0.01) {
+            throw new Exception('Principal and interest amounts must equal total payment amount');
+        }
+    }
+    
+    // Start transaction
+    $conn->begin_transaction();
+    
+    try {
+        // Get current loan balance
+        $loanSql = "SELECT current_balance, principal_amount, status FROM loans WHERE id = ? FOR UPDATE";
+        $loanStmt = $conn->prepare($loanSql);
+        $loanStmt->bind_param('i', $loanId);
+        $loanStmt->execute();
+        $loanResult = $loanStmt->get_result();
+        $loan = $loanResult->fetch_assoc();
+        
+        if (!$loan) {
+            throw new Exception('Loan not found');
+        }
+        
+        $currentBalance = floatval($loan['current_balance']);
+        $principalAmount = min($principalAmount, $currentBalance); // Can't pay more principal than owed
+        
+        // Insert payment record
+        $paymentSql = "INSERT INTO loan_payments 
+                       (loan_id, payment_date, amount, principal_amount, interest_amount, payment_reference, created_at) 
+                       VALUES (?, ?, ?, ?, ?, ?, NOW())";
+        
+        $paymentStmt = $conn->prepare($paymentSql);
+        $paymentStmt->bind_param('isddds', $loanId, $paymentDate, $totalPayment, $principalAmount, $interestAmount, $paymentReference);
+        $paymentStmt->execute();
+        
+        // Update loan balance
+        $newBalance = max(0, $currentBalance - $principalAmount);
+        
+        // Determine new status
+        $newStatus = $loan['status'];
+        if ($newBalance <= 0.01 && $loan['status'] === 'active') {
+            $newStatus = 'paid';
+        } elseif ($loan['status'] === 'pending' && $newBalance > 0) {
+            $newStatus = 'active';
+        }
+        
+        $updateSql = "UPDATE loans 
+                      SET current_balance = ?, 
+                          status = ?,
+                          updated_at = NOW()
+                      WHERE id = ?";
+        
+        $updateStmt = $conn->prepare($updateSql);
+        $updateStmt->bind_param('dsi', $newBalance, $newStatus, $loanId);
+        $updateStmt->execute();
+        
+        // Log the payment in audit trail
+        if (tableExists('audit_logs')) {
+            $auditSql = "INSERT INTO audit_logs (user_id, action, object_type, object_id, additional_info, ip_address, created_at) 
+                         VALUES (?, 'PAYMENT', 'loan', ?, ?, ?, NOW())";
+            
+            $auditInfo = json_encode([
+                'payment_amount' => $totalPayment,
+                'principal_amount' => $principalAmount,
+                'interest_amount' => $interestAmount,
+                'payment_date' => $paymentDate,
+                'payment_reference' => $paymentReference,
+                'previous_balance' => $currentBalance,
+                'new_balance' => $newBalance
+            ]);
+            
+            $auditStmt = $conn->prepare($auditSql);
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $auditStmt->bind_param('iiss', $currentUser['id'], $loanId, $auditInfo, $ipAddress);
+            $auditStmt->execute();
+        }
+        
+        // Log activity
+        logActivity('payment', 'loan_accounting', "Recorded payment of ₱" . number_format($totalPayment, 2) . " for loan #$loanId", $conn);
+        
+        $conn->commit();
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Payment recorded successfully',
+            'data' => [
+                'payment_id' => $paymentStmt->insert_id,
+                'new_balance' => $newBalance,
+                'new_status' => $newStatus
+            ]
+        ]);
+        
+        ob_end_flush();
+        exit();
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
+    }
 }
 
 /**
