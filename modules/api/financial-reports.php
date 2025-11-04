@@ -66,6 +66,9 @@ try {
  * Generate Trial Balance Report
  */
 function generateTrialBalance($conn, $date_from, $date_to, $account_type) {
+    // Log report generation
+    logActivity('generate', 'financial_reporting', "Generated Trial Balance report ($date_from to $date_to)", $conn);
+    
     // Set default dates if not provided
     if (empty($date_from)) {
         $date_from = date('Y-01-01');

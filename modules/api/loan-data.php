@@ -444,6 +444,9 @@ function softDeleteLoan() {
             $auditStmt->execute();
         }
         
+        // Log activity
+        logActivity('delete', 'loan_accounting', "Deleted loan #$loanId", $conn);
+        
         $conn->commit();
         
         echo json_encode([
@@ -500,6 +503,9 @@ function restoreLoan() {
             $auditStmt->bind_param('iis', $currentUser['id'], $loanId, $ipAddress);
             $auditStmt->execute();
         }
+        
+        // Log activity
+        logActivity('restore', 'loan_accounting', "Restored loan #$loanId from bin", $conn);
         
         $conn->commit();
         
@@ -612,6 +618,9 @@ function permanentDeleteLoan() {
             throw new Exception('Loan not found or not in bin');
         }
         
+        // Log activity
+        logActivity('permanent_delete', 'loan_accounting', "Permanently deleted loan #$loanId from bin", $conn);
+        
         $conn->commit();
         
         echo json_encode([
@@ -632,6 +641,11 @@ function permanentDeleteLoan() {
  * Export loans to Excel
  */
 function exportToExcel() {
+    global $conn;
+    
+    // Log export activity
+    logActivity('export', 'loan_accounting', 'Exported loans to Excel', $conn);
+    
     // This would require PHPSpreadsheet library
     // For now, return a message
     throw new Exception('Excel export requires PHPSpreadsheet library to be installed');

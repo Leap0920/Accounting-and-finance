@@ -47,6 +47,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $update_stmt->execute();
                     $update_stmt->close();
                     
+                    // Log login activity
+                    logActivity('login', 'authentication', 'User logged in successfully', $conn);
+                    
                     // Redirect to dashboard
                     header("Location: dashboard.php");
                     exit();

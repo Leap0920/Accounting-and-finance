@@ -386,6 +386,12 @@ function getStatistics() {
  * Note: Requires PHPSpreadsheet library
  */
 function exportToExcel() {
+    global $conn;
+    $currentUser = getCurrentUser();
+    
+    // Log export activity
+    logActivity('export', 'transaction_reading', 'Exported transactions to Excel', $conn);
+    
     // This would require PHPSpreadsheet library
     // Implementation example:
     /*
@@ -488,6 +494,9 @@ function softDeleteTransaction() {
             $auditStmt->bind_param('iiss', $currentUser['id'], $transactionId, $action, $ipAddress);
             $auditStmt->execute();
         }
+        
+        // Log activity
+        logActivity('delete', 'transaction_reading', "Deleted transaction #$transactionId", $conn);
         
         $conn->commit();
         
@@ -615,6 +624,9 @@ function restoreTransaction() {
         $auditStmt->bind_param('iis', $currentUser['id'], $transactionId, $ipAddress);
         $auditStmt->execute();
         
+        // Log activity
+        logActivity('restore', 'transaction_reading', "Restored transaction #$transactionId from bin", $conn);
+        
         $conn->commit();
         
         echo json_encode([
@@ -731,6 +743,9 @@ function permanentDeleteTransaction() {
         if ($deleteEntryStmt->affected_rows === 0) {
             throw new Exception('Transaction not found or not in bin');
         }
+        
+        // Log permanent delete activity
+        logActivity('permanent_delete', 'transaction_reading', "Permanently deleted transaction #$transactionId from bin", $conn);
         
         $conn->commit();
         
@@ -853,6 +868,9 @@ function restoreAllTransactions() {
             $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
             $auditStmt->bind_param('is', $currentUser['id'], $ipAddress);
             $auditStmt->execute();
+            
+            // Log activity
+            logActivity('restore_all', 'transaction_reading', "Restored $restoredCount transactions from bin", $conn);
         }
         
         $conn->commit();
@@ -910,6 +928,9 @@ function emptyBinTransactions() {
             // Delete the journal entries
             $deleteEntrySql = "DELETE FROM journal_entries WHERE status IN ('deleted', 'voided')";
             $conn->query($deleteEntrySql);
+            
+            // Log activity
+            logActivity('empty_bin', 'transaction_reading', "Permanently deleted $deletedCount transactions from bin", $conn);
         }
         
         $conn->commit();

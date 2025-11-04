@@ -416,29 +416,9 @@ if ($selected_employee) {
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom notifications-dropdown" aria-labelledby="notificationsDropdown">
                         <li class="dropdown-header">Notifications</li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-info-circle text-info"></i>
-                            <div class="notification-content">
-                                <strong>New Report Available</strong>
-                                <small>Monthly financial report is ready</small>
-                            </div>
-                        </a></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                            <div class="notification-content">
-                                <strong>Pending Approvals</strong>
-                                <small>2 expense reports need review</small>
-                            </div>
-                        </a></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <div class="notification-content">
-                                <strong>Payroll Processed</strong>
-                                <small>October payroll completed</small>
-                            </div>
-                        </a></li>
+                        <li class="dropdown-item text-center text-muted"><small>Loading notifications...</small></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center small" href="#">View All Notifications</a></li>
+                        <li><a class="dropdown-item text-center small" href="activity-log.php">View All Notifications</a></li>
                     </ul>
                 </div>
                 
@@ -1793,5 +1773,6 @@ if ($selected_employee) {
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Custom JS -->
     <script src="../assets/js/payroll-management.js"></script>
+    <script src="../assets/js/notifications.js"></script>
 </body>
 </html>

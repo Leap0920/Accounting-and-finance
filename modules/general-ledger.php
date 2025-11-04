@@ -91,29 +91,9 @@ $current_user = getCurrentUser();
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom notifications-dropdown" aria-labelledby="notificationsDropdown">
                         <li class="dropdown-header">Notifications</li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-info-circle text-info"></i>
-                            <div class="notification-content">
-                                <strong>New Report Available</strong>
-                                <small>Monthly financial report is ready</small>
-                            </div>
-                        </a></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                            <div class="notification-content">
-                                <strong>Pending Approvals</strong>
-                                <small>2 expense reports need review</small>
-                            </div>
-                        </a></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <div class="notification-content">
-                                <strong>Payroll Processed</strong>
-                                <small>October payroll completed</small>
-                            </div>
-                        </a></li>
+                        <li class="dropdown-item text-center text-muted"><small>Loading notifications...</small></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center small" href="#">View All Notifications</a></li>
+                        <li><a class="dropdown-item text-center small" href="activity-log.php">View All Notifications</a></li>
                     </ul>
                 </div>
                 
@@ -145,36 +125,54 @@ $current_user = getCurrentUser();
     </nav>
     
     <!-- Main Content -->
-    <main class="gl-main-content">
-        <div class="container-fluid">
-            <!-- Page Header -->
-            <div class="gl-page-header">
-                <div class="row w-100">
-                    <div class="col-md-8">
-                        <h1 class="page-title">GENERAL LEDGER</h1>
-                        <p class="page-subtitle">Comprehensive view and control of ledger data, charts, transactions, audit trails, and adjustments.</p>
-                        <button class="btn-gl-secondary mt-2" onclick="window.location.href='../core/dashboard.php'">
-                            Go to Dashboard
-                        </button>
+    <main class="container-fluid py-4">
+        <!-- Beautiful Page Header -->
+        <div class="beautiful-page-header mb-5">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="header-content">
+                            <h1 class="page-title-beautiful">
+                                <i class="fas fa-book me-3"></i>
+                                General Ledger
+                            </h1>
+                            <p class="page-subtitle-beautiful">
+                                Comprehensive view and control of ledger data, charts, transactions, audit trails, and adjustments
+                            </p>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="header-buttons-group">
-                            <button class="btn-gl-primary-sm" onclick="scrollToSection('accounts')">
-                                Go to Accounts
-                            </button>
-                            <button class="btn-gl-primary-sm" onclick="scrollToSection('transactions')">
-                                Go to Transactions
-                            </button>
-                            <button class="btn-gl-primary-sm" onclick="scrollToSection('audit')">
-                                Go to Audit Trails
-                            </button>
-                            <button class="btn-gl-primary-sm" onclick="scrollToSection('adjustments')">
-                                Go to Adjustments
-                            </button>
+                    <div class="col-lg-4 text-lg-end">
+                        <div class="header-info-card">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Database Status</div>
+                                    <div class="info-value status-connected">Connected</div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Current Period</div>
+                                    <div class="info-value"><?php echo date('F Y'); ?></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <div class="header-actions mt-3">
+                    <a href="../core/dashboard.php" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </a>
+                </div>
             </div>
+        </div>
+
+        <div class="container-fluid">
 
             <!-- Statistics Cards -->
             <div class="gl-stats-section">
@@ -425,8 +423,10 @@ $current_user = getCurrentUser();
     </main>
 
     <!-- Footer -->
-    <footer class="gl-footer">
-        <p>&copy; 2025 Evergreen Accounting & Finance. All rights reserved.</p>
+    <footer class="mt-5">
+        <div class="container-fluid">
+            <p class="mb-0 text-center">&copy; <?php echo date('Y'); ?> Evergreen Accounting & Finance. All rights reserved.</p>
+        </div>
     </footer>
 
     <!-- jQuery -->
@@ -437,5 +437,6 @@ $current_user = getCurrentUser();
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Custom JS -->
     <script src="../assets/js/general-ledger.js"></script>
+    <script src="../assets/js/notifications.js"></script>
 </body>
 </html>

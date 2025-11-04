@@ -99,29 +99,9 @@ $current_user = getCurrentUser();
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom notifications-dropdown" aria-labelledby="notificationsDropdown">
                         <li class="dropdown-header">Notifications</li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-info-circle text-info"></i>
-                            <div class="notification-content">
-                                <strong>New Report Available</strong>
-                                <small>Monthly financial report is ready</small>
-                            </div>
-                        </a></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                            <div class="notification-content">
-                                <strong>Pending Approvals</strong>
-                                <small>2 expense reports need review</small>
-                            </div>
-                        </a></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <div class="notification-content">
-                                <strong>Payroll Processed</strong>
-                                <small>October payroll completed</small>
-                            </div>
-                        </a></li>
+                        <li class="dropdown-item text-center text-muted"><small>Loading notifications...</small></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center small" href="#">View All Notifications</a></li>
+                        <li><a class="dropdown-item text-center small" href="activity-log.php">View All Notifications</a></li>
                     </ul>
                 </div>
                 
@@ -152,19 +132,48 @@ $current_user = getCurrentUser();
         </div>
     </nav>
 
-    <!-- Page Header -->
-    <div class="page-header-simple">
-        <div class="container">
+    <!-- Beautiful Page Header -->
+    <div class="beautiful-page-header mb-5">
+        <div class="container-fluid">
             <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h2><i class="fas fa-trash-alt me-3"></i>Bin Station</h2>
-                    <p class="text-muted mb-0">Manage all deleted items across the system. Restore accidentally deleted items or permanently remove them.</p>
+                <div class="col-lg-8">
+                    <div class="header-content">
+                        <h1 class="page-title-beautiful">
+                            <i class="fas fa-trash-alt me-3"></i>
+                            Bin Station
+                        </h1>
+                        <p class="page-subtitle-beautiful">
+                            Manage all deleted items across the system. Restore accidentally deleted items or permanently remove them.
+                        </p>
+                    </div>
                 </div>
-                <div class="col-md-4 text-end">
-                    <button class="btn btn-outline-primary" onclick="refreshBin()">
-                        <i class="fas fa-refresh me-2"></i>Refresh
-                    </button>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="header-info-card">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Database Status</div>
+                                <div class="info-value status-connected">Connected</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Current Period</div>
+                                <div class="info-value"><?php echo date('F Y'); ?></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <div class="header-actions mt-3">
+                <a href="../core/dashboard.php" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
             </div>
         </div>
     </div>
@@ -245,9 +254,12 @@ $current_user = getCurrentUser();
     </div>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Custom JS -->
+    <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/notifications.js"></script>
 
     <script>
         // Load bin data on page load

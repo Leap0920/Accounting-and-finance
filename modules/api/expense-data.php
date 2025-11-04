@@ -198,6 +198,9 @@ function formatAuditChanges($row) {
 function exportExpenses() {
     global $conn;
     
+    // Log export activity
+    logActivity('export', 'expense_tracking', 'Exported expenses to CSV/Excel', $conn);
+    
     // Get filter parameters
     $dateFrom = $_GET['date_from'] ?? '';
     $dateTo = $_GET['date_to'] ?? '';
