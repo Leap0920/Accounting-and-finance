@@ -475,18 +475,17 @@ function generateBalanceSheetHTML(data) {
  * Generate Income Statement HTML
  */
 function generateIncomeStatementHTML(data) {
-    let html = '<h5 class="mt-4 mb-3 text-teal" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">REVENUE</h5>';
+    let html = '<h5 class="section-header-financial mt-4 mb-3">REVENUE</h5>';
     html += generateAccountTable(data.revenue, data.total_revenue, 'TOTAL REVENUE');
     
-    html += '<h5 class="mt-4 mb-3 text-teal" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">EXPENSES</h5>';
+    html += '<h5 class="section-header-financial mt-4 mb-3">EXPENSES</h5>';
     html += generateAccountTable(data.expenses, data.total_expenses, 'TOTAL EXPENSES');
     
     const alertClass = data.net_income >= 0 ? 'alert-success' : 'alert-warning';
-    const alertBg = data.net_income >= 0 ? '#d4edda' : '#fff3cd';
     html += `
-        <div class="alert ${alertClass} mt-3" style="background: ${alertBg}; background-color: ${alertBg}; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-            <h5 style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>NET INCOME:</strong> ${formatCurrency(data.net_income)}</h5>
-            <p class="mb-0" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">Profit Margin: ${data.net_income_percentage.toFixed(2)}%</p>
+        <div class="alert ${alertClass} mt-3">
+            <h5><strong>NET INCOME:</strong> ${formatCurrency(data.net_income)}</h5>
+            <p class="mb-0">Profit Margin: ${data.net_income_percentage.toFixed(2)}%</p>
         </div>
     `;
     
@@ -498,25 +497,31 @@ function generateIncomeStatementHTML(data) {
  */
 function generateCashFlowHTML(data) {
     let html = `
-        <table class="report-table" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
             <tbody>
-                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>Cash from Operating Activities</strong></td>
-                    <td class="amount" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${formatCurrency(data.cash_from_operations)}</td>
+                <tr>
+                    <td><strong>Cash from Operating Activities</strong></td>
+                    <td class="amount">${formatCurrency(data.cash_from_operations)}</td>
                 </tr>
-                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>Cash from Investing Activities</strong></td>
-                    <td class="amount" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${formatCurrency(data.cash_from_investing)}</td>
+                <tr>
+                    <td><strong>Cash from Investing Activities</strong></td>
+                    <td class="amount">${formatCurrency(data.cash_from_investing)}</td>
                 </tr>
-                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>Cash from Financing Activities</strong></td>
-                    <td class="amount" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${formatCurrency(data.cash_from_financing)}</td>
+                <tr>
+                    <td><strong>Cash from Financing Activities</strong></td>
+                    <td class="amount">${formatCurrency(data.cash_from_financing)}</td>
                 </tr>
             </tbody>
-            <tfoot style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                    <td style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>NET CASH CHANGE</strong></td>
-                    <td class="amount" style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(data.net_cash_change)}</strong></td>
+            <tfoot>
+                <tr>
+                    <td><strong>NET CASH CHANGE</strong></td>
+                    <td class="amount"><strong>${formatCurrency(data.net_cash_change)}</strong></td>
                 </tr>
             </tfoot>
         </table>
@@ -642,38 +647,37 @@ function generateGenericReportHTML(data) {
  */
 function generateAccountTable(accounts, total, totalLabel) {
     let html = `
-        <table class="report-table" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
+        <table class="report-table">
             <thead>
-                <tr style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                    <th style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">Account Code</th>
-                    <th style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">Account Name</th>
-                    <th style="text-align: right; background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">Amount</th>
+                <tr>
+                    <th>Account Code</th>
+                    <th>Account Name</th>
+                    <th style="text-align: right;">Amount</th>
                 </tr>
             </thead>
             <tbody>
     `;
     
     if (accounts && accounts.length > 0) {
-        accounts.forEach((account, index) => {
-            const bgColor = index % 2 === 0 ? '#FFFFFF' : '#F5F9FA';
+        accounts.forEach((account) => {
             html += `
-                <tr style="background: ${bgColor}; background-color: ${bgColor}; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${account.code}</strong></td>
-                    <td style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${account.name}</td>
-                    <td class="amount" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">${formatCurrency(account.balance)}</td>
+                <tr>
+                    <td><strong>${account.code}</strong></td>
+                    <td>${account.name}</td>
+                    <td class="amount">${formatCurrency(account.balance)}</td>
                 </tr>
             `;
         });
     } else {
-        html += '<tr><td colspan="3" class="text-center text-muted" style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">No accounts found</td></tr>';
+        html += '<tr><td colspan="3" class="text-center text-muted">No accounts found</td></tr>';
     }
     
     html += `
             </tbody>
-            <tfoot style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                <tr style="-webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;">
-                    <td colspan="2" style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${totalLabel}</strong></td>
-                    <td class="amount" style="background: #f8f9fa; background-color: #f8f9fa; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;"><strong>${formatCurrency(total)}</strong></td>
+            <tfoot>
+                <tr>
+                    <td colspan="2"><strong>${totalLabel}</strong></td>
+                    <td class="amount"><strong>${formatCurrency(total)}</strong></td>
                 </tr>
             </tfoot>
         </table>
