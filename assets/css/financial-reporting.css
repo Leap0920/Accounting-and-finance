@@ -1559,8 +1559,6 @@ body {
 .report-table {
     width: 100%;
     margin-bottom: 20px;
-    border-collapse: collapse;
-    background: #fff;
 }
 
 .report-table thead th {
@@ -1571,31 +1569,12 @@ body {
     padding: 12px;
     text-align: left;
     text-transform: uppercase;
-    border: 1px solid var(--primary-teal);
-    box-shadow: 0 2px 4px rgba(10, 61, 61, 0.1);
-}
-
-.report-table thead th:last-child {
-    text-align: right;
 }
 
 .report-table tbody td {
     padding: 10px 12px;
-    border: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
     font-size: 13px;
-    background: #fff;
-}
-
-.report-table tbody tr:nth-child(even) td {
-    background: #f8f9fa;
-}
-
-.report-table tbody tr:hover {
-    background-color: rgba(10, 61, 61, 0.08);
-}
-
-.report-table tbody tr:hover td {
-    background-color: rgba(10, 61, 61, 0.08);
 }
 
 .report-table tbody td.amount {
@@ -1608,10 +1587,8 @@ body {
     padding: 12px;
     font-weight: 700;
     font-size: 14px;
-    background: linear-gradient(135deg, #e9f7f7 0%, #d4eded 100%);
+    background: var(--bg-cream);
     border-top: 2px solid var(--primary-teal);
-    border-bottom: 1px solid var(--primary-teal);
-    color: var(--text-dark);
 }
 
 /* ========================================
@@ -3350,15 +3327,14 @@ body {
 }
 
 .report-table-financial thead th {
-    background: linear-gradient(135deg, var(--primary-teal), var(--secondary-teal));
+    background-color: #1e3a3a;
     color: white;
     font-weight: 600;
     font-size: 13px;
     padding: 12px;
     text-align: left;
     text-transform: uppercase;
-    border: 1px solid var(--primary-teal);
-    box-shadow: 0 2px 4px rgba(10, 61, 61, 0.1);
+    border: 1px solid #1e3a3a;
 }
 
 .report-table-financial thead th:last-child {
@@ -3367,32 +3343,22 @@ body {
 
 .report-table-financial tbody td {
     padding: 10px 12px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #dee2e6;
     font-size: 14px;
     color: var(--text-dark);
-    background: #fff;
-}
-
-.report-table-financial tbody tr:nth-child(even) td {
-    background: #f8f9fa;
 }
 
 .report-table-financial tbody tr:hover {
-    background-color: rgba(10, 61, 61, 0.08);
-}
-
-.report-table-financial tbody tr:hover td {
-    background-color: rgba(10, 61, 61, 0.08);
+    background-color: rgba(10, 61, 61, 0.05);
 }
 
 .report-table-financial tfoot td {
     padding: 12px;
     font-weight: 700;
     font-size: 14px;
-    background: linear-gradient(135deg, #e9f7f7 0%, #d4eded 100%);
-    border: 1px solid var(--primary-teal);
-    border-top: 2px solid var(--primary-teal);
-    color: var(--text-dark);
+    background-color: #f0f0f0;
+    border: 1px solid #dee2e6;
+    border-top: 2px solid #1e3a3a;
 }
 
 .final-total-section {
