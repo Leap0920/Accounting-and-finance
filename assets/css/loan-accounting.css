@@ -352,6 +352,14 @@
     font-size: 13px;
     letter-spacing: 0.5px;
     border-bottom: 2px solid #0A3D3D;
+    background-color: #f8f9fa;
+    color: #0A3D3D;
+}
+
+.table-light thead th {
+    background-color: #f8f9fa !important;
+    color: #0A3D3D !important;
+    font-weight: 600;
 }
 
 .table-dark {
@@ -548,39 +556,154 @@
 @media print {
     .navbar-custom,
     .page-header,
+    .beautiful-page-header,
     footer,
     .btn,
     .card-header,
     .stat-card,
     #filterPanel,
-    .btn-group {
+    .btn-group,
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate,
+    .dataTables_wrapper .dataTables_processing {
         display: none !important;
+    }
+    
+    /* Show print title */
+    .print-title {
+        display: block !important;
+        page-break-after: avoid;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #0A3D3D;
+    }
+    
+    .print-title h2 {
+        color: #0A3D3D;
+        font-size: 24px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: 1px;
+    }
+    
+    .print-title p {
+        font-size: 12px;
+        margin: 5px 0 0 0;
+        color: #666;
+    }
+    
+    /* Remove all margins and padding for full-width layout */
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .container,
+    .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
     
     .card {
         box-shadow: none !important;
-        border: 1px solid #ddd !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .card-body {
+        padding: 10px !important;
+    }
+    
+    /* Make table expand to full width */
+    .table-responsive {
+        width: 100% !important;
+        overflow: visible !important;
     }
     
     .table {
-        font-size: 11px;
+        width: 100% !important;
+        font-size: 10px !important;
+        table-layout: auto !important;
     }
     
-    .table thead {
-        background-color: #0A3D3D !important;
-        color: #fff !important;
+    /* Table header styling - match screen view */
+    .table thead th {
+        background-color: #f8f9fa !important;
+        color: #0A3D3D !important;
+        font-weight: 600 !important;
+        font-size: 10px !important;
+        padding: 8px 6px !important;
+        border: 1px solid #dee2e6 !important;
+        text-align: left !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
     
+    /* Table body cells */
+    .table tbody td {
+        border: 1px solid #dee2e6 !important;
+        padding: 6px 6px !important;
+        font-size: 9px !important;
+        vertical-align: middle !important;
+    }
+    
+    /* Ensure text alignment is preserved */
+    .table tbody td.text-end {
+        text-align: right !important;
+    }
+    
+    .table tbody td.text-center {
+        text-align: center !important;
+    }
+    
+    /* Status badges - keep visible and styled */
     .badge {
-        border: 1px solid #333;
+        border: 1px solid #333 !important;
+        padding: 3px 8px !important;
+        font-size: 8px !important;
+        font-weight: 600 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
     
+    /* Action buttons column - hide in print */
+    .table thead th:last-child,
+    .table tbody td:last-child {
+        display: none !important;
+    }
+    
+    /* Remove table hover effects */
+    .table-hover tbody tr:hover {
+        background-color: transparent !important;
+    }
+    
+    /* Ensure alternating row colors print */
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.02) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    /* Page setup for portrait orientation */
     @page {
-        margin: 1cm;
+        size: A4 portrait;
+        margin: 0.5cm;
+    }
+    
+    /* Print header */
+    @media print {
+        @page {
+            @top-center {
+                content: "Loan History Report - " counter(page);
+                font-size: 8px;
+                color: #666;
+            }
+        }
     }
 }
 

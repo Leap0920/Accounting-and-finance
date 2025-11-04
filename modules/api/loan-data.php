@@ -311,10 +311,10 @@ function getAuditTrail() {
                 al.*,
                 u.username,
                 u.full_name,
-                l.loan_number
+                l.loan_no as loan_number
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
-            LEFT JOIN loans l ON al.object_id = l.id
+            LEFT JOIN loans l ON CAST(al.object_id AS UNSIGNED) = l.id
             WHERE al.object_type = 'loan'";
     
     $params = [];
@@ -323,7 +323,7 @@ function getAuditTrail() {
     if (!empty($loanId)) {
         $sql .= " AND al.object_id = ?";
         $params[] = $loanId;
-        $types .= 'i';
+        $types .= 's';
     }
     
     $sql .= " ORDER BY al.created_at DESC LIMIT 100";

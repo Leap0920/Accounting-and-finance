@@ -441,6 +441,11 @@ foreach ($loans as $loan) {
             <div class="card-header bg-light">
                 <h5 class="mb-0"><i class="fas fa-table me-2"></i>Loan History</h5>
             </div>
+            <!-- Print Title - Only visible when printing -->
+            <div class="print-title d-none">
+                <h2 class="text-center mb-3">LOAN HISTORY REPORT</h2>
+                <p class="text-center text-muted mb-4">Generated on <?php echo date('F d, Y'); ?></p>
+            </div>
             <div class="card-body">
                 <?php if ($applyFilters && !$hasResults): ?>
                 <div class="empty-state">
@@ -454,18 +459,18 @@ foreach ($loans as $loan) {
                 <?php elseif ($hasResults): ?>
                 <div class="table-responsive">
                     <table id="loanTable" class="table table-hover table-striped">
-                        <thead class="table-dark">
+                        <thead class="table-light">
                             <tr>
-                                <th>Loan No.</th>
-                                <th>Borrower</th>
-                                <th>Loan Type</th>
-                                <th>Start Date</th>
-                                <th>Maturity Date</th>
-                                <th>Loan Amount</th>
-                                <th>Interest Rate</th>
-                                <th>Outstanding</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Loan No.</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Borrower</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Loan Type</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Start Date</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Maturity Date</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Loan Amount</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Interest Rate</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Outstanding</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Status</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>

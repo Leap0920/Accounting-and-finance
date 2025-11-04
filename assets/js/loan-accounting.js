@@ -135,32 +135,182 @@
     };
 
     /**
-     * Export table data to Excel
+     * Export table data to Excel with professional formatting
      */
     window.exportToExcel = function() {
+        // Get table data
+        const table = document.getElementById('loanTable');
+        const rows = table ? table.querySelectorAll('tbody tr') : [];
+        
+        if (rows.length === 0) {
+            showNotification('No data available to export', 'warning');
+            return;
+        }
+        
         // Show loading
         showLoading('Preparing Excel export...');
-
-        setTimeout(function() {
-            hideLoading();
-            showNotification('Excel export feature will be available when connected to database', 'info');
-            
-            // In production, this would make an AJAX call to generate Excel file
-            // fetch('api/loan-data.php?action=export_excel&' + getCurrentFilters())
-            //     .then(response => response.blob())
-            //     .then(blob => {
-            //         const url = window.URL.createObjectURL(blob);
-            //         const a = document.createElement('a');
-            //         a.href = url;
-            //         a.download = 'loans_' + new Date().toISOString().split('T')[0] + '.xlsx';
-            //         a.click();
-            //         hideLoading();
-            //     })
-            //     .catch(error => {
-            //         hideLoading();
-            //         showNotification('Export failed: ' + error.message, 'error');
-            //     });
-        }, 500);
+        
+        // Get filter information
+        const urlParams = new URLSearchParams(window.location.search);
+        const dateFrom = urlParams.get('date_from') || '';
+        const dateTo = urlParams.get('date_to') || '';
+        const statusFilter = urlParams.get('status') || '';
+        const accountFilter = urlParams.get('account_number') || '';
+        const hasFilters = dateFrom || dateTo || statusFilter || accountFilter;
+        
+        // Calculate totals
+        let totalLoans = 0;
+        let totalLoanAmount = 0;
+        let totalOutstanding = 0;
+        const statusCounts = {};
+        const loans = [];
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 9) {
+                const loanNo = cells[0].textContent.trim();
+                const borrower = cells[1].textContent.trim();
+                const loanType = cells[2].textContent.trim();
+                const startDate = cells[3].textContent.trim();
+                const maturityDate = cells[4].textContent.trim();
+                const loanAmountStr = cells[5].textContent.trim().replace(/[₱,]/g, '');
+                const interestRate = cells[6].textContent.trim();
+                const outstandingStr = cells[7].textContent.trim().replace(/[₱,]/g, '');
+                const status = cells[8].textContent.trim();
+                
+                const loanAmount = parseFloat(loanAmountStr) || 0;
+                const outstanding = parseFloat(outstandingStr) || 0;
+                
+                totalLoans++;
+                totalLoanAmount += loanAmount;
+                totalOutstanding += outstanding;
+                
+                statusCounts[status] = (statusCounts[status] || 0) + 1;
+                
+                loans.push({
+                    loanNo,
+                    borrower,
+                    loanType,
+                    startDate,
+                    maturityDate,
+                    loanAmount,
+                    interestRate,
+                    outstanding,
+                    status
+                });
+            }
+        });
+        
+        // Build professional CSV content
+        let csvContent = '';
+        
+        // Header Section
+        csvContent += 'EVERGREEN ACCOUNTING & FINANCE SYSTEM\n';
+        csvContent += 'LOAN ACCOUNTING REPORT\n';
+        csvContent += '\n';
+        csvContent += `Report Generated: ${new Date().toLocaleString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        })}\n`;
+        csvContent += '\n';
+        
+        // Report Parameters Section
+        csvContent += 'REPORT PARAMETERS\n';
+        csvContent += '\n';
+        if (hasFilters) {
+            csvContent += 'Filter Criteria Applied:\n';
+            if (dateFrom) csvContent += `  Date From: ${dateFrom}\n`;
+            if (dateTo) csvContent += `  Date To: ${dateTo}\n`;
+            if (statusFilter) csvContent += `  Status: ${statusFilter.toUpperCase()}\n`;
+            if (accountFilter) csvContent += `  Loan Number: ${accountFilter}\n`;
+        } else {
+            csvContent += '  All Loans (No Filters Applied)\n';
+        }
+        csvContent += '\n';
+        csvContent += '\n';
+        
+        // Executive Summary Section
+        csvContent += 'EXECUTIVE SUMMARY\n';
+        csvContent += '\n';
+        csvContent += 'Metric,Value\n';
+        csvContent += `Total Loans,${totalLoans}\n`;
+        csvContent += `Total Loan Amount,${totalLoanAmount.toFixed(2)}\n`;
+        csvContent += `Total Outstanding Balance,${totalOutstanding.toFixed(2)}\n`;
+        csvContent += `Total Amount Paid,${(totalLoanAmount - totalOutstanding).toFixed(2)}\n`;
+        csvContent += `Average Loan Size,${(totalLoans > 0 ? (totalLoanAmount / totalLoans).toFixed(2) : '0.00')}\n`;
+        csvContent += '\n';
+        
+        // Summary by Status
+        csvContent += 'SUMMARY BY STATUS\n';
+        csvContent += '\n';
+        csvContent += 'Status,Count,Percentage (%)\n';
+        Object.keys(statusCounts).sort().forEach(status => {
+            const count = statusCounts[status];
+            const percentage = ((count / totalLoans) * 100).toFixed(2);
+            csvContent += `"${status.toUpperCase()}",${count},${percentage}%\n`;
+        });
+        csvContent += '\n';
+        csvContent += '\n';
+        csvContent += '\n';
+        
+        // Loan Details Section
+        csvContent += 'LOAN DETAILS\n';
+        csvContent += '\n';
+        csvContent += 'Loan No.,Borrower,Loan Type,Start Date,Maturity Date,Loan Amount,Interest Rate,Outstanding Balance,Status\n';
+        
+        loans.forEach(loan => {
+            csvContent += `"${loan.loanNo}",`;
+            csvContent += `"${loan.borrower.replace(/"/g, '""')}",`;
+            csvContent += `"${loan.loanType.replace(/"/g, '""')}",`;
+            csvContent += `"${loan.startDate}",`;
+            csvContent += `"${loan.maturityDate}",`;
+            csvContent += `${loan.loanAmount.toFixed(2)},`;
+            csvContent += `"${loan.interestRate}",`;
+            csvContent += `${loan.outstanding.toFixed(2)},`;
+            csvContent += `"${loan.status.toUpperCase()}"\n`;
+        });
+        
+        // Totals Row
+        csvContent += '\n';
+        csvContent += '"TOTAL","","","","",';
+        csvContent += `${totalLoanAmount.toFixed(2)},"",`;
+        csvContent += `${totalOutstanding.toFixed(2)},""\n`;
+        csvContent += '\n';
+        csvContent += '\n';
+        
+        // Footer Section
+        csvContent += 'REPORT INFORMATION\n';
+        csvContent += '\n';
+        csvContent += '"This report was generated by the Evergreen Accounting & Finance System"\n';
+        csvContent += `"Report Period: ${hasFilters ? 'Filtered Data' : 'All Available Data'}"\n`;
+        csvContent += `"Total Loans: ${totalLoans} loan(s)"\n`;
+        csvContent += `"Total Loan Amount: ${totalLoanAmount.toFixed(2)}"\n`;
+        csvContent += `"Total Outstanding: ${totalOutstanding.toFixed(2)}"\n`;
+        csvContent += `"Collection Rate: ${totalLoanAmount > 0 ? (((totalLoanAmount - totalOutstanding) / totalLoanAmount) * 100).toFixed(2) : '0.00'}%"\n`;
+        csvContent += `"Export Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}"\n`;
+        csvContent += '\n';
+        csvContent += '"© ' + new Date().getFullYear() + ' Evergreen Accounting & Finance. All rights reserved."\n';
+        
+        // Create and download file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        const dateStr = new Date().toISOString().split('T')[0];
+        const filename = `loan_report_${dateStr}.csv`;
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        hideLoading();
+        showNotification('Excel file exported successfully!', 'success');
     };
 
     /**
