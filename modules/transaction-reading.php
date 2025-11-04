@@ -147,6 +147,7 @@ try {
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="../assets/css/financial-reporting.css">
     <link rel="stylesheet" href="../assets/css/transaction-reading.css">
 </head>
 <body>
@@ -273,18 +274,48 @@ try {
         </div>
     </nav>
     
-    <!-- Page Header -->
-    <div class="page-header">
+    <!-- Beautiful Page Header -->
+    <div class="beautiful-page-header mb-5">
         <div class="container-fluid">
             <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h2><i class="fas fa-exchange-alt me-2"></i>TRANSACTION RECORDING</h2>
+                <div class="col-lg-8">
+                    <div class="header-content">
+                        <h1 class="page-title-beautiful">
+                            <i class="fas fa-exchange-alt me-3"></i>
+                            Transaction Recording
+                        </h1>
+                        <p class="page-subtitle-beautiful">
+                            Record, view, and manage all journal entries and accounting transactions
+                        </p>
+                    </div>
                 </div>
-                <div class="col-md-6 text-end">
-                    <a href="../core/dashboard.php" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                    </a>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="header-info-card">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Database Status</div>
+                                <div class="info-value status-connected">Connected</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Current Period</div>
+                                <div class="info-value"><?php echo date('F Y'); ?></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <div class="header-actions mt-3">
+                <a href="../core/dashboard.php" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
             </div>
         </div>
     </div>
