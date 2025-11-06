@@ -13,7 +13,8 @@ $status = $_GET['status'] ?? '';
 $accountNumber = $_GET['account_number'] ?? '';
 $applyFilters = isset($_GET['apply_filters']);
 
-// Build query - matching actual schema columns
+// Build query to combine both loans and loan_applications
+// This ensures loan applications from the loan subsystem are visible in loan-accounting
 $sql = "SELECT 
             l.id,
             l.loan_no as loan_number,
@@ -25,97 +26,208 @@ $sql = "SELECT
             DATE_ADD(l.start_date, INTERVAL l.term_months MONTH) as maturity_date,
             l.current_balance as outstanding_balance,
             l.status,
-            'loan' as transaction_type,
+            'loan' as record_type,
             lt.name as loan_type_name,
-            '' as account_code,
-            '' as account_name,
+            NULL as account_number,
+            l.created_at,
+            u.full_name as created_by_name,
+            NULL as contact_number,
+            NULL as email,
+            NULL as job,
+            NULL as monthly_salary,
+            NULL as user_email,
+            NULL as purpose,
+            NULL as application_id
+        FROM loans l
+        LEFT JOIN loan_types lt ON l.loan_type_id = lt.id
+        LEFT JOIN users u ON l.created_by = u.id
+        WHERE 1=1
+        
+        UNION ALL
+        
+        SELECT 
+            la.id + 1000000 as id, -- Offset to avoid ID conflicts
+            CONCAT('APP-', la.id) as loan_number,
+            COALESCE(la.full_name, la.user_email) as borrower_name,
+            COALESCE(la.loan_amount, 0) as loan_amount,
+            COALESCE(lt_app.interest_rate, 0) as interest_rate,
+            CASE 
+                WHEN la.loan_terms LIKE '%6%' OR la.loan_terms LIKE '%6 Months%' THEN 6
+                WHEN la.loan_terms LIKE '%12%' OR la.loan_terms LIKE '%12 Months%' THEN 12
+                WHEN la.loan_terms LIKE '%24%' OR la.loan_terms LIKE '%24 Months%' THEN 24
+                WHEN la.loan_terms LIKE '%30%' OR la.loan_terms LIKE '%30 Months%' THEN 30
+                WHEN la.loan_terms LIKE '%36%' OR la.loan_terms LIKE '%36 Months%' THEN 36
+                ELSE 0
+            END as loan_term,
+            la.created_at as start_date,
+            NULL as maturity_date,
+            0.00 as outstanding_balance,
+            la.status,
+            'application' as record_type,
+            COALESCE(lt_app.name, la.loan_type, 'N/A') as loan_type_name,
+            la.account_number,
+            la.created_at,
+            COALESCE(u_app.full_name, la.approved_by) as created_by_name,
+            la.contact_number,
+            la.email,
+            la.job,
+            la.monthly_salary,
+            la.user_email,
+            la.purpose,
+            la.id as application_id
+        FROM loan_applications la
+        LEFT JOIN loan_types lt_app ON la.loan_type_id = lt_app.id
+        LEFT JOIN users u_app ON la.approved_by_user_id = u_app.id
+        WHERE la.loan_id IS NULL"; // Only show applications not yet converted to loans
+
+$params = [];
+$types = '';
+$loanConditions = [];
+$appConditions = [];
+
+// Apply filters - separate conditions for loans and applications
+if ($applyFilters) {
+    if (!empty($dateFrom)) {
+        $loanConditions[] = "l.start_date >= ?";
+        $appConditions[] = "la.created_at >= ?";
+        $params[] = $dateFrom;
+        $params[] = $dateFrom;
+        $types .= 'ss';
+    }
+    
+    if (!empty($dateTo)) {
+        $loanConditions[] = "l.start_date <= ?";
+        $appConditions[] = "la.created_at <= ?";
+        $params[] = $dateTo;
+        $params[] = $dateTo;
+        $types .= 'ss';
+    }
+    
+    if (!empty($status)) {
+        $loanConditions[] = "l.status = ?";
+        $appConditions[] = "la.status = ?";
+        $params[] = $status;
+        $params[] = $status;
+        $types .= 'ss';
+    }
+    
+    if (!empty($accountNumber)) {
+        $loanConditions[] = "l.loan_no LIKE ?";
+        $appConditions[] = "(CONCAT('APP-', la.id) LIKE ? OR la.account_number LIKE ?)";
+        $searchTerm = "%{$accountNumber}%";
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+        $types .= 'sss';
+    }
+}
+
+// Add conditions to loans query
+if (!empty($loanConditions)) {
+    $sql = str_replace("WHERE 1=1", "WHERE 1=1 AND " . implode(" AND ", $loanConditions), $sql);
+}
+
+// Add conditions to applications query
+if (!empty($appConditions)) {
+    $sql = str_replace("WHERE la.loan_id IS NULL", "WHERE la.loan_id IS NULL AND " . implode(" AND ", $appConditions), $sql);
+}
+
+// Wrap in subquery for proper ordering
+$sql = "SELECT * FROM ($sql) AS combined_results ORDER BY start_date DESC, loan_number DESC";
+
+// Execute query with fallback
+$loans = [];
+$hasResults = false;
+$queryError = null;
+
+if ($conn) {
+    // Try the UNION query first
+    $stmt = $conn->prepare($sql);
+    
+    if ($stmt === false) {
+        // Query preparation failed - try simple loans query as fallback
+        $queryError = $conn->error;
+        $fallbackSql = "SELECT 
+            l.id,
+            l.loan_no as loan_number,
+            l.borrower_external_no as borrower_name,
+            l.principal_amount as loan_amount,
+            l.interest_rate,
+            l.term_months as loan_term,
+            l.start_date,
+            DATE_ADD(l.start_date, INTERVAL l.term_months MONTH) as maturity_date,
+            l.current_balance as outstanding_balance,
+            l.status,
+            'loan' as record_type,
+            lt.name as loan_type_name,
             l.created_at,
             u.full_name as created_by_name
         FROM loans l
         LEFT JOIN loan_types lt ON l.loan_type_id = lt.id
         LEFT JOIN users u ON l.created_by = u.id
-        WHERE 1=1";
-
-$params = [];
-$types = '';
-
-// Apply filters
-if ($applyFilters) {
-    if (!empty($dateFrom)) {
-        $sql .= " AND l.start_date >= ?";
-        $params[] = $dateFrom;
-        $types .= 's';
-    }
-    
-    if (!empty($dateTo)) {
-        $sql .= " AND l.start_date <= ?";
-        $params[] = $dateTo;
-        $types .= 's';
-    }
-    
-    // Transaction type filter - skip since we don't have this column
-    // if (!empty($transactionType)) {
-    //     $sql .= " AND l.transaction_type = ?";
-    //     $params[] = $transactionType;
-    //     $types .= 's';
-    // }
-    
-    if (!empty($status)) {
-        $sql .= " AND l.status = ?";
-        $params[] = $status;
-        $types .= 's';
-    }
-    
-    if (!empty($accountNumber)) {
-        $sql .= " AND l.loan_no LIKE ?";
-        $searchTerm = "%{$accountNumber}%";
-        $params[] = $searchTerm;
-        $types .= 's';
-    }
-}
-
-$sql .= " ORDER BY l.start_date DESC, l.loan_no DESC";
-
-// Execute query
-$loans = [];
-$hasResults = false;
-
-if ($conn) {
-    // Check if prepare succeeded
-    $stmt = $conn->prepare($sql);
-    
-    if ($stmt === false) {
-        // Query preparation failed - likely table doesn't exist yet
-        $loans = [];
-        $hasResults = false;
+        ORDER BY l.start_date DESC, l.loan_no DESC";
+        
+        $stmt = $conn->prepare($fallbackSql);
+        if ($stmt && $stmt->execute()) {
+            $result = $stmt->get_result();
+            while ($row = $result->fetch_assoc()) {
+                $row['contact_number'] = null;
+                $row['email'] = null;
+                $row['job'] = null;
+                $row['monthly_salary'] = null;
+                $row['user_email'] = null;
+                $row['purpose'] = null;
+                $row['application_id'] = null;
+                $row['account_number'] = null;
+                $loans[] = $row;
+            }
+            $hasResults = count($loans) > 0;
+            $queryError = null; // Clear error if fallback worked
+        }
+        if ($stmt) $stmt->close();
     } else {
         if (!empty($params)) {
             $stmt->bind_param($types, ...$params);
         }
         
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        while ($row = $result->fetch_assoc()) {
-            $loans[] = $row;
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            
+            while ($row = $result->fetch_assoc()) {
+                $loans[] = $row;
+            }
+            
+            $hasResults = count($loans) > 0;
+        } else {
+            // Execution failed
+            $queryError = $stmt->error;
         }
         
-        $hasResults = count($loans) > 0;
         $stmt->close();
     }
 }
 
 // Calculate statistics
-$totalLoans = count($loans);
+$totalLoans = 0;
+$totalApplications = 0;
 $totalAmount = 0;
 $totalOutstanding = 0;
 $activeLoans = 0;
+$pendingApplications = 0;
 
 foreach ($loans as $loan) {
-    $totalAmount += $loan['loan_amount'];
-    $totalOutstanding += $loan['outstanding_balance'];
-    if ($loan['status'] === 'active') {
-        $activeLoans++;
+    if ($loan['record_type'] === 'loan') {
+        $totalLoans++;
+        $totalAmount += $loan['loan_amount'];
+        $totalOutstanding += $loan['outstanding_balance'];
+        if ($loan['status'] === 'active') {
+            $activeLoans++;
+        }
+    } else {
+        $totalApplications++;
+        if ($loan['status'] === 'Pending' || $loan['status'] === 'pending') {
+            $pendingApplications++;
+        }
     }
 }
 ?>
@@ -306,6 +418,20 @@ foreach ($loans as $loan) {
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3><?php echo $totalApplications; ?></h3>
+                        <p>Loan Applications</p>
+                        <?php if ($pendingApplications > 0): ?>
+                            <small class="text-warning"><i class="fas fa-clock me-1"></i><?php echo $pendingApplications; ?> Pending</small>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
                 <div class="stat-card stat-card-success">
                     <div class="stat-icon">
                         <i class="fas fa-check-circle"></i>
@@ -313,17 +439,6 @@ foreach ($loans as $loan) {
                     <div class="stat-content">
                         <h3><?php echo $activeLoans; ?></h3>
                         <p>Active Loans</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card stat-card-info">
-                    <div class="stat-icon">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>₱<?php echo number_format($totalAmount, 2); ?></h3>
-                        <p>Total Amount</p>
                     </div>
                 </div>
             </div>
@@ -390,8 +505,12 @@ foreach ($loans as $loan) {
                             <label class="form-label">Status</label>
                             <select class="form-select" name="status">
                                 <option value="">All Status</option>
-                                <option value="pending" <?php echo $status === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="Pending" <?php echo $status === 'Pending' ? 'selected' : ''; ?>>Pending (Application)</option>
+                                <option value="pending" <?php echo $status === 'pending' ? 'selected' : ''; ?>>Pending (Loan)</option>
                                 <option value="active" <?php echo $status === 'active' ? 'selected' : ''; ?>>Active</option>
+                                <option value="Active" <?php echo $status === 'Active' ? 'selected' : ''; ?>>Active (Application)</option>
+                                <option value="Approved" <?php echo $status === 'Approved' ? 'selected' : ''; ?>>Approved</option>
+                                <option value="Rejected" <?php echo $status === 'Rejected' ? 'selected' : ''; ?>>Rejected</option>
                                 <option value="paid" <?php echo $status === 'paid' ? 'selected' : ''; ?>>Paid</option>
                                 <option value="defaulted" <?php echo $status === 'defaulted' ? 'selected' : ''; ?>>Defaulted</option>
                                 <option value="cancelled" <?php echo $status === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
@@ -427,24 +546,33 @@ foreach ($loans as $loan) {
                 <p class="text-center text-muted mb-4">Generated on <?php echo date('F d, Y'); ?></p>
             </div>
             <div class="card-body">
-                <?php if ($applyFilters && !$hasResults): ?>
+                <?php if ($queryError): ?>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Database Query Error:</strong> <?php echo htmlspecialchars($queryError); ?>
+                    <br><small>Please check that the loans and loan_applications tables exist and have the correct structure.</small>
+                </div>
+                <?php elseif (!$hasResults): ?>
                 <div class="empty-state">
                     <i class="fas fa-search"></i>
-                    <h4>No Existing Information Found</h4>
-                    <p>No loans match your filter criteria. Try adjusting your filters.</p>
+                    <h4><?php echo $applyFilters ? 'No Existing Information Found' : 'No Loan Data Available'; ?></h4>
+                    <p><?php echo $applyFilters ? 'No loans match your filter criteria. Try adjusting your filters.' : 'Start by creating loan records or applying filters to view existing loans.'; ?></p>
+                    <?php if ($applyFilters): ?>
                     <button class="btn btn-primary mt-3" onclick="clearFilters()">
                         <i class="fas fa-times me-1"></i>Clear Filters
                     </button>
+                    <?php endif; ?>
                 </div>
-                <?php elseif ($hasResults): ?>
+                <?php else: ?>
                 <div class="table-responsive">
                     <table id="loanTable" class="table table-hover table-striped">
                         <thead class="table-light">
                             <tr>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Type</th>
                                 <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Loan No.</th>
-                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Borrower</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Borrower/Applicant</th>
                                 <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Loan Type</th>
-                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Start Date</th>
+                                <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Start/Applied Date</th>
                                 <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Maturity Date</th>
                                 <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Loan Amount</th>
                                 <th style="background-color: #f8f9fa; color: #0A3D3D; font-weight: 600;">Interest Rate</th>
@@ -456,14 +584,41 @@ foreach ($loans as $loan) {
                         <tbody>
                             <?php foreach ($loans as $loan): ?>
                             <tr>
+                                <td>
+                                    <?php if ($loan['record_type'] === 'application'): ?>
+                                        <span class="badge bg-info"><i class="fas fa-file-alt me-1"></i>Application</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-success"><i class="fas fa-hand-holding-usd me-1"></i>Loan</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td><strong><?php echo htmlspecialchars($loan['loan_number']); ?></strong></td>
-                                <td><?php echo htmlspecialchars($loan['borrower_name']); ?></td>
+                                <td>
+                                    <?php echo htmlspecialchars($loan['borrower_name']); ?>
+                                    <?php if ($loan['record_type'] === 'application' && !empty($loan['contact_number'])): ?>
+                                        <br><small class="text-muted"><i class="fas fa-phone me-1"></i><?php echo htmlspecialchars($loan['contact_number']); ?></small>
+                                    <?php endif; ?>
+                                    <?php if ($loan['record_type'] === 'application' && !empty($loan['email'])): ?>
+                                        <br><small class="text-muted"><i class="fas fa-envelope me-1"></i><?php echo htmlspecialchars($loan['email']); ?></small>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($loan['loan_type_name'] ?? 'N/A'); ?></td>
                                 <td><?php echo date('M d, Y', strtotime($loan['start_date'])); ?></td>
-                                <td><?php echo date('M d, Y', strtotime($loan['maturity_date'])); ?></td>
+                                <td>
+                                    <?php if (!empty($loan['maturity_date'])): ?>
+                                        <?php echo date('M d, Y', strtotime($loan['maturity_date'])); ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">N/A</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="text-end">₱<?php echo number_format($loan['loan_amount'], 2); ?></td>
                                 <td class="text-center"><?php echo number_format($loan['interest_rate'], 2); ?>%</td>
-                                <td class="text-end">₱<?php echo number_format($loan['outstanding_balance'], 2); ?></td>
+                                <td class="text-end">
+                                    <?php if ($loan['record_type'] === 'loan'): ?>
+                                        ₱<?php echo number_format($loan['outstanding_balance'], 2); ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="badge status-<?php echo strtolower($loan['status']); ?>">
                                         <?php echo ucfirst($loan['status']); ?>
@@ -471,24 +626,24 @@ foreach ($loans as $loan) {
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-info btn-action" onclick="viewLoanDetails(<?php echo $loan['id']; ?>)" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-danger btn-action" onclick="deleteLoan(<?php echo $loan['id']; ?>)" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <?php if ($loan['record_type'] === 'application'): ?>
+                                            <button class="btn btn-info btn-action" onclick="viewApplicationDetails(<?php echo $loan['application_id']; ?>)" title="View Application Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        <?php else: ?>
+                                            <button class="btn btn-info btn-action" onclick="viewLoanDetails(<?php echo $loan['id']; ?>)" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-danger btn-action" onclick="deleteLoan(<?php echo $loan['id']; ?>)" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-                </div>
-                <?php else: ?>
-                <div class="empty-state">
-                    <i class="fas fa-hand-holding-usd"></i>
-                    <h4>No Loan Data Available</h4>
-                    <p>Start by creating loan records or applying filters to view existing loans.</p>
                 </div>
                 <?php endif; ?>
             </div>
@@ -571,3 +726,4 @@ foreach ($loans as $loan) {
     <script src="../assets/js/notifications.js"></script>
 </body>
 </html>
+
