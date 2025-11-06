@@ -2,7 +2,7 @@
 -- UNIFIED DATABASE SCHEMA
 -- ========================================
 -- This file contains the complete unified database schema
--- Merged from: schema.sql, hris_system.sql, evergreen_bank.sql, basic-operation.sql
+-- Merged from: schema.sql, hris_system.sql, evergreen_bank.sql, basic-operation.sql, bank_loan.sql
 -- 
 -- Database Name: BankingDB
 -- Professional database for comprehensive banking and financial management
@@ -703,13 +703,16 @@ CREATE TABLE loans (
     term_months INT NOT NULL,
     monthly_payment DECIMAL(18,2) NOT NULL,
     current_balance DECIMAL(18,2) DEFAULT 0.00,
+    next_payment_due DATE DEFAULT NULL,
     status ENUM('pending','active','paid','defaulted','cancelled') DEFAULT 'pending',
+    application_id INT DEFAULT NULL,
     created_by INT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (loan_type_id) REFERENCES loan_types(id),
     FOREIGN KEY (created_by) REFERENCES users(id),
     INDEX idx_loan_no (loan_no),
-    INDEX idx_status (status)
+    INDEX idx_status (status),
+    INDEX idx_application_id (application_id)
 );
 
 CREATE TABLE loan_payments (
@@ -727,6 +730,58 @@ CREATE TABLE loan_payments (
     INDEX idx_loan_id (loan_id),
     INDEX idx_payment_date (payment_date)
 );
+
+CREATE TABLE loan_applications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    -- Applicant information
+    full_name VARCHAR(100) DEFAULT NULL,
+    account_number VARCHAR(50) DEFAULT NULL,
+    contact_number VARCHAR(20) DEFAULT NULL,
+    email VARCHAR(100) DEFAULT NULL,
+    job VARCHAR(255) DEFAULT NULL,
+    monthly_salary DECIMAL(10,2) DEFAULT NULL,
+    user_email VARCHAR(255) NOT NULL,
+    -- Requested loan details (transferred to loans table when approved)
+    loan_type VARCHAR(50) DEFAULT NULL,
+    loan_type_id INT DEFAULT NULL,
+    loan_terms VARCHAR(50) DEFAULT NULL,
+    loan_amount DECIMAL(12,2) DEFAULT NULL,
+    purpose TEXT DEFAULT NULL,
+    -- Application workflow
+    status VARCHAR(50) DEFAULT 'Pending',
+    remarks TEXT DEFAULT NULL,
+    approved_by VARCHAR(100) DEFAULT NULL,
+    approved_by_user_id INT DEFAULT NULL,
+    approved_at DATETIME DEFAULT NULL,
+    rejected_by VARCHAR(255) DEFAULT NULL,
+    rejected_by_user_id INT DEFAULT NULL,
+    rejected_at DATETIME DEFAULT NULL,
+    rejection_remarks TEXT DEFAULT NULL,
+    -- Supporting documents
+    valid_id_path VARCHAR(255) DEFAULT NULL,
+    coe_path VARCHAR(255) DEFAULT NULL,
+    salary_path VARCHAR(255) DEFAULT NULL,
+    file_name VARCHAR(255) DEFAULT NULL,
+    -- Link to approved loan (set when application is approved and loan created)
+    loan_id BIGINT DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (loan_type_id) REFERENCES loan_types(id) ON DELETE SET NULL,
+    FOREIGN KEY (approved_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (rejected_by_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (loan_id) REFERENCES loans(id) ON DELETE SET NULL,
+    INDEX idx_user_email (user_email),
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at),
+    INDEX idx_loan_type_id (loan_type_id),
+    INDEX idx_approved_by_user_id (approved_by_user_id),
+    INDEX idx_rejected_by_user_id (rejected_by_user_id),
+    INDEX idx_loan_id (loan_id)
+);
+
+
+ALTER TABLE loans 
+ADD CONSTRAINT fk_loans_application_id 
+FOREIGN KEY (application_id) REFERENCES loan_applications(id) ON DELETE SET NULL;
 
 -- ========================================
 -- EXPENSES MODULE
