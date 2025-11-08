@@ -44,11 +44,11 @@ $current_user = getCurrentUser();
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-th-large me-1"></i>Modules
                         </a>
                         <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="modulesDropdown">
-                            <li><a class="dropdown-item active" href="general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
+                            <li><a class="dropdown-item" href="general-ledger.php"><i class="fas fa-book me-2"></i>General Ledger</a></li>
                             <li><a class="dropdown-item" href="financial-reporting.php"><i class="fas fa-chart-line me-2"></i>Financial Reporting</a></li>
                             <li><a class="dropdown-item" href="loan-accounting.php"><i class="fas fa-hand-holding-usd me-2"></i>Loan Accounting</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -68,15 +68,15 @@ $current_user = getCurrentUser();
                             <li><a class="dropdown-item" href="payroll-management.php"><i class="fas fa-wallet me-2"></i>Payroll Report</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-cog me-1"></i>Settings
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="settingsDropdown">
-                            <li><a class="dropdown-item" href="bin-station.php"><i class="fas fa-trash-alt me-2"></i>Bin Station</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="database-settings.php"><i class="fas fa-database me-2"></i>Database Settings</a></li>
-                        </ul>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog me-1"></i>Settings
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-custom" aria-labelledby="settingsDropdown">
+                                <li><a class="dropdown-item" href="bin-station.php"><i class="fas fa-trash-alt me-2"></i>Bin Station</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="database-settings.php"><i class="fas fa-database me-2"></i>Database Settings</a></li>
+                            </ul>
                     </li>
                 </ul>
             </div>
@@ -91,29 +91,9 @@ $current_user = getCurrentUser();
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom notifications-dropdown" aria-labelledby="notificationsDropdown">
                         <li class="dropdown-header">Notifications</li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-info-circle text-info"></i>
-                            <div class="notification-content">
-                                <strong>New Report Available</strong>
-                                <small>Monthly financial report is ready</small>
-                            </div>
-                        </a></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-exclamation-triangle text-warning"></i>
-                            <div class="notification-content">
-                                <strong>Pending Approvals</strong>
-                                <small>2 expense reports need review</small>
-                            </div>
-                        </a></li>
-                        <li><a class="dropdown-item notification-item" href="#">
-                            <i class="fas fa-check-circle text-success"></i>
-                            <div class="notification-content">
-                                <strong>Payroll Processed</strong>
-                                <small>October payroll completed</small>
-                            </div>
-                        </a></li>
+                        <li class="dropdown-item text-center text-muted"><small>Loading notifications...</small></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center small" href="#">View All Notifications</a></li>
+                        <li><a class="dropdown-item text-center small" href="activity-log.php">View All Notifications</a></li>
                     </ul>
                 </div>
                 
@@ -599,5 +579,6 @@ $current_user = getCurrentUser();
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Custom JS -->
     <script src="../assets/js/general-ledger.js"></script>
+    <script src="../assets/js/notifications.js"></script>
 </body>
 </html>
