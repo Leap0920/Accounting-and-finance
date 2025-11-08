@@ -194,7 +194,7 @@ $current_user = getCurrentUser();
 
             <!-- Statistics Cards -->
             <div class="row g-3 mb-4">
-                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="col-12 col-md-4">
                         <div class="stat-card">
                             <div class="stat-icon">
                                 <i class="fas fa-list-alt"></i>
@@ -206,7 +206,7 @@ $current_user = getCurrentUser();
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="col-12 col-md-4">
                         <div class="stat-card">
                             <div class="stat-icon">
                                 <i class="fas fa-exchange-alt"></i>
@@ -218,67 +218,7 @@ $current_user = getCurrentUser();
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-file-alt"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="total-draft">Loading...</h3>
-                                <p>Draft Entries</p>
-                                <a href="#transactions" class="stat-link">View Details</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-ban"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="total-voided">Loading...</h3>
-                                <p>Voided Entries</p>
-                                <a href="#transactions" class="stat-link">View Details</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-file-invoice"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="total-journal-types">Loading...</h3>
-                                <p>Journal Types</p>
-                                <a href="#transactions" class="stat-link">View Details</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="total-fiscal-periods">Loading...</h3>
-                                <p>Fiscal Periods</p>
-                                <a href="#transactions" class="stat-link">View Details</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="total-balance">Loading...</h3>
-                                <p>Total Balance</p>
-                                <a href="#accounts" class="stat-link">View Details</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-3">
+                    <div class="col-12 col-md-4">
                         <div class="stat-card">
                             <div class="stat-icon">
                                 <i class="fas fa-history"></i>

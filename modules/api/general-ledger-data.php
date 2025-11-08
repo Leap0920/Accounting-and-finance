@@ -90,37 +90,6 @@ function getStatistics() {
         $row = $result->fetch_assoc();
         $total_transactions = $row['total'] ?? 0;
         
-        // Get total draft entries
-        $result = $conn->query("SELECT COUNT(*) as total FROM journal_entries WHERE status = 'draft'");
-        $row = $result->fetch_assoc();
-        $total_draft = $row['total'] ?? 0;
-        
-        // Get total voided entries
-        $result = $conn->query("SELECT COUNT(*) as total FROM journal_entries WHERE status = 'voided'");
-        $row = $result->fetch_assoc();
-        $total_voided = $row['total'] ?? 0;
-        
-        // Get total journal types
-        $result = $conn->query("SELECT COUNT(*) as total FROM journal_types");
-        $row = $result->fetch_assoc();
-        $total_journal_types = $row['total'] ?? 0;
-        
-        // Get total fiscal periods
-        $result = $conn->query("SELECT COUNT(*) as total FROM fiscal_periods");
-        $row = $result->fetch_assoc();
-        $total_fiscal_periods = $row['total'] ?? 0;
-        
-        // Get total balance (sum of all account closing balances for active fiscal period)
-        $result = $conn->query("
-            SELECT COALESCE(SUM(ab.closing_balance), 0) as total_balance
-            FROM account_balances ab
-            INNER JOIN fiscal_periods fp ON ab.fiscal_period_id = fp.id
-            WHERE fp.status = 'open'
-            AND fp.id = (SELECT id FROM fiscal_periods WHERE status = 'open' ORDER BY start_date DESC LIMIT 1)
-        ");
-        $row = $result->fetch_assoc();
-        $total_balance = $row['total_balance'] ?? 0;
-        
         // Get total audit entries from audit_logs table
         $result = $conn->query("SELECT COUNT(*) as total FROM audit_logs");
         $row = $result->fetch_assoc();
@@ -131,11 +100,6 @@ function getStatistics() {
             'data' => [
                 'total_accounts' => $total_accounts,
                 'total_transactions' => $total_transactions,
-                'total_draft' => $total_draft,
-                'total_voided' => $total_voided,
-                'total_journal_types' => $total_journal_types,
-                'total_fiscal_periods' => $total_fiscal_periods,
-                'total_balance' => $total_balance,
                 'total_audit' => $total_audit
             ]
         ];
@@ -147,11 +111,6 @@ function getStatistics() {
             'data' => [
                 'total_accounts' => 247,
                 'total_transactions' => 1542,
-                'total_draft' => 15,
-                'total_voided' => 3,
-                'total_journal_types' => 8,
-                'total_fiscal_periods' => 4,
-                'total_balance' => 1250000.00,
                 'total_audit' => 89
             ]
         ];

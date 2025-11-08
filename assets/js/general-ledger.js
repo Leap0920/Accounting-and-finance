@@ -88,11 +88,6 @@ function showStatisticsLoadingState() {
     const elements = {
         'total-accounts': 'Loading...',
         'total-transactions': 'Loading...',
-        'total-draft': 'Loading...',
-        'total-voided': 'Loading...',
-        'total-journal-types': 'Loading...',
-        'total-fiscal-periods': 'Loading...',
-        'total-balance': 'Loading...',
         'total-audit': 'Loading...'
     };
     
@@ -108,11 +103,6 @@ function animateStatistics(data) {
     const elements = {
         'total-accounts': data.total_accounts || data.total_account || 0,
         'total-transactions': data.total_transactions || 0,
-        'total-draft': data.total_draft || 0,
-        'total-voided': data.total_voided || 0,
-        'total-journal-types': data.total_journal_types || 0,
-        'total-fiscal-periods': data.total_fiscal_periods || 0,
-        'total-balance': data.total_balance || 0,
         'total-audit': data.total_audit || 0
     };
     
@@ -121,13 +111,8 @@ function animateStatistics(data) {
         if (element) {
             // Clear loading text
             element.innerHTML = '';
-            if (id === 'total-balance') {
-                // Format currency for balance
-                element.textContent = '₱' + formatCurrency(value);
-            } else {
-                // Animate numbers
-                animateNumber(element, 0, value, 1500);
-            }
+            // Animate numbers
+            animateNumber(element, 0, value, 1500);
         }
     });
 }
@@ -915,11 +900,6 @@ function getFallbackStatistics() {
     return {
         total_accounts: 247,
         total_transactions: 1542,
-        total_draft: 15,
-        total_voided: 3,
-        total_journal_types: 8,
-        total_fiscal_periods: 4,
-        total_balance: 1250000.00,
         total_audit: 89
     };
 }
