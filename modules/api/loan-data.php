@@ -253,7 +253,12 @@ function getLoanDetails() {
         throw new Exception('Loan not found');
     }
     
-    // Get payment schedule and calculate payment summary if table exists
+    // Initialize payment schedule as empty array (always return this field)
+    $loan['payment_schedule'] = [];
+    $loan['total_paid'] = 0;
+    $loan['last_payment_date'] = null;
+    
+    // Get payment history from loan_payments table (for all loan statuses including paid)
     if (tableExists('loan_payments')) {
         $sql = "SELECT 
                     lp.*,
@@ -267,16 +272,17 @@ function getLoanDetails() {
                 ORDER BY lp.payment_date ASC";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('i', $loanId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $paymentSchedule = [];
-        $runningBalance = $loan['loan_amount'];
-        $totalPaid = 0;
-        $lastPaymentDate = null;
-        
-        while ($row = $result->fetch_assoc()) {
+        if ($stmt) {
+            $stmt->bind_param('i', $loanId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $paymentSchedule = [];
+            $runningBalance = floatval($loan['loan_amount']);
+            $totalPaid = 0;
+            $lastPaymentDate = null;
+            
+            while ($row = $result->fetch_assoc()) {
             // Calculate balance after this payment
             $paymentAmount = floatval($row['principal_amount']);
             $runningBalance -= $paymentAmount;
@@ -297,17 +303,17 @@ function getLoanDetails() {
                 'total_payment' => $row['amount'] ? $row['amount'] : ($row['principal_amount'] + $row['interest_amount']),
                 'total_amount' => $row['amount'] ? $row['amount'] : ($row['principal_amount'] + $row['interest_amount']),
                 'balance' => max(0, $runningBalance),
-                'status' => $row['payment_date'] <= date('Y-m-d') ? 'paid' : 'pending',
+                'status' => 'paid', // All payments in loan_payments table are completed payments
                 'payment_reference' => $row['payment_reference'] ?? null,
                 'created_at' => $row['created_at'] ?? null
             ];
+            }
+            
+            // Update loan with payment data
+            $loan['payment_schedule'] = $paymentSchedule;
+            $loan['total_paid'] = $totalPaid;
+            $loan['last_payment_date'] = $lastPaymentDate;
         }
-        
-        $loan['payment_schedule'] = $paymentSchedule;
-        
-        // Calculate payment summary
-        $loan['total_paid'] = $totalPaid;
-        $loan['last_payment_date'] = $lastPaymentDate;
         
         // Calculate payment status
         $remainingBalance = floatval($loan['current_balance']);
