@@ -688,106 +688,140 @@ if ($selected_employee) {
                 <div class="payroll-content-card">
                     <h3 class="payroll-section-title">Employee Details</h3>
                     
-                    <?php if ($current_employee): ?>
-                        <div class="employee-details-grid">
-                            <div class="employee-photo-section">
-                                <div class="employee-photo">
-                                    <i class="fas fa-user-circle"></i>
+                    <?php if ($current_employee): 
+                        // Calculate salary rates
+                        $base_salary = floatval($current_employee['base_monthly_salary'] ?? 0);
+                        $working_days_per_month = 22; // Standard Philippine working days
+                        $hours_per_day = 8;
+                        $daily_rate = $base_salary > 0 ? $base_salary / $working_days_per_month : 0;
+                        $hourly_rate = $daily_rate > 0 ? $daily_rate / $hours_per_day : 0;
+                    ?>
+                        <div class="employee-details-container">
+                            <div class="employee-details-main-layout">
+                                <!-- Left Column: Photo + Employee Info -->
+                                <div class="employee-left-column">
+                                    <div class="employee-photo-section">
+                                        <div class="employee-photo">
+                                            <i class="fas fa-user-circle"></i>
+                                        </div>
+                                        <div class="employee-status">
+                                            <span class="status-badge status-<?php echo strtolower($current_employee['employment_type']); ?>">
+                                                <?php echo strtoupper($current_employee['employment_type']); ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="employee-info-section">
+                                        <table class="employee-info-table">
+                                            <tr>
+                                                <td>Employee Number</td>
+                                                <td><?php echo htmlspecialchars($current_employee['external_employee_no']); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Full Name</td>
+                                                <td><?php echo htmlspecialchars($current_employee['name'] ?? 'N/A'); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Position</td>
+                                                <td><?php echo htmlspecialchars($current_employee['position'] ?? 'N/A'); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Department</td>
+                                                <td><?php echo htmlspecialchars($current_employee['department'] ?? 'N/A'); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Employment Type</td>
+                                                <td><?php echo ucfirst($current_employee['employment_type'] ?? 'N/A'); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Date of Joining</td>
+                                                <td><?php echo date('F d, Y', strtotime($current_employee['created_at'])); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Bank Name</td>
+                                                <td><?php echo htmlspecialchars($company_bank['bank_name'] ?? 'N/A'); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Bank Account Number</td>
+                                                <td><?php echo htmlspecialchars($company_bank['account_number'] ?? 'N/A'); ?></td>
+                                            </tr>
+                                        </table>
+                                    </div>
                                 </div>
-                                <div class="employee-status">
-                                    <span class="status-badge status-<?php echo $current_employee['employment_type']; ?>">
-                                        <?php echo ucfirst($current_employee['employment_type']); ?>
-                                    </span>
+                                
+                                <!-- Right Column: Salary Cards -->
+                                <div class="employee-right-column">
+                                    <!-- Salary Rates Card -->
+                                    <div class="salary-rates-card">
+                                        <h6 class="salary-rates-title">SALARY RATES</h6>
+                                        <table class="salary-rates-table">
+                                            <tr>
+                                                <td>Monthly Salary</td>
+                                                <td class="amount-cell">₱<?php echo number_format($base_salary, 2); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Daily Rate</td>
+                                                <td class="amount-cell">₱<?php echo number_format($daily_rate, 2); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Hourly Rate</td>
+                                                <td class="amount-cell">₱<?php echo number_format($hourly_rate, 2); ?></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    
+                                    <!-- Payroll Impact Card -->
+                                    <?php if ($attendance_payroll_adjustments && $attendance_month == date('Y-m')): 
+                                        $adj = $attendance_payroll_adjustments['salary_adjustments'];
+                                        $has_impact = $adj['absent_deduction'] > 0 || $adj['half_day_deduction'] > 0 || $adj['late_penalty'] > 0 || $adj['overtime_pay'] > 0;
+                                    ?>
+                                    <div class="payroll-impact-card">
+                                        <div class="payroll-impact-header">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>Payroll Impact</span>
+                                        </div>
+                                        <div class="payroll-impact-content">
+                                            <?php if (!$has_impact): ?>
+                                            <div class="payroll-impact-item">
+                                                <i class="fas fa-check-circle text-success"></i>
+                                                <span class="text-success">Perfect attendance - no payroll adjustments</span>
+                                            </div>
+                                            <?php else: ?>
+                                                <?php if ($adj['overtime_pay'] > 0): ?>
+                                                <div class="payroll-impact-item">
+                                                    <span class="impact-label text-success">Overtime Pay</span>
+                                                    <span class="impact-amount text-success">+₱<?php echo number_format($adj['overtime_pay'], 2); ?></span>
+                                                </div>
+                                                <?php endif; ?>
+                                                <?php if ($adj['absent_deduction'] > 0): ?>
+                                                <div class="payroll-impact-item">
+                                                    <span class="impact-label text-danger">Absent Deduction</span>
+                                                    <span class="impact-amount text-danger">-₱<?php echo number_format($adj['absent_deduction'], 2); ?></span>
+                                                </div>
+                                                <?php endif; ?>
+                                                <?php if ($adj['half_day_deduction'] > 0): ?>
+                                                <div class="payroll-impact-item">
+                                                    <span class="impact-label text-warning">Half Day Deduction</span>
+                                                    <span class="impact-amount text-warning">-₱<?php echo number_format($adj['half_day_deduction'], 2); ?></span>
+                                                </div>
+                                                <?php endif; ?>
+                                                <?php if ($adj['late_penalty'] > 0): ?>
+                                                <div class="payroll-impact-item">
+                                                    <span class="impact-label text-danger">Late Penalty</span>
+                                                    <span class="impact-amount text-danger">-₱<?php echo number_format($adj['late_penalty'], 2); ?></span>
+                                                </div>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
-                            </div>
-                            
-                            <div class="employee-info-section">
-                                <table class="employee-info-table">
-                                    <tr>
-                                        <td>Employee Number</td>
-                                        <td><?php echo htmlspecialchars($current_employee['external_employee_no']); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Full Name</td>
-                                        <td><?php echo htmlspecialchars($current_employee['name'] ?? 'N/A'); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Position</td>
-                                        <td><?php echo htmlspecialchars($current_employee['position'] ?? 'N/A'); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Department</td>
-                                        <td><?php echo htmlspecialchars($current_employee['department'] ?? 'N/A'); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Employment Type</td>
-                                        <td><?php echo ucfirst($current_employee['employment_type'] ?? 'N/A'); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Date of Joining</td>
-                                        <td><?php echo date('F d, Y', strtotime($current_employee['created_at'])); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Bank Name</td>
-                                        <td><?php echo htmlspecialchars($company_bank['bank_name'] ?? 'N/A'); ?></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Bank Account Number</td>
-                                        <td><?php echo htmlspecialchars($company_bank['account_number'] ?? 'N/A'); ?></td>
-                                    </tr>
-                                </table>
                             </div>
                         </div>
                         
                         <!-- Attendance Summary Cards -->
                         <div class="attendance-summary-section">
                             <h5 class="section-subtitle">Attendance Summary - <?php echo date('F Y', strtotime($attendance_month . '-01')); ?></h5>
-                            
-                            <?php if ($attendance_payroll_adjustments && $attendance_month == date('Y-m')): 
-                                $adj = $attendance_payroll_adjustments['salary_adjustments'];
-                                $has_impact = $adj['absent_deduction'] > 0 || $adj['half_day_deduction'] > 0 || $adj['late_penalty'] > 0 || $adj['overtime_pay'] > 0;
-                            ?>
-                            <div class="alert alert-info mb-3 payroll-impact-alert" role="alert">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-info-circle me-3"></i>
-                                    <h6 class="alert-heading mb-0 me-4">Payroll Impact</h6>
-                                    <?php if (!$has_impact): ?>
-                                    <span class="ms-auto text-success d-flex align-items-center gap-2">
-                                        <i class="fas fa-check-circle"></i>
-                                        <span>Perfect attendance - no payroll adjustments</span>
-                                    </span>
-                                    <?php endif; ?>
-                                </div>
-                                <?php if ($has_impact): ?>
-                                <div class="payroll-impact-items">
-                                    <?php if ($adj['overtime_pay'] > 0): ?>
-                                    <div class="d-flex align-items-center gap-2" style="padding-left: 26px;">
-                                        <strong class="text-success">Overtime Pay:</strong> 
-                                        <span class="impact-amount text-success">+₱<?php echo number_format($adj['overtime_pay'], 2); ?></span>
-                                    </div>
-                                    <?php endif; ?>
-                                    <?php if ($adj['absent_deduction'] > 0): ?>
-                                    <div class="d-flex align-items-center gap-2" style="padding-left: 26px;">
-                                        <strong class="text-danger">Absent Deduction:</strong> 
-                                        <span class="impact-amount text-danger">-₱<?php echo number_format($adj['absent_deduction'], 2); ?></span>
-                                    </div>
-                                    <?php endif; ?>
-                                    <?php if ($adj['half_day_deduction'] > 0): ?>
-                                    <div class="d-flex align-items-center gap-2" style="padding-left: 26px;">
-                                        <strong class="text-warning">Half Day Deduction:</strong> 
-                                        <span class="impact-amount text-warning">-₱<?php echo number_format($adj['half_day_deduction'], 2); ?></span>
-                                    </div>
-                                    <?php endif; ?>
-                                    <?php if ($adj['late_penalty'] > 0): ?>
-                                    <div class="d-flex align-items-center gap-2" style="padding-left: 26px;">
-                                        <strong class="text-danger">Late Penalty:</strong> 
-                                        <span class="impact-amount text-danger">-₱<?php echo number_format($adj['late_penalty'], 2); ?></span>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                            <?php endif; ?>
                             
                             <div class="row g-3 mb-4">
                                 <div class="col-md-3">
