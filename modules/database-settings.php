@@ -57,6 +57,142 @@ if ($conn) {
         $db_size = $row['DB Size in MB'] ?? 0;
     }
 }
+
+// Table to Module Mapping
+function getTableModuleMapping() {
+    return [
+        // User Management
+        'users' => ['Core Authentication', 'User Management'],
+        'roles' => ['Core Authentication', 'User Management'],
+        'user_roles' => ['Core Authentication', 'User Management'],
+        'login_attempts' => ['Core Authentication'],
+        
+        // General Ledger
+        'accounts' => ['General Ledger', 'Financial Reporting', 'Transaction Reading'],
+        'account_types' => ['General Ledger', 'Financial Reporting'],
+        'account_balances' => ['General Ledger', 'Financial Reporting'],
+        'journal_entries' => ['General Ledger', 'Transaction Reading', 'Financial Reporting'],
+        'journal_lines' => ['General Ledger', 'Transaction Reading', 'Financial Reporting'],
+        'journal_types' => ['General Ledger', 'Transaction Reading'],
+        'fiscal_periods' => ['General Ledger', 'Financial Reporting'],
+        
+        // Payroll Management
+        'employee_refs' => ['Payroll Management', 'HRIS Integration'],
+        'employee_benefits' => ['Payroll Management'],
+        'employee_deductions' => ['Payroll Management'],
+        'payroll_runs' => ['Payroll Management'],
+        'payslips' => ['Payroll Management'],
+        'payroll_items' => ['Payroll Management'],
+        'payroll_deductions' => ['Payroll Management'],
+        
+        // Expense Tracking
+        'expense_categories' => ['Expense Tracking'],
+        'expense_claims' => ['Expense Tracking'],
+        'expense_line_items' => ['Expense Tracking'],
+        
+        // Loan Accounting
+        'loans' => ['Loan Accounting'],
+        'loan_payments' => ['Loan Accounting'],
+        'loan_schedules' => ['Loan Accounting'],
+        
+        // System Management
+        'audit_logs' => ['General Ledger', 'Activity Log', 'System Management'],
+        'system_settings' => ['System Management', 'Database Settings'],
+        'system_notifications' => ['Notifications', 'System Management'],
+        
+        // Bank Operations
+        'bank_users' => ['Bank Operations'],
+        'bank_customers' => ['Bank Operations'],
+        'bank_employees' => ['Bank Operations'],
+        'transactions' => ['Transaction Reading', 'Bank Operations'],
+    ];
+}
+
+// Get table structure and usage info
+function getTableAnalysis($table_name) {
+    global $conn;
+    $analysis = [
+        'table_name' => $table_name,
+        'modules' => [],
+        'structure' => [],
+        'indexes' => [],
+        'foreign_keys' => []
+    ];
+    
+    $mapping = getTableModuleMapping();
+    if (isset($mapping[$table_name])) {
+        $analysis['modules'] = $mapping[$table_name];
+    }
+    
+    if ($conn) {
+        // Escape table name for security
+        $table_name_escaped = $conn->real_escape_string($table_name);
+        
+        // Get table structure
+        $result = $conn->query("DESCRIBE `$table_name_escaped`");
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $analysis['structure'][] = $row;
+            }
+        }
+        
+        // Get indexes
+        $result = $conn->query("SHOW INDEXES FROM `$table_name_escaped`");
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $analysis['indexes'][] = $row;
+            }
+        }
+        
+        // Get foreign keys
+        $result = $conn->query("
+            SELECT 
+                CONSTRAINT_NAME,
+                COLUMN_NAME,
+                REFERENCED_TABLE_NAME,
+                REFERENCED_COLUMN_NAME
+            FROM information_schema.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = '$table_name_escaped'
+            AND REFERENCED_TABLE_NAME IS NOT NULL
+        ");
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $analysis['foreign_keys'][] = $row;
+            }
+        }
+        
+        // Get row count
+        $result = $conn->query("SELECT COUNT(*) as count FROM `$table_name_escaped`");
+        if ($result) {
+            $analysis['row_count'] = $result->fetch_assoc()['count'];
+        }
+        
+        // Get table size
+        $result = $conn->query("
+            SELECT 
+                ROUND((data_length + index_length) / 1024 / 1024, 2) AS size_mb,
+                table_rows
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+            AND table_name = '$table_name_escaped'
+        ");
+        if ($result) {
+            $row = $result->fetch_assoc();
+            $analysis['size_mb'] = $row['size_mb'] ?? 0;
+            $analysis['estimated_rows'] = $row['table_rows'] ?? 0;
+        }
+    }
+    
+    return $analysis;
+}
+
+// Handle AJAX request for table analysis
+if (isset($_GET['analyze_table']) && isset($_GET['table_name'])) {
+    header('Content-Type: application/json');
+    echo json_encode(getTableAnalysis($_GET['table_name']));
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -347,6 +483,28 @@ if ($conn) {
         </div>
     </main>
 
+    <!-- Table Analysis Modal -->
+    <div class="modal fade" id="tableAnalysisModal" tabindex="-1" aria-labelledby="tableAnalysisModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="tableAnalysisModalLabel">
+                        <i class="fas fa-database me-2"></i>Table Analysis: <span id="modalTableName"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="tableAnalysisContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Analyzing table...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
@@ -382,7 +540,76 @@ if ($conn) {
         }
         
         function analyzeTable(tableName) {
-            alert(`Analyzing table: ${tableName}\n\nThis feature will show detailed table structure and statistics.`);
+            const modal = new bootstrap.Modal(document.getElementById('tableAnalysisModal'));
+            document.getElementById('modalTableName').textContent = tableName;
+            document.getElementById('tableAnalysisContent').innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Analyzing table...</p>
+                </div>
+            `;
+            modal.show();
+            
+            // Fetch table analysis
+            fetch(`?analyze_table=1&table_name=${encodeURIComponent(tableName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayTableAnalysis(data);
+                })
+                .catch(error => {
+                    document.getElementById('tableAnalysisContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Error:</strong> Failed to analyze table. ${error.message}
+                        </div>
+                    `;
+                });
+        }
+        
+        function displayTableAnalysis(data) {
+            let html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Table Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Table Name:</strong> <code style="color: #e83e8c;">${data.table_name}</code></p>
+                                <p><strong>Row Count:</strong> <span class="badge bg-info">${data.row_count?.toLocaleString() || 'N/A'}</span></p>
+                                <p><strong>Table Size:</strong> <span class="badge bg-success">${data.size_mb || 0} MB</span></p>
+                                <p><strong>Estimated Rows:</strong> ${data.estimated_rows?.toLocaleString() || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0"><i class="fas fa-puzzle-piece me-2"></i>Modules Using This Table</h6>
+                            </div>
+                            <div class="card-body">
+            `;
+            
+            if (data.modules && data.modules.length > 0) {
+                html += '<ul class="list-unstyled mb-0">';
+                data.modules.forEach(module => {
+                    html += `<li><i class="fas fa-check-circle text-success me-2"></i>${module}</li>`;
+                });
+                html += '</ul>';
+            } else {
+                html += '<p class="text-muted mb-0"><i class="fas fa-info-circle me-2"></i>No specific module mapping found.</p>';
+            }
+            
+            html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('tableAnalysisContent').innerHTML = html;
         }
     </script>
 
