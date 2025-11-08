@@ -608,11 +608,6 @@ if ($selected_employee) {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-2 text-md-end mt-2 mt-md-0">
-                            <a href="../core/dashboard.php" class="btn-back-dashboard">
-                                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                            </a>
-                        </div>
                     </div>
                     <?php if ($payroll_period && $period_label): ?>
                     <div class="row mt-2">
@@ -732,38 +727,6 @@ if ($selected_employee) {
                         </div>
                     </div>
                 </div>
-        
-        <?php if ($current_employee): ?>
-        <div class="current-employee-info-card mb-3">
-            <div class="row g-3">
-                <div class="col-md-3 col-sm-6">
-                    <div class="info-item">
-                        <span class="info-label">Employee:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($current_employee['name']); ?></span>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="info-item">
-                        <span class="info-label">Position:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($current_employee['position'] ?? 'N/A'); ?></span>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="info-item">
-                        <span class="info-label">Department:</span>
-                        <span class="info-value"><?php echo htmlspecialchars($current_employee['department'] ?? 'N/A'); ?></span>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="info-item">
-                        <span class="info-label">Type:</span>
-                        <span class="info-value"><?php echo ucfirst($current_employee['employment_type'] ?? 'N/A'); ?></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
-        
         <!-- Tab Navigation -->
         <div class="payroll-tabs-container">
             <ul class="nav nav-pills payroll-nav-tabs" id="payrollTabs" role="tablist">
