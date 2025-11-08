@@ -567,7 +567,7 @@ if ($selected_employee) {
                     </div>
                 </div>
                 <div class="header-actions mt-3">
-                    <div class="row align-items-end">
+                    <div class="row align-items-end g-3">
                         <div class="col-md-6">
                             <div class="employee-selector-header">
                                 <label for="employee-select" class="form-label mb-1">Select Employee:</label>
@@ -585,25 +585,41 @@ if ($selected_employee) {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="payroll-period-selector">
                                 <label for="payroll-period-select" class="form-label mb-1">Payroll Period:</label>
                                 <div class="d-flex gap-2">
-                                    <select class="form-select form-select-sm" id="payroll-month-select" onchange="changePayrollPeriod()">
+                                    <select class="form-select" id="payroll-month-select" onchange="changePayrollPeriod()">
                                         <?php
-                                        // Generate month options (current month and previous 5 months)
-                                        for ($i = 0; $i < 6; $i++) {
+                                        // Always show current month first, then previous months
+                                        $current_month = date('Y-m');
+                                        $current_month_label = date('F Y');
+                                        
+                                        // Check if current month is selected (or no month selected, default to current)
+                                        $is_current_selected = (empty($payroll_month) || $payroll_month == $current_month) ? 'selected' : '';
+                                        
+                                        // Show current month first
+                                        echo "<option value=\"$current_month\" $is_current_selected>$current_month_label</option>";
+                                        
+                                        // Then show previous 5 months
+                                        for ($i = 1; $i <= 5; $i++) {
                                             $month_date = date('Y-m', strtotime("-$i months"));
                                             $month_label = date('F Y', strtotime("-$i months"));
-                                            $selected = ($payroll_month == $month_date) ? 'selected' : '';
+                                            // Only select if it's not the current month and matches the selected month
+                                            $selected = ($payroll_month == $month_date && $payroll_month != $current_month) ? 'selected' : '';
                                             echo "<option value=\"$month_date\" $selected>$month_label</option>";
                                         }
                                         ?>
                                     </select>
-                                    <select class="form-select form-select-sm" id="payroll-period-select" onchange="changePayrollPeriod()">
+                                    <select class="form-select" id="payroll-period-select" onchange="changePayrollPeriod()">
+                                        <?php
+                                        // Use current month if no month is selected
+                                        $display_month = !empty($payroll_month) ? $payroll_month : date('Y-m');
+                                        $last_day = date('t', strtotime($display_month . '-01'));
+                                        ?>
                                         <option value="">Full Month</option>
                                         <option value="first" <?php echo ($payroll_period === 'first') ? 'selected' : ''; ?>>1-15</option>
-                                        <option value="second" <?php echo ($payroll_period === 'second') ? 'selected' : ''; ?>>16-<?php echo date('t', strtotime($payroll_month . '-01')); ?></option>
+                                        <option value="second" <?php echo ($payroll_period === 'second') ? 'selected' : ''; ?>>16-<?php echo $last_day; ?></option>
                                     </select>
                                 </div>
                             </div>

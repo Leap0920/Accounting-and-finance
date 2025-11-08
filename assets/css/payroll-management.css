@@ -109,7 +109,6 @@ body {
     font-size: 14px;
     transition: all 0.3s ease;
     width: 100%;
-    max-width: 400px;
     background: var(--card-bg);
     color: var(--text-dark);
     cursor: pointer;
@@ -125,6 +124,46 @@ body {
     border-color: var(--primary-teal);
     box-shadow: 0 0 0 0.25rem rgba(10, 61, 61, 0.15);
     outline: none;
+}
+
+.payroll-period-selector {
+    width: 100%;
+    text-align: left;
+}
+
+.payroll-period-selector .form-label {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 13px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.payroll-period-selector .form-select {
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: var(--card-bg);
+    color: var(--text-dark);
+    cursor: pointer;
+    flex: 1;
+}
+
+.payroll-period-selector .form-select:hover {
+    border-color: var(--primary-teal);
+}
+
+.payroll-period-selector .form-select:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 0.25rem rgba(10, 61, 61, 0.15);
+    outline: none;
+}
+
+.payroll-period-selector .d-flex {
+    width: 100%;
 }
 
 .btn-back-dashboard {
