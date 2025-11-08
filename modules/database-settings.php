@@ -217,7 +217,9 @@ if (isset($_GET['analyze_table']) && isset($_GET['table_name'])) {
     <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container-fluid px-4">
             <div class="logo-section">
-                <div class="logo-circle">E</div>
+                <div class="logo-circle">
+                    <img src="../assets/image/LOGO.png" alt="Evergreen Logo" class="logo-img">
+                </div>
                 <div class="logo-text">
                     <h1>EVERGREEN</h1>
                     <p>Secure. Invest. Achieve</p>
