@@ -145,68 +145,56 @@ $current_user = getCurrentUser();
     </nav>
     
     <!-- Main Content -->
-    <main class="gl-main-content">
-        <div class="container-xl gl-content-wrapper">
-            <!-- Page Header -->
-            <header class="gl-page-header">
-                <div class="gl-breadcrumb" aria-label="Breadcrumb">
-                    <a href="../core/dashboard.php" class="gl-breadcrumb__link">
-                        <i class="fas fa-home me-2"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <span class="gl-breadcrumb__separator" aria-hidden="true">
-                        <i class="fas fa-chevron-right"></i>
-                    </span>
-                    <span class="gl-breadcrumb__item">Modules</span>
-                    <span class="gl-breadcrumb__separator" aria-hidden="true">
-                        <i class="fas fa-chevron-right"></i>
-                    </span>
-                    <span class="gl-breadcrumb__item gl-breadcrumb__item--current">General Ledger</span>
-                </div>
-
-                <div class="gl-header-main">
-                    <div class="gl-header-text">
-                        <h1 class="page-title">General Ledger</h1>
-                        <p class="page-subtitle">Monitor ledger health, track movements, and stay audit-ready with a curated snapshot of every critical activity.</p>
-                        <div class="gl-header-links">
-                            <a class="btn-link" href="../core/dashboard.php">
-                                <i class="fas fa-arrow-left"></i>
-                                <span>Back to dashboard</span>
-                            </a>
+    <main class="container-fluid py-4">
+            <!-- Beautiful Page Header -->
+            <div class="beautiful-page-header mb-5">
+                <div class="container-fluid">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <div class="header-content">
+                                <h1 class="page-title-beautiful">
+                                    <i class="fas fa-book me-3"></i>
+                                    General Ledger
+                                </h1>
+                                <p class="page-subtitle-beautiful">
+                                    Monitor ledger health, track movements, and stay audit-ready with a curated snapshot of every critical activity.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 text-lg-end">
+                            <div class="header-info-card">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <div class="info-label">Database Status</div>
+                                        <div class="info-value status-connected">Connected</div>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <div class="info-label">Current Period</div>
+                                        <div class="info-value"><?php echo date('F Y'); ?></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="gl-header-actions">
-                        <button class="btn-gl-outline" type="button" onclick="scrollToSection('accounts')">
-                            <i class="fas fa-layer-group"></i>
-                            <span>Chart of accounts</span>
-                        </button>
-                        <button class="btn-gl-primary" type="button" onclick="scrollToSection('transactions')">
-                            <i class="fas fa-file-invoice-dollar"></i>
-                            <span>Review transactions</span>
-                        </button>
+                    <div class="header-actions mt-3">
+                        <a href="../core/dashboard.php" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
                     </div>
                 </div>
-
-                <nav class="gl-quick-nav" aria-label="Ledger quick links">
-                    <button class="gl-quick-nav__item" type="button" onclick="scrollToSection('accounts')">
-                        <i class="fas fa-table"></i>
-                        <span>Accounts</span>
-                    </button>
-                    <button class="gl-quick-nav__item" type="button" onclick="scrollToSection('transactions')">
-                        <i class="fas fa-shuffle"></i>
-                        <span>Transactions</span>
-                    </button>
-                    <button class="gl-quick-nav__item" type="button" onclick="scrollToSection('audit')">
-                        <i class="fas fa-clipboard-check"></i>
-                        <span>Audit trail</span>
-                    </button>
-                </nav>
-            </header>
+            </div>
 
             <!-- Statistics Cards -->
-            <div class="gl-stats-section">
-                <div class="row g-3">
-                    <div class="col-md-3">
+            <div class="row g-3 mb-4">
+                    <div class="col-12 col-sm-6 col-md-3">
                         <div class="stat-card">
                             <div class="stat-icon">
                                 <i class="fas fa-list-alt"></i>
@@ -218,19 +206,79 @@ $current_user = getCurrentUser();
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-12 col-sm-6 col-md-3">
                         <div class="stat-card">
                             <div class="stat-icon">
                                 <i class="fas fa-exchange-alt"></i>
                             </div>
                             <div class="stat-content">
                                 <h3 id="total-transactions">Loading...</h3>
-                                <p>Total Transactions</p>
+                                <p>Posted Transactions</p>
                                 <a href="#transactions" class="stat-link">View Details</a>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="total-draft">Loading...</h3>
+                                <p>Draft Entries</p>
+                                <a href="#transactions" class="stat-link">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="total-voided">Loading...</h3>
+                                <p>Voided Entries</p>
+                                <a href="#transactions" class="stat-link">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="total-journal-types">Loading...</h3>
+                                <p>Journal Types</p>
+                                <a href="#transactions" class="stat-link">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="total-fiscal-periods">Loading...</h3>
+                                <p>Fiscal Periods</p>
+                                <a href="#transactions" class="stat-link">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="total-balance">Loading...</h3>
+                                <p>Total Balance</p>
+                                <a href="#accounts" class="stat-link">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
                         <div class="stat-card">
                             <div class="stat-icon">
                                 <i class="fas fa-history"></i>
@@ -242,8 +290,6 @@ $current_user = getCurrentUser();
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
             <!-- Charts Overview -->
             <div class="gl-section">
@@ -400,18 +446,118 @@ $current_user = getCurrentUser();
                     <h2>Audit Trail</h2>
                     <p>Track all system activities and changes</p>
                 </div>
-                <div class="chart-grid">
-                    <div class="chart-container">
-                        <h4>Account Type Distribution</h4>
-                        <div class="chart-wrapper">
-                            <canvas id="auditAccountTypesChart"></canvas>
+                <div class="gl-toolbar" role="search" aria-label="Audit trail filters">
+                    <div class="gl-toolbar__field">
+                        <label for="audit-date-from" class="visually-hidden">From date</label>
+                        <input type="date" id="audit-date-from" class="gl-input" placeholder="From date">
+                    </div>
+                    <div class="gl-toolbar__field">
+                        <label for="audit-date-to" class="visually-hidden">To date</label>
+                        <input type="date" id="audit-date-to" class="gl-input" placeholder="To date">
+                    </div>
+                    <div class="gl-toolbar__actions">
+                        <button class="btn-filter" type="button" onclick="loadAuditTrail()">
+                            <i class="fas fa-filter"></i>
+                            <span>Apply filter</span>
+                        </button>
+                        <button class="btn-reset" type="button" onclick="resetAuditFilter()">
+                            <i class="fas fa-rotate-left"></i>
+                            <span>Reset</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="gl-table" id="audit-trail-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Object Type</th>
+                                <th>Description</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="loading-spinner"></div>
+                                    <p>Loading audit trail...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-actions-row">
+                    <span class="table-actions-hint">Showing last 100 audit log entries</span>
+                    <div class="table-actions">
+                        <button class="btn-action btn-action-outline" type="button" onclick="exportAuditTrail()">Export</button>
+                        <button class="btn-action" type="button" onclick="loadAuditTrail()">Refresh</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trial Balance Report -->
+            <div class="gl-section" id="trial-balance">
+                <div class="section-header">
+                    <h2>Trial Balance</h2>
+                    <p>Account balances summary for a specific date range</p>
+                </div>
+                <div class="gl-toolbar" role="search" aria-label="Trial balance filters">
+                    <div class="gl-toolbar__group">
+                        <div class="gl-toolbar__field gl-toolbar__field--compact">
+                            <label for="trial-balance-from">From</label>
+                            <input type="date" id="trial-balance-from" class="gl-input">
+                        </div>
+                        <div class="gl-toolbar__field gl-toolbar__field--compact">
+                            <label for="trial-balance-to">To</label>
+                            <input type="date" id="trial-balance-to" class="gl-input">
                         </div>
                     </div>
-                    <div class="chart-container">
-                        <h4>Transaction Summary by Category</h4>
-                        <div class="chart-wrapper">
-                            <canvas id="auditTransactionChart"></canvas>
-                        </div>
+                    <div class="gl-toolbar__actions">
+                        <button class="btn-filter" type="button" onclick="generateTrialBalance()">
+                            <i class="fas fa-calculator"></i>
+                            <span>Generate Report</span>
+                        </button>
+                        <button class="btn-reset" type="button" onclick="resetTrialBalanceFilter()">
+                            <i class="fas fa-rotate-left"></i>
+                            <span>Reset</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="gl-table" id="trial-balance-table">
+                        <thead>
+                            <tr>
+                                <th>Account Code</th>
+                                <th>Account Name</th>
+                                <th>Type</th>
+                                <th class="text-end">Debit Balance</th>
+                                <th class="text-end">Credit Balance</th>
+                                <th class="text-end">Net Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p class="text-muted">Select date range and click "Generate Report" to view trial balance</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="trial-balance-footer" style="display: none;">
+                            <!-- Totals will be added here -->
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="table-actions-row">
+                    <span class="table-actions-hint" id="trial-balance-hint">Trial balance for selected period</span>
+                    <div class="table-actions">
+                        <button class="btn-action btn-action-outline" type="button" onclick="exportTrialBalance()" id="exportTrialBalanceBtn" style="display: none;">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                        <button class="btn-action btn-action-outline" type="button" onclick="printTrialBalance()" id="printTrialBalanceBtn" style="display: none;">
+                            <i class="fas fa-print me-1"></i>Print
+                        </button>
                     </div>
                 </div>
             </div>
@@ -472,9 +618,33 @@ $current_user = getCurrentUser();
                     </table>
                 </div>
             </div>
-
-        </div>
     </main>
+
+    <!-- Journal Entry Detail Modal -->
+    <div class="modal fade" id="journalEntryDetailModal" tabindex="-1" aria-labelledby="journalEntryDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="journalEntryDetailModalLabel">
+                        <i class="fas fa-file-invoice me-2"></i>Journal Entry Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="journalEntryDetailBody">
+                    <p class="text-center text-muted">Loading details...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success d-none" id="postJournalEntryBtn" onclick="postJournalEntry()">
+                        <i class="fas fa-check me-1"></i>Post
+                    </button>
+                    <button type="button" class="btn btn-danger d-none" id="voidJournalEntryBtn" onclick="voidJournalEntry()">
+                        <i class="fas fa-times me-1"></i>Void
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="gl-footer">

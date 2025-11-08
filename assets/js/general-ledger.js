@@ -17,6 +17,13 @@ function initializeGeneralLedger() {
     loadCharts();
     loadAccountsTable();
     loadTransactionsTable();
+    
+    // Load audit trail after a delay to ensure DOM is ready
+    setTimeout(() => {
+        if (document.getElementById('audit-trail-table')) {
+            loadAuditTrail();
+        }
+    }, 1500);
 }
 
 // ========================================
@@ -81,6 +88,11 @@ function showStatisticsLoadingState() {
     const elements = {
         'total-accounts': 'Loading...',
         'total-transactions': 'Loading...',
+        'total-draft': 'Loading...',
+        'total-voided': 'Loading...',
+        'total-journal-types': 'Loading...',
+        'total-fiscal-periods': 'Loading...',
+        'total-balance': 'Loading...',
         'total-audit': 'Loading...'
     };
     
@@ -94,9 +106,14 @@ function showStatisticsLoadingState() {
 
 function animateStatistics(data) {
     const elements = {
-        'total-accounts': data.total_accounts,
-        'total-transactions': data.total_transactions,
-        'total-audit': data.total_audit
+        'total-accounts': data.total_accounts || data.total_account || 0,
+        'total-transactions': data.total_transactions || 0,
+        'total-draft': data.total_draft || 0,
+        'total-voided': data.total_voided || 0,
+        'total-journal-types': data.total_journal_types || 0,
+        'total-fiscal-periods': data.total_fiscal_periods || 0,
+        'total-balance': data.total_balance || 0,
+        'total-audit': data.total_audit || 0
     };
     
     Object.entries(elements).forEach(([id, value]) => {
@@ -104,7 +121,13 @@ function animateStatistics(data) {
         if (element) {
             // Clear loading text
             element.innerHTML = '';
-            animateNumber(element, 0, value, 1500);
+            if (id === 'total-balance') {
+                // Format currency for balance
+                element.textContent = '₱' + formatCurrency(value);
+            } else {
+                // Animate numbers
+                animateNumber(element, 0, value, 1500);
+            }
         }
     });
 }
@@ -608,13 +631,15 @@ function displayTransactionsTable(transactions) {
     let html = '';
     transactions.slice(0, 10).forEach((txn, index) => {
         html += `
-            <tr style="animation-delay: ${index * 0.1}s">
+            <tr style="animation-delay: ${index * 0.1}s" data-entry-id="${txn.id || ''}">
                 <td><strong class="transaction-id">${txn.journal_no}</strong></td>
                 <td><span class="transaction-date">${txn.entry_date}</span></td>
                 <td><span class="transaction-desc">${txn.description || '-'}</span></td>
                 <td class="text-end amount-debit">₱${formatCurrency(txn.total_debit)}</td>
                 <td class="text-end amount-credit">₱${formatCurrency(txn.total_credit)}</td>
-                <td><button class="btn btn-sm btn-outline-primary" onclick="viewTransactionDetails('${txn.journal_no}')">View</button></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewTransactionDetailsById(${txn.id || 0}, '${txn.journal_no}')">View</button>
+                </td>
             </tr>
         `;
     });
@@ -890,6 +915,11 @@ function getFallbackStatistics() {
     return {
         total_accounts: 247,
         total_transactions: 1542,
+        total_draft: 15,
+        total_voided: 3,
+        total_journal_types: 8,
+        total_fiscal_periods: 4,
+        total_balance: 1250000.00,
         total_audit: 89
     };
 }
@@ -927,3 +957,683 @@ function getFallbackTransactions() {
         { journal_no: 'TXN-2024-005', entry_date: 'Jan 11, 2024', description: 'Service Revenue', total_debit: 0, total_credit: 8900.00, status: 'posted' }
     ];
 }
+
+// ========================================
+// JOURNAL ENTRY MANAGEMENT
+// ========================================
+
+let currentJournalEntryId = null;
+
+function viewTransactionDetailsById(entryId, journalNo) {
+    if (entryId && entryId > 0) {
+        loadJournalEntryDetails(entryId);
+    } else {
+        // Fallback to journal number search
+        viewTransactionDetails(journalNo);
+    }
+}
+
+function viewTransactionDetails(journalNo) {
+    // Fallback: search in loaded transactions
+    fetch(`../modules/api/general-ledger-data.php?action=get_transactions`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const entry = data.data.find(t => t.journal_no === journalNo);
+                if (entry && entry.id) {
+                    loadJournalEntryDetails(entry.id);
+                } else {
+                    showNotification('Journal entry not found', 'error');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error loading journal entry details', 'error');
+        });
+}
+
+function loadJournalEntryDetails(entryId) {
+    fetch(`../modules/api/general-ledger-data.php?action=get_journal_entry_details&id=${entryId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayJournalEntryDetails(data.data);
+                currentJournalEntryId = entryId;
+            } else {
+                showNotification(data.message || 'Error loading details', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error loading journal entry details', 'error');
+        });
+}
+
+function displayJournalEntryDetails(entry) {
+    const body = document.getElementById('journalEntryDetailBody');
+    
+    // Format dates
+    const entryDate = entry.entry_date ? new Date(entry.entry_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A';
+    const createdDate = entry.created_at ? new Date(entry.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+    const postedDate = entry.posted_at ? new Date(entry.posted_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+    
+    let html = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>Journal Number:</strong> ${entry.journal_no}<br>
+                <strong>Type:</strong> ${entry.type_name} (${entry.type_code})<br>
+                <strong>Date:</strong> ${entryDate}<br>
+                <strong>Status:</strong> <span class="badge bg-${getStatusColor(entry.status)}">${entry.status.toUpperCase()}</span>
+            </div>
+            <div class="col-md-6">
+                <strong>Fiscal Period:</strong> ${entry.period_name || 'N/A'}<br>
+                <strong>Reference:</strong> ${entry.reference_no || 'N/A'}<br>
+                <strong>Created By:</strong> ${entry.created_by_name} on ${createdDate}<br>
+                ${entry.posted_by_name ? `<strong>Posted By:</strong> ${entry.posted_by_name} on ${postedDate}<br>` : ''}
+            </div>
+        </div>
+        <div class="mb-3">
+            <strong>Description:</strong><br>
+            <p>${entry.description || 'N/A'}</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Account</th>
+                        <th>Account Name</th>
+                        <th class="text-end">Debit</th>
+                        <th class="text-end">Credit</th>
+                        <th>Memo</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    entry.lines.forEach(line => {
+        html += `
+            <tr>
+                <td>${line.account_code}</td>
+                <td>${line.account_name}</td>
+                <td class="text-end">${line.debit > 0 ? '₱' + formatCurrency(line.debit) : '-'}</td>
+                <td class="text-end">${line.credit > 0 ? '₱' + formatCurrency(line.credit) : '-'}</td>
+                <td>${line.memo || '-'}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="2">Total</th>
+                        <th class="text-end">₱${formatCurrency(entry.total_debit)}</th>
+                        <th class="text-end">₱${formatCurrency(entry.total_credit)}</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+    
+    body.innerHTML = html;
+    
+    // Show/hide action buttons based on permissions
+    document.getElementById('postJournalEntryBtn').classList.toggle('d-none', !entry.can_post);
+    document.getElementById('voidJournalEntryBtn').classList.toggle('d-none', !entry.can_void);
+    
+    const modal = new bootstrap.Modal(document.getElementById('journalEntryDetailModal'));
+    modal.show();
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'draft': 'secondary',
+        'posted': 'success',
+        'voided': 'danger',
+        'reversed': 'warning'
+    };
+    return colors[status] || 'secondary';
+}
+
+
+function postJournalEntry() {
+    if (!currentJournalEntryId) return;
+    
+    if (!confirm('Are you sure you want to post this journal entry? This action cannot be undone.')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('action', 'post_journal_entry');
+    formData.append('journal_entry_id', currentJournalEntryId);
+    
+    fetch('../modules/api/general-ledger-data.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('journalEntryDetailModal'));
+            modal.hide();
+            loadTransactionsTable();
+            loadStatistics();
+        } else {
+            showNotification(data.message || 'Error posting journal entry', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error posting journal entry', 'error');
+    });
+}
+
+function voidJournalEntry() {
+    if (!currentJournalEntryId) return;
+    
+    const reason = prompt('Please enter a reason for voiding this journal entry:');
+    if (!reason) return;
+    
+    if (!confirm('Are you sure you want to void this journal entry? This will reverse all account balances.')) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('action', 'void_journal_entry');
+    formData.append('journal_entry_id', currentJournalEntryId);
+    formData.append('reason', reason);
+    
+    fetch('../modules/api/general-ledger-data.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('journalEntryDetailModal'));
+            modal.hide();
+            loadTransactionsTable();
+            loadStatistics();
+        } else {
+            showNotification(data.message || 'Error voiding journal entry', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error voiding journal entry', 'error');
+    });
+}
+
+// ========================================
+// AUDIT TRAIL FUNCTIONS
+// ========================================
+
+function loadAuditTrail() {
+    const dateFrom = document.getElementById('audit-date-from')?.value || '';
+    const dateTo = document.getElementById('audit-date-to')?.value || '';
+    
+    const params = new URLSearchParams();
+    params.append('action', 'get_audit_trail');
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    
+    fetch(`../modules/api/general-ledger-data.php?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAuditTrail(data.data);
+            } else {
+                console.error('Error loading audit trail:', data.message);
+                showNotification('Error loading audit trail', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading audit trail:', error);
+            showNotification('Error loading audit trail', 'error');
+        });
+}
+
+function displayAuditTrail(logs) {
+    const tbody = document.querySelector('#audit-trail-table tbody');
+    
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No audit log entries found</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    logs.forEach(log => {
+        html += `
+            <tr>
+                <td>${log.created_at}</td>
+                <td>${log.full_name} (${log.username})</td>
+                <td><span class="badge bg-info">${log.action}</span></td>
+                <td>${log.object_type}</td>
+                <td>${log.additional_info || '-'}</td>
+                <td>${log.ip_address || '-'}</td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+function resetAuditFilter() {
+    document.getElementById('audit-date-from').value = '';
+    document.getElementById('audit-date-to').value = '';
+    loadAuditTrail();
+}
+
+function exportAuditTrail() {
+    showNotification('Export functionality coming soon', 'info');
+}
+
+// ========================================
+// TRIAL BALANCE FUNCTIONS
+// ========================================
+
+function generateTrialBalance() {
+    const dateFrom = document.getElementById('trial-balance-from')?.value || '';
+    const dateTo = document.getElementById('trial-balance-to')?.value || '';
+    
+    if (!dateFrom || !dateTo) {
+        showNotification('Please select both start and end dates', 'error');
+        return;
+    }
+    
+    if (new Date(dateFrom) > new Date(dateTo)) {
+        showNotification('Start date cannot be after end date', 'error');
+        return;
+    }
+    
+    const params = new URLSearchParams();
+    params.append('action', 'get_trial_balance');
+    params.append('date_from', dateFrom);
+    params.append('date_to', dateTo);
+    
+    const tbody = document.querySelector('#trial-balance-table tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="loading-spinner"></div><p>Generating trial balance...</p></td></tr>';
+    
+    fetch(`../modules/api/general-ledger-data.php?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayTrialBalance(data.data);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">Error: ${data.message || 'Failed to generate trial balance'}</td></tr>`;
+                showNotification(data.message || 'Error generating trial balance', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error generating trial balance:', error);
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Error generating trial balance</td></tr>';
+            showNotification('Error generating trial balance', 'error');
+        });
+}
+
+function displayTrialBalance(data) {
+    const tbody = document.querySelector('#trial-balance-table tbody');
+    const footer = document.getElementById('trial-balance-footer');
+    const hint = document.getElementById('trial-balance-hint');
+    const exportBtn = document.getElementById('exportTrialBalanceBtn');
+    const printBtn = document.getElementById('printTrialBalanceBtn');
+    
+    if (data.accounts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No transactions found for the selected period</td></tr>';
+        footer.style.display = 'none';
+        exportBtn.style.display = 'none';
+        printBtn.style.display = 'none';
+        hint.textContent = 'No data for selected period';
+        return;
+    }
+    
+    let html = '';
+    data.accounts.forEach(account => {
+        const netBalance = account.net_balance;
+        const netBalanceClass = netBalance >= 0 ? 'text-success' : 'text-danger';
+        const netBalanceDisplay = netBalance >= 0 ? 
+            `₱${formatCurrency(Math.abs(netBalance))}` : 
+            `(₱${formatCurrency(Math.abs(netBalance))})`;
+        
+        html += `
+            <tr>
+                <td>${account.code}</td>
+                <td>${account.name}</td>
+                <td><span class="badge bg-secondary">${account.account_type}</span></td>
+                <td class="text-end">${account.debit_balance > 0 ? '₱' + formatCurrency(account.debit_balance) : '-'}</td>
+                <td class="text-end">${account.credit_balance > 0 ? '₱' + formatCurrency(account.credit_balance) : '-'}</td>
+                <td class="text-end ${netBalanceClass}">${netBalanceDisplay}</td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+    
+    // Display totals in footer
+    const totals = data.totals;
+    const difference = totals.difference;
+    const differenceClass = difference > 0.01 ? 'text-danger' : 'text-success';
+    const differenceDisplay = difference > 0.01 ? 
+        `Difference: ₱${formatCurrency(difference)}` : 
+        'Balanced';
+    
+    footer.innerHTML = `
+        <tr class="table-light">
+            <th colspan="3" class="text-end">TOTALS:</th>
+            <th class="text-end">₱${formatCurrency(totals.total_debit)}</th>
+            <th class="text-end">₱${formatCurrency(totals.total_credit)}</th>
+            <th class="text-end ${differenceClass}">${differenceDisplay}</th>
+        </tr>
+    `;
+    footer.style.display = '';
+    
+    // Update hint and show export/print buttons
+    const fromDate = new Date(data.date_from).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const toDate = new Date(data.date_to).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    hint.textContent = `Trial balance from ${fromDate} to ${toDate}`;
+    exportBtn.style.display = 'inline-block';
+    printBtn.style.display = 'inline-block';
+    
+    // Store data for export/print
+    window.currentTrialBalanceData = data;
+}
+
+function resetTrialBalanceFilter() {
+    document.getElementById('trial-balance-from').value = '';
+    document.getElementById('trial-balance-to').value = '';
+    const tbody = document.querySelector('#trial-balance-table tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><p class="text-muted">Select date range and click "Generate Report" to view trial balance</p></td></tr>';
+    document.getElementById('trial-balance-footer').style.display = 'none';
+    document.getElementById('exportTrialBalanceBtn').style.display = 'none';
+    document.getElementById('printTrialBalanceBtn').style.display = 'none';
+    document.getElementById('trial-balance-hint').textContent = 'Trial balance for selected period';
+    window.currentTrialBalanceData = null;
+}
+
+function exportTrialBalance() {
+    if (!window.currentTrialBalanceData) {
+        showNotification('No trial balance data to export', 'error');
+        return;
+    }
+    
+    const data = window.currentTrialBalanceData;
+    const fromDate = data.date_from.replace(/-/g, '');
+    const toDate = data.date_to.replace(/-/g, '');
+    
+    // Create CSV content
+    let csv = 'Trial Balance Report\n';
+    csv += `Period: ${data.date_from} to ${data.date_to}\n\n`;
+    csv += 'Account Code,Account Name,Type,Debit Balance,Credit Balance,Net Balance\n';
+    
+    data.accounts.forEach(account => {
+        csv += `"${account.code}","${account.name}","${account.account_type}",${account.debit_balance},${account.credit_balance},${account.net_balance}\n`;
+    });
+    
+    csv += `\nTotal,${data.totals.total_debit},${data.totals.total_credit},${data.totals.total_debit - data.totals.total_credit}\n`;
+    
+    // Download CSV
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `trial_balance_${fromDate}_${toDate}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Trial balance exported successfully', 'success');
+}
+
+function printTrialBalance() {
+    if (!window.currentTrialBalanceData) {
+        showNotification('No trial balance data to print', 'error');
+        return;
+    }
+    
+    const data = window.currentTrialBalanceData;
+    const fromDate = new Date(data.date_from).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const toDate = new Date(data.date_to).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    
+    // Create print-friendly HTML
+    let printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Trial Balance Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { text-align: center; margin-bottom: 10px; }
+                .period { text-align: center; margin-bottom: 20px; color: #666; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .text-end { text-align: right; }
+                .text-success { color: #28a745; }
+                .text-danger { color: #dc3545; }
+                .footer { margin-top: 20px; font-size: 12px; color: #666; }
+            </style>
+        </head>
+        <body>
+            <h1>Trial Balance Report</h1>
+            <div class="period">Period: ${fromDate} to ${toDate}</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Account Code</th>
+                        <th>Account Name</th>
+                        <th>Type</th>
+                        <th class="text-end">Debit Balance</th>
+                        <th class="text-end">Credit Balance</th>
+                        <th class="text-end">Net Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    data.accounts.forEach(account => {
+        const netBalance = account.net_balance;
+        const netBalanceClass = netBalance >= 0 ? 'text-success' : 'text-danger';
+        const netBalanceDisplay = netBalance >= 0 ? 
+            `₱${formatCurrency(Math.abs(netBalance))}` : 
+            `(₱${formatCurrency(Math.abs(netBalance))})`;
+        
+        printContent += `
+            <tr>
+                <td>${account.code}</td>
+                <td>${account.name}</td>
+                <td>${account.account_type}</td>
+                <td class="text-end">${account.debit_balance > 0 ? '₱' + formatCurrency(account.debit_balance) : '-'}</td>
+                <td class="text-end">${account.credit_balance > 0 ? '₱' + formatCurrency(account.credit_balance) : '-'}</td>
+                <td class="text-end ${netBalanceClass}">${netBalanceDisplay}</td>
+            </tr>
+        `;
+    });
+    
+    const difference = data.totals.difference;
+    const differenceClass = difference > 0.01 ? 'text-danger' : 'text-success';
+    const differenceDisplay = difference > 0.01 ? 
+        `Difference: ₱${formatCurrency(difference)}` : 
+        'Balanced';
+    
+    printContent += `
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f2f2f2; font-weight: bold;">
+                        <td colspan="3" class="text-end">TOTALS:</td>
+                        <td class="text-end">₱${formatCurrency(data.totals.total_debit)}</td>
+                        <td class="text-end">₱${formatCurrency(data.totals.total_credit)}</td>
+                        <td class="text-end ${differenceClass}">${differenceDisplay}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="footer">Generated on ${new Date().toLocaleString()}</div>
+        </body>
+        </html>
+    `;
+    
+    // Open print window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+    }, 250);
+}
+
+// ========================================
+// EXPORT FUNCTIONS
+// ========================================
+
+function exportAccounts() {
+    const search = document.getElementById('account-search')?.value || '';
+    
+    const params = new URLSearchParams();
+    params.append('action', 'export_accounts');
+    if (search) params.append('search', search);
+    
+    fetch(`../modules/api/general-ledger-data.php?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Create CSV content
+                let csv = 'Account Code,Account Name,Type,Balance,Status\n';
+                
+                data.data.forEach(account => {
+                    csv += `"${account.code}","${account.name}","${account.type}",${account.balance},"${account.status}"\n`;
+                });
+                
+                // Download CSV
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', data.filename || 'accounts_export.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('Accounts exported successfully', 'success');
+            } else {
+                showNotification(data.message || 'Error exporting accounts', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error exporting accounts:', error);
+            showNotification('Error exporting accounts', 'error');
+        });
+}
+
+function exportTransactions() {
+    const dateFrom = document.getElementById('transaction-from')?.value || '';
+    const dateTo = document.getElementById('transaction-to')?.value || '';
+    const type = document.getElementById('transaction-type')?.value || '';
+    
+    const params = new URLSearchParams();
+    params.append('action', 'export_transactions');
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    if (type) params.append('type', type);
+    
+    fetch(`../modules/api/general-ledger-data.php?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Create CSV content
+                let csv = 'Journal Number,Entry Date,Type,Description,Reference Number,Debit,Credit,Status,Created By\n';
+                
+                data.data.forEach(txn => {
+                    csv += `"${txn.journal_no}","${txn.entry_date}","${txn.type}","${txn.description}","${txn.reference_no || ''}",${txn.debit},${txn.credit},"${txn.status}","${txn.created_by}"\n`;
+                });
+                
+                // Download CSV
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', data.filename || 'transactions_export.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('Transactions exported successfully', 'success');
+            } else {
+                showNotification(data.message || 'Error exporting transactions', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error exporting transactions:', error);
+            showNotification('Error exporting transactions', 'error');
+        });
+}
+
+function printTransactions() {
+    const table = document.getElementById('recent-transactions-table');
+    if (!table) {
+        showNotification('No transaction data to print', 'error');
+        return;
+    }
+    
+    // Create print-friendly HTML
+    let printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Transaction Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .text-end { text-align: right; }
+                .footer { margin-top: 20px; font-size: 12px; color: #666; }
+            </style>
+        </head>
+        <body>
+            <h1>Transaction Report</h1>
+            <table>
+    `;
+    
+    // Copy table structure
+    printContent += table.outerHTML;
+    
+    printContent += `
+            </table>
+            <div class="footer">Generated on ${new Date().toLocaleString()}</div>
+        </body>
+        </html>
+    `;
+    
+    // Open print window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+    }, 250);
+}
+
+// Make functions globally available
+window.viewTransactionDetails = viewTransactionDetails;
+window.viewTransactionDetailsById = viewTransactionDetailsById;
+window.postJournalEntry = postJournalEntry;
+window.voidJournalEntry = voidJournalEntry;
+window.loadAuditTrail = loadAuditTrail;
+window.resetAuditFilter = resetAuditFilter;
+window.exportAuditTrail = exportAuditTrail;
+window.generateTrialBalance = generateTrialBalance;
+window.resetTrialBalanceFilter = resetTrialBalanceFilter;
+window.exportTrialBalance = exportTrialBalance;
+window.printTrialBalance = printTrialBalance;
+window.exportAccounts = exportAccounts;
+window.exportTransactions = exportTransactions;
+window.printTransactions = printTransactions;
