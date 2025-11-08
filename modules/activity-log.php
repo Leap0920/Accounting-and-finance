@@ -131,7 +131,9 @@ if ($conn) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Activity Log - Accounting and Finance System</title>
-    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../assets/image/LOGO.png">
+    <link rel="shortcut icon" type="image/png" href="../assets/image/LOGO.png">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
