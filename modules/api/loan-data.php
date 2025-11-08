@@ -98,6 +98,10 @@ try {
             processPayment();
             break;
         
+        case 'get_application_details':
+            getApplicationDetails();
+            break;
+        
         default:
             throw new Exception('Invalid action');
     }
@@ -847,6 +851,74 @@ function processPayment() {
         $conn->rollback();
         throw $e;
     }
+}
+
+/**
+ * Get detailed information for a loan application
+ * Including all application fields from the updated schema
+ */
+function getApplicationDetails() {
+    global $conn;
+    
+    $applicationId = $_GET['id'] ?? '';
+    
+    if (empty($applicationId)) {
+        throw new Exception('Application ID is required');
+    }
+    
+    // Get main application data with all new fields
+    $sql = "SELECT 
+                la.*,
+                la.id as application_id,
+                CONCAT('APP-', la.id) as application_number,
+                COALESCE(la.full_name, la.user_email) as borrower_name,
+                la.loan_amount,
+                la.loan_type,
+                la.loan_terms,
+                la.monthly_payment,
+                la.due_date,
+                la.next_payment_due,
+                la.status,
+                la.purpose,
+                la.remarks,
+                la.file_name,
+                la.proof_of_income,
+                la.coe_document,
+                la.pdf_path,
+                la.approved_by,
+                la.approved_at,
+                la.rejected_by,
+                la.rejected_at,
+                la.rejection_remarks,
+                lt.name as loan_type_name,
+                lt.description as loan_type_description,
+                lt.interest_rate as loan_type_interest_rate,
+                u_app.full_name as approved_by_name,
+                u_rej.full_name as rejected_by_name,
+                la.created_at
+            FROM loan_applications la
+            LEFT JOIN loan_types lt ON la.loan_type_id = lt.id
+            LEFT JOIN users u_app ON la.approved_by_user_id = u_app.id
+            LEFT JOIN users u_rej ON la.rejected_by_user_id = u_rej.id
+            WHERE la.id = ?";
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $applicationId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $application = $result->fetch_assoc();
+    
+    if (!$application) {
+        throw new Exception('Application not found');
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'data' => $application
+    ]);
+    
+    ob_end_flush();
+    exit();
 }
 
 /**

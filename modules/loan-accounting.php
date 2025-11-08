@@ -60,7 +60,7 @@ $sql = "SELECT
                 ELSE 0
             END as loan_term,
             la.created_at as start_date,
-            NULL as maturity_date,
+            la.due_date as maturity_date,
             0.00 as outstanding_balance,
             la.status,
             'application' as record_type,
@@ -74,6 +74,19 @@ $sql = "SELECT
             la.monthly_salary,
             la.user_email,
             la.purpose,
+            la.monthly_payment,
+            la.due_date,
+            la.next_payment_due,
+            la.approved_by,
+            la.approved_at,
+            la.rejected_by,
+            la.rejected_at,
+            la.rejection_remarks,
+            la.remarks,
+            la.file_name,
+            la.proof_of_income,
+            la.coe_document,
+            la.pdf_path,
             la.id as application_id
         FROM loan_applications la
         LEFT JOIN loan_types lt_app ON la.loan_type_id = lt_app.id
@@ -179,6 +192,10 @@ if ($conn) {
                 $row['purpose'] = null;
                 $row['application_id'] = null;
                 $row['account_number'] = null;
+                $row['monthly_payment'] = null;
+                $row['due_date'] = null;
+                $row['next_payment_due'] = null;
+                $row['record_type'] = 'loan';
                 $loans[] = $row;
             }
             $hasResults = count($loans) > 0;
@@ -610,6 +627,8 @@ foreach ($loans as $loan) {
                                 <td>
                                     <?php if (!empty($loan['maturity_date'])): ?>
                                         <?php echo date('M d, Y', strtotime($loan['maturity_date'])); ?>
+                                    <?php elseif ($loan['record_type'] === 'application' && !empty($loan['due_date'])): ?>
+                                        <?php echo date('M d, Y', strtotime($loan['due_date'])); ?>
                                     <?php else: ?>
                                         <span class="text-muted">N/A</span>
                                     <?php endif; ?>
@@ -619,6 +638,8 @@ foreach ($loans as $loan) {
                                 <td class="text-end">
                                     <?php if ($loan['record_type'] === 'loan'): ?>
                                         ₱<?php echo number_format($loan['outstanding_balance'], 2); ?>
+                                    <?php elseif ($loan['record_type'] === 'application' && !empty($loan['monthly_payment'])): ?>
+                                        <small class="text-muted">Monthly: ₱<?php echo number_format($loan['monthly_payment'], 2); ?></small>
                                     <?php else: ?>
                                         <span class="text-muted">-</span>
                                     <?php endif; ?>

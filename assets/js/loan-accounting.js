@@ -335,6 +335,248 @@
     };
 
     /**
+     * View application details
+     */
+    window.viewApplicationDetails = function(applicationId) {
+        currentLoanId = applicationId;
+        
+        const modal = new bootstrap.Modal(document.getElementById('loanDetailsModal'));
+        const modalBody = document.getElementById('loanDetailsBody');
+        
+        // Update modal title
+        const modalTitle = document.querySelector('#loanDetailsModal .modal-title');
+        if (modalTitle) {
+            modalTitle.innerHTML = '<i class="fas fa-file-alt me-2"></i>Loan Application Details';
+        }
+        
+        // Show loading state
+        modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Loading application details...</p></div>';
+        
+        modal.show();
+        
+        // Fetch application details from API
+        fetch('api/loan-data.php?action=get_application_details&id=' + applicationId)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.data) {
+                    displayApplicationDetails(data.data);
+                } else {
+                    modalBody.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>Error:</strong> ${data.error || 'Failed to load application details'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching application details:', error);
+                modalBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Error Loading Application Details</strong>
+                        <p class="mb-2 mt-2">Unable to fetch application details from the server.</p>
+                        <p class="mb-0"><small>Error: ${error.message}</small></p>
+                    </div>
+                `;
+            });
+    };
+    
+    /**
+     * Display application details in modal
+     */
+    function displayApplicationDetails(app) {
+        const modalBody = document.getElementById('loanDetailsBody');
+        
+        const loanAmount = parseFloat(app.loan_amount || 0);
+        const monthlyPayment = parseFloat(app.monthly_payment || 0);
+        
+        let html = `
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="loan-detail-section">
+                        <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Applicant Information</h6>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Application Number:</span>
+                            <span class="loan-detail-value"><strong>${app.application_number || 'APP-' + app.application_id || 'N/A'}</strong></span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Full Name:</span>
+                            <span class="loan-detail-value">${app.full_name || app.borrower_name || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Account Number:</span>
+                            <span class="loan-detail-value">${app.account_number || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Contact Number:</span>
+                            <span class="loan-detail-value">${app.contact_number || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Email:</span>
+                            <span class="loan-detail-value">${app.email || app.user_email || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Job/Position:</span>
+                            <span class="loan-detail-value">${app.job || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Monthly Salary:</span>
+                            <span class="loan-detail-value">${app.monthly_salary ? '₱' + parseFloat(app.monthly_salary).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="loan-detail-section">
+                        <h6 class="text-primary mb-3"><i class="fas fa-file-contract me-2"></i>Loan Application Details</h6>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Loan Type:</span>
+                            <span class="loan-detail-value">${app.loan_type_name || app.loan_type || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Loan Terms:</span>
+                            <span class="loan-detail-value">${app.loan_terms || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Loan Amount:</span>
+                            <span class="loan-detail-value"><strong class="text-primary">₱${loanAmount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Monthly Payment:</span>
+                            <span class="loan-detail-value"><strong class="text-success">₱${monthlyPayment.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Due Date:</span>
+                            <span class="loan-detail-value">${app.due_date ? formatDate(app.due_date) : 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Next Payment Due:</span>
+                            <span class="loan-detail-value">${app.next_payment_due ? formatDate(app.next_payment_due) : 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Purpose:</span>
+                            <span class="loan-detail-value">${app.purpose || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Status:</span>
+                            <span class="loan-detail-value"><span class="badge status-${(app.status || '').toLowerCase()}">${(app.status || 'N/A').toUpperCase()}</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loan-detail-section">
+                <h6 class="text-primary mb-3"><i class="fas fa-clipboard-check me-2"></i>Application Workflow</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        ${app.approved_by || app.approved_at ? `
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Approved By:</span>
+                            <span class="loan-detail-value">${app.approved_by_name || app.approved_by || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Approved At:</span>
+                            <span class="loan-detail-value">${app.approved_at ? new Date(app.approved_at).toLocaleString('en-US') : 'N/A'}</span>
+                        </div>
+                        ` : ''}
+                        ${app.remarks ? `
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Remarks:</span>
+                            <span class="loan-detail-value">${app.remarks}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="col-md-6">
+                        ${app.rejected_by || app.rejected_at ? `
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Rejected By:</span>
+                            <span class="loan-detail-value">${app.rejected_by_name || app.rejected_by || 'N/A'}</span>
+                        </div>
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Rejected At:</span>
+                            <span class="loan-detail-value">${app.rejected_at ? new Date(app.rejected_at).toLocaleString('en-US') : 'N/A'}</span>
+                        </div>
+                        ${app.rejection_remarks ? `
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Rejection Remarks:</span>
+                            <span class="loan-detail-value text-danger">${app.rejection_remarks}</span>
+                        </div>
+                        ` : ''}
+                        ` : ''}
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Created At:</span>
+                            <span class="loan-detail-value"><small>${app.created_at ? new Date(app.created_at).toLocaleString('en-US') : 'N/A'}</small></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            ${(app.proof_of_income || app.coe_document || app.file_name || app.pdf_path) ? `
+            <div class="loan-detail-section mt-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-file-upload me-2"></i>Supporting Documents</h6>
+                <div class="row">
+                    ${app.file_name ? `
+                    <div class="col-md-6 mb-2">
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Valid ID:</span>
+                            <span class="loan-detail-value">
+                                <a href="../${app.file_name}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file me-1"></i>View File
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${app.proof_of_income ? `
+                    <div class="col-md-6 mb-2">
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Proof of Income:</span>
+                            <span class="loan-detail-value">
+                                <a href="../${app.proof_of_income}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file me-1"></i>View File
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${app.coe_document ? `
+                    <div class="col-md-6 mb-2">
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Certificate of Employment:</span>
+                            <span class="loan-detail-value">
+                                <a href="../${app.coe_document}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file me-1"></i>View File
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${app.pdf_path ? `
+                    <div class="col-md-6 mb-2">
+                        <div class="loan-detail-row">
+                            <span class="loan-detail-label">Application PDF:</span>
+                            <span class="loan-detail-value">
+                                <a href="../${app.pdf_path}" target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-file-pdf me-1"></i>View PDF
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            ` : ''}
+        `;
+        
+        modalBody.innerHTML = html;
+    }
+
+    /**
      * View loan details
      */
     window.viewLoanDetails = function(loanId) {
@@ -342,6 +584,12 @@
         
         const modal = new bootstrap.Modal(document.getElementById('loanDetailsModal'));
         const modalBody = document.getElementById('loanDetailsBody');
+        
+        // Update modal title
+        const modalTitle = document.querySelector('#loanDetailsModal .modal-title');
+        if (modalTitle) {
+            modalTitle.innerHTML = '<i class="fas fa-file-invoice-dollar me-2"></i>Loan Details';
+        }
         
         // Show loading state
         modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-3">Loading loan details...</p></div>';
