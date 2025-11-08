@@ -91,9 +91,29 @@ $current_user = getCurrentUser();
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-custom notifications-dropdown" aria-labelledby="notificationsDropdown">
                         <li class="dropdown-header">Notifications</li>
                         <li><hr class="dropdown-divider"></li>
-                        <li class="dropdown-item text-center text-muted"><small>Loading notifications...</small></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-info-circle text-info"></i>
+                            <div class="notification-content">
+                                <strong>New Report Available</strong>
+                                <small>Monthly financial report is ready</small>
+                            </div>
+                        </a></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <div class="notification-content">
+                                <strong>Pending Approvals</strong>
+                                <small>2 expense reports need review</small>
+                            </div>
+                        </a></li>
+                        <li><a class="dropdown-item notification-item" href="#">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <div class="notification-content">
+                                <strong>Payroll Processed</strong>
+                                <small>October payroll completed</small>
+                            </div>
+                        </a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center small" href="activity-log.php">View All Notifications</a></li>
+                        <li><a class="dropdown-item text-center small" href="#">View All Notifications</a></li>
                     </ul>
                 </div>
                 
@@ -125,54 +145,63 @@ $current_user = getCurrentUser();
     </nav>
     
     <!-- Main Content -->
-    <main class="container-fluid py-4">
-        <!-- Beautiful Page Header -->
-        <div class="beautiful-page-header mb-5">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-lg-8">
-                        <div class="header-content">
-                            <h1 class="page-title-beautiful">
-                                <i class="fas fa-book me-3"></i>
-                                General Ledger
-                            </h1>
-                            <p class="page-subtitle-beautiful">
-                                Comprehensive view and control of ledger data, charts, transactions, audit trails, and adjustments
-                            </p>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 text-lg-end">
-                        <div class="header-info-card">
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="fas fa-database"></i>
-                                </div>
-                                <div class="info-content">
-                                    <div class="info-label">Database Status</div>
-                                    <div class="info-value status-connected">Connected</div>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-icon">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </div>
-                                <div class="info-content">
-                                    <div class="info-label">Current Period</div>
-                                    <div class="info-value"><?php echo date('F Y'); ?></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="header-actions mt-3">
-                    <a href="../core/dashboard.php" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    <main class="gl-main-content">
+        <div class="container-xl gl-content-wrapper">
+            <!-- Page Header -->
+            <header class="gl-page-header">
+                <div class="gl-breadcrumb" aria-label="Breadcrumb">
+                    <a href="../core/dashboard.php" class="gl-breadcrumb__link">
+                        <i class="fas fa-home me-2"></i>
+                        <span>Dashboard</span>
                     </a>
+                    <span class="gl-breadcrumb__separator" aria-hidden="true">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                    <span class="gl-breadcrumb__item">Modules</span>
+                    <span class="gl-breadcrumb__separator" aria-hidden="true">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                    <span class="gl-breadcrumb__item gl-breadcrumb__item--current">General Ledger</span>
                 </div>
-            </div>
-        </div>
 
-        <div class="container-fluid">
+                <div class="gl-header-main">
+                    <div class="gl-header-text">
+                        <h1 class="page-title">General Ledger</h1>
+                        <p class="page-subtitle">Monitor ledger health, track movements, and stay audit-ready with a curated snapshot of every critical activity.</p>
+                        <div class="gl-header-links">
+                            <a class="btn-link" href="../core/dashboard.php">
+                                <i class="fas fa-arrow-left"></i>
+                                <span>Back to dashboard</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="gl-header-actions">
+                        <button class="btn-gl-outline" type="button" onclick="scrollToSection('accounts')">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Chart of accounts</span>
+                        </button>
+                        <button class="btn-gl-primary" type="button" onclick="scrollToSection('transactions')">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>Review transactions</span>
+                        </button>
+                    </div>
+                </div>
+
+                <nav class="gl-quick-nav" aria-label="Ledger quick links">
+                    <button class="gl-quick-nav__item" type="button" onclick="scrollToSection('accounts')">
+                        <i class="fas fa-table"></i>
+                        <span>Accounts</span>
+                    </button>
+                    <button class="gl-quick-nav__item" type="button" onclick="scrollToSection('transactions')">
+                        <i class="fas fa-shuffle"></i>
+                        <span>Transactions</span>
+                    </button>
+                    <button class="gl-quick-nav__item" type="button" onclick="scrollToSection('audit')">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>Audit trail</span>
+                    </button>
+                </nav>
+            </header>
 
             <!-- Statistics Cards -->
             <div class="gl-stats-section">
@@ -213,18 +242,6 @@ $current_user = getCurrentUser();
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="fas fa-edit"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="total-adjustments">Loading...</h3>
-                                <p>Total Adjustments</p>
-                                <a href="#adjustments" class="stat-link">View Details</a>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -234,21 +251,17 @@ $current_user = getCurrentUser();
                     <h2>Charts Overview</h2>
                     <p>Visual representation of your financial data</p>
                 </div>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <h4>Account Type Distribution</h4>
-                            <div class="chart-wrapper">
-                                <canvas id="accountTypesChart"></canvas>
-                            </div>
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <h4>Account Type Distribution</h4>
+                        <div class="chart-wrapper">
+                            <canvas id="accountTypesChart"></canvas>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <h4>Transaction Summary by Category</h4>
-                            <div class="chart-wrapper">
-                                <canvas id="transactionSummaryChart"></canvas>
-                            </div>
+                    <div class="chart-container">
+                        <h4>Transaction Summary by Category</h4>
+                        <div class="chart-wrapper">
+                            <canvas id="transactionSummaryChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -264,10 +277,22 @@ $current_user = getCurrentUser();
                     <h2>Accounts Table</h2>
                     <p>List of financial accounts with balances</p>
                 </div>
-                <div class="table-controls">
-                    <input type="text" class="search-input" placeholder="Search accounts..." id="account-search">
-                    <button class="btn-filter" onclick="applyAccountFilter()">Apply Filter</button>
-                    <button class="btn-reset" onclick="resetAccountFilter()">Reset Filter</button>
+                <div class="gl-toolbar" role="search" aria-label="Account search and filters">
+                    <div class="gl-toolbar__field">
+                        <label for="account-search" class="visually-hidden">Search accounts</label>
+                        <span class="gl-toolbar__icon"><i class="fas fa-search"></i></span>
+                        <input type="text" class="search-input" placeholder="Search accounts" id="account-search" autocomplete="off">
+                    </div>
+                    <div class="gl-toolbar__actions">
+                        <button class="btn-filter" type="button" onclick="applyAccountFilter()">
+                            <i class="fas fa-filter"></i>
+                            <span>Apply filter</span>
+                        </button>
+                        <button class="btn-reset" type="button" onclick="resetAccountFilter()">
+                            <i class="fas fa-rotate-left"></i>
+                            <span>Reset</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table class="gl-table" id="accounts-table">
@@ -291,9 +316,11 @@ $current_user = getCurrentUser();
                     </table>
                 </div>
                 <div class="table-actions-row">
-                    <button class="btn-action" onclick="viewAccount()">View</button>
-                    <button class="btn-action" onclick="viewAccount()">View</button>
-                    <button class="btn-action" onclick="viewAccount()">View</button>
+                    <span class="table-actions-hint">Showing the latest 10 active accounts</span>
+                    <div class="table-actions">
+                        <button class="btn-action btn-action-outline" type="button" onclick="exportAccounts()">Export</button>
+                        <button class="btn-action" type="button" onclick="loadAccountsTable()">Refresh</button>
+                    </div>
                 </div>
             </div>
 
@@ -303,9 +330,37 @@ $current_user = getCurrentUser();
                     <h2>Transaction Records</h2>
                     <p>Detailed transaction history and filters</p>
                 </div>
-                <div class="transaction-filters">
-                    <button class="btn-filter" onclick="applyTransactionFilter()">Apply</button>
-                    <button class="btn-reset" onclick="resetTransactionFilter()">Reset</button>
+                <div class="gl-toolbar gl-toolbar--split" role="search" aria-label="Transaction filters">
+                    <div class="gl-toolbar__group">
+                        <div class="gl-toolbar__field gl-toolbar__field--compact">
+                            <label for="transaction-from">From</label>
+                            <input type="date" id="transaction-from" class="gl-input">
+                        </div>
+                        <div class="gl-toolbar__field gl-toolbar__field--compact">
+                            <label for="transaction-to">To</label>
+                            <input type="date" id="transaction-to" class="gl-input">
+                        </div>
+                        <div class="gl-toolbar__field gl-toolbar__field--compact">
+                            <label for="transaction-type">Type</label>
+                            <select id="transaction-type" class="gl-select">
+                                <option value="">All types</option>
+                                <option value="sale">Sales</option>
+                                <option value="purchase">Purchases</option>
+                                <option value="payment">Payments</option>
+                                <option value="receipt">Receipts</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="gl-toolbar__actions">
+                        <button class="btn-filter" type="button" onclick="applyTransactionFilter()">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>Apply</span>
+                        </button>
+                        <button class="btn-reset" type="button" onclick="resetTransactionFilter()">
+                            <i class="fas fa-rotate-left"></i>
+                            <span>Reset</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table class="gl-table" id="transactions-table">
@@ -330,9 +385,12 @@ $current_user = getCurrentUser();
                     </table>
                 </div>
                 <div class="table-actions-row">
-                    <button class="btn-action" onclick="exportTransactions()">Export</button>
-                    <button class="btn-action" onclick="printTransactions()">Print</button>
-                    <button class="btn-action" onclick="refreshTransactions()">Refresh</button>
+                    <span class="table-actions-hint">Latest journal entries posted to the ledger</span>
+                    <div class="table-actions">
+                        <button class="btn-action btn-action-outline" type="button" onclick="exportTransactions()">Export</button>
+                        <button class="btn-action btn-action-outline" type="button" onclick="printTransactions()">Print</button>
+                        <button class="btn-action" type="button" onclick="refreshTransactions()">Refresh</button>
+                    </div>
                 </div>
             </div>
 
@@ -342,28 +400,24 @@ $current_user = getCurrentUser();
                     <h2>Audit Trail</h2>
                     <p>Track all system activities and changes</p>
                 </div>
-                <div class="row g-4 mb-4">
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <h4>Account Type Distribution</h4>
-                            <div class="chart-wrapper">
-                                <canvas id="auditAccountTypesChart"></canvas>
-                            </div>
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <h4>Account Type Distribution</h4>
+                        <div class="chart-wrapper">
+                            <canvas id="auditAccountTypesChart"></canvas>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <h4>Transaction Summary by Category</h4>
-                            <div class="chart-wrapper">
-                                <canvas id="auditTransactionChart"></canvas>
-                            </div>
+                    <div class="chart-container">
+                        <h4>Transaction Summary by Category</h4>
+                        <div class="chart-wrapper">
+                            <canvas id="auditTransactionChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Recent Transactions -->
-            <div class="gl-section">
+            <div class="gl-section gl-section--minimal">
                 <div class="section-header">
                     <h2>Recent Transactions</h2>
                 </div>
@@ -423,10 +477,8 @@ $current_user = getCurrentUser();
     </main>
 
     <!-- Footer -->
-    <footer class="mt-5">
-        <div class="container-fluid">
-            <p class="mb-0 text-center">&copy; <?php echo date('Y'); ?> Evergreen Accounting & Finance. All rights reserved.</p>
-        </div>
+    <footer class="gl-footer">
+        <p>&copy; 2025 Evergreen Accounting & Finance. All rights reserved.</p>
     </footer>
 
     <!-- jQuery -->
@@ -437,6 +489,5 @@ $current_user = getCurrentUser();
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Custom JS -->
     <script src="../assets/js/general-ledger.js"></script>
-    <script src="../assets/js/notifications.js"></script>
 </body>
 </html>

@@ -81,8 +81,7 @@ function showStatisticsLoadingState() {
     const elements = {
         'total-accounts': 'Loading...',
         'total-transactions': 'Loading...',
-        'total-audit': 'Loading...',
-        'total-adjustments': 'Loading...'
+        'total-audit': 'Loading...'
     };
     
     Object.entries(elements).forEach(([id, text]) => {
@@ -97,8 +96,7 @@ function animateStatistics(data) {
     const elements = {
         'total-accounts': data.total_accounts,
         'total-transactions': data.total_transactions,
-        'total-audit': data.total_audit,
-        'total-adjustments': data.total_adjustments
+        'total-audit': data.total_audit
     };
     
     Object.entries(elements).forEach(([id, value]) => {
@@ -497,6 +495,8 @@ function renderAuditCharts(data) {
 // ========================================
 
 function loadAccountsTable() {
+    showLoadingState('accounts');
+
     fetch('../modules/api/general-ledger-data.php?action=get_accounts')
         .then(response => {
             if (!response.ok) {
@@ -561,7 +561,21 @@ function displayAccountsTable(accounts) {
 // ========================================
 
 function loadTransactionsTable() {
-    fetch('../modules/api/general-ledger-data.php?action=get_recent_transactions')
+    showLoadingState('transactions');
+
+    // Get filter parameters
+    const dateFrom = document.getElementById('transaction-from')?.value || '';
+    const dateTo = document.getElementById('transaction-to')?.value || '';
+    const type = document.getElementById('transaction-type')?.value || '';
+
+    // Build query string
+    const params = new URLSearchParams();
+    params.append('action', 'get_transactions');
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    if (type) params.append('type', type);
+
+    fetch(`../modules/api/general-ledger-data.php?${params.toString()}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -637,15 +651,17 @@ function viewDrillDown() {
 
 function applyAccountFilter() {
     const searchTerm = document.getElementById('account-search').value;
-    
+
     if (!searchTerm.trim()) {
         loadAccountsTable();
         return;
     }
-    
+
     showLoadingState('accounts');
-    
-    fetch(`../modules/api/general-ledger-data.php?action=get_accounts&search=${searchTerm}`)
+
+    const encodedSearch = encodeURIComponent(searchTerm.trim());
+
+    fetch(`../modules/api/general-ledger-data.php?action=get_accounts&search=${encodedSearch}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -666,13 +682,54 @@ function resetAccountFilter() {
 }
 
 function applyTransactionFilter() {
+    const dateFrom = document.getElementById('transaction-from')?.value || '';
+    const dateTo = document.getElementById('transaction-to')?.value || '';
+    const type = document.getElementById('transaction-type')?.value || '';
+
+    if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
+        showNotification('From date cannot be after To date', 'error');
+        return;
+    }
+
     showNotification('Transaction filters applied!', 'success');
     loadTransactionsTable();
 }
 
 function resetTransactionFilter() {
+    const dateFromInput = document.getElementById('transaction-from');
+    const dateToInput = document.getElementById('transaction-to');
+    const typeInput = document.getElementById('transaction-type');
+
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
+    if (typeInput) typeInput.value = '';
+
     showNotification('Transaction filters reset', 'info');
     loadTransactionsTable();
+}
+
+function showLoadingState(section) {
+    const tableTargets = {
+        accounts: '#accounts-table tbody',
+        transactions: '#transactions-table tbody'
+    };
+
+    const selector = tableTargets[section];
+    if (!selector) return;
+
+    const tbody = document.querySelector(selector);
+    if (!tbody) return;
+
+    const colSpan = section === 'transactions' ? 6 : 5;
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="${colSpan}" class="text-center py-4">
+                <div class="loading-spinner"></div>
+                <p>Loading ${section}...</p>
+            </td>
+        </tr>
+    `;
 }
 
 // ========================================
@@ -695,6 +752,24 @@ function viewAccount() {
 
 function viewTransaction() {
     showNotification('Opening transaction details...', 'info');
+}
+
+function exportAccounts() {
+    showNotification('Preparing account export...', 'info');
+}
+
+function exportTransactions() {
+    showNotification('Generating transaction export...', 'info');
+}
+
+function printTransactions() {
+    showNotification('Sending transaction table to printer...', 'info');
+    window.print();
+}
+
+function refreshTransactions() {
+    showNotification('Refreshing transaction list...', 'success');
+    loadTransactionsTable();
 }
 
 // ========================================
@@ -815,8 +890,7 @@ function getFallbackStatistics() {
     return {
         total_accounts: 247,
         total_transactions: 1542,
-        total_audit: 89,
-        total_adjustments: 23
+        total_audit: 89
     };
 }
 
@@ -827,8 +901,8 @@ function getFallbackChartData() {
             values: [45, 32, 28, 15, 25]
         },
         transaction_summary: {
-            labels: ['Sales', 'Purchases', 'Payments', 'Receipts', 'Adjustments'],
-            values: [120, 85, 95, 110, 23]
+            labels: ['Sales', 'Purchases', 'Payments', 'Receipts'],
+            values: [120, 85, 95, 110]
         }
     };
 }
