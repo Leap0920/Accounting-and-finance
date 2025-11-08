@@ -13,6 +13,44 @@ $filter_position = isset($_GET['position']) ? $_GET['position'] : '';
 $filter_department = isset($_GET['department']) ? $_GET['department'] : '';
 $filter_type = isset($_GET['type']) ? $_GET['type'] : '';
 
+// Get payroll period selection (1-15 or 16-end of month)
+$payroll_period = isset($_GET['payroll_period']) ? $_GET['payroll_period'] : '';
+$payroll_month = isset($_GET['payroll_month']) ? $_GET['payroll_month'] : date('Y-m');
+
+// Calculate period start and end dates based on selection
+$period_start = '';
+$period_end = '';
+$period_label = '';
+
+if ($payroll_period && $payroll_month) {
+    $year = date('Y', strtotime($payroll_month . '-01'));
+    $month = date('m', strtotime($payroll_month . '-01'));
+    $last_day = date('t', strtotime($payroll_month . '-01'));
+    
+    if ($payroll_period === 'first') {
+        // First half: 1-15
+        $period_start = sprintf('%04d-%02d-01', $year, $month);
+        $period_end = sprintf('%04d-%02d-15', $year, $month);
+        $period_label = date('M 1-15, Y', strtotime($period_start));
+    } elseif ($payroll_period === 'second') {
+        // Second half: 16-end of month
+        $period_start = sprintf('%04d-%02d-16', $year, $month);
+        $period_end = sprintf('%04d-%02d-%02d', $year, $month, $last_day);
+        $period_label = date('M 16', strtotime($period_start)) . '-' . date('t, Y', strtotime($period_start));
+    } else {
+        // Default to current month
+        $period_start = date('Y-m-01');
+        $period_end = date('Y-m-t');
+        $period_label = date('F Y');
+    }
+} else {
+    // Default to current month
+    $period_start = date('Y-m-01');
+    $period_end = date('Y-m-t');
+    $period_label = date('F Y');
+    $payroll_month = date('Y-m');
+}
+
 // Build dynamic query for employees with filters
 $employees_query = "SELECT * FROM employee_refs WHERE 1=1";
 $params = [];
@@ -179,21 +217,41 @@ $attendance_summary = [
 ];
 
 if ($selected_employee) {
-    // Get attendance month from URL parameter or default to current month
-    $attendance_month = isset($_GET['attendance_month']) ? $_GET['attendance_month'] : date('Y-m');
-    $attendance_query = "SELECT 
-                            DATE(attendance_date) as date,
-                            time_in,
-                            time_out,
-                            status,
-                            hours_worked,
-                            overtime_hours,
-                            late_minutes,
-                            remarks
-                        FROM employee_attendance 
-                        WHERE employee_external_no = ? 
-                        AND DATE_FORMAT(attendance_date, '%Y-%m') = ?
-                        ORDER BY attendance_date DESC";
+    // Use payroll period dates if available, otherwise use attendance month
+    $attendance_month = isset($_GET['attendance_month']) ? $_GET['attendance_month'] : $payroll_month;
+    
+    // Build attendance query based on period selection
+    if ($payroll_period && $period_start && $period_end) {
+        // Use period dates for filtering
+        $attendance_query = "SELECT 
+                                DATE(attendance_date) as date,
+                                time_in,
+                                time_out,
+                                status,
+                                hours_worked,
+                                overtime_hours,
+                                late_minutes,
+                                remarks
+                            FROM employee_attendance 
+                            WHERE employee_external_no = ? 
+                            AND attendance_date BETWEEN ? AND ?
+                            ORDER BY attendance_date DESC";
+    } else {
+        // Fallback to month-based filtering
+        $attendance_query = "SELECT 
+                                DATE(attendance_date) as date,
+                                time_in,
+                                time_out,
+                                status,
+                                hours_worked,
+                                overtime_hours,
+                                late_minutes,
+                                remarks
+                            FROM employee_attendance 
+                            WHERE employee_external_no = ? 
+                            AND DATE_FORMAT(attendance_date, '%Y-%m') = ?
+                            ORDER BY attendance_date DESC";
+    }
     
     // Check if attendance table exists, if not create sample data
     $table_check = $conn->query("SHOW TABLES LIKE 'employee_attendance'");
@@ -258,7 +316,13 @@ if ($selected_employee) {
     }
     
     $attendance_stmt = $conn->prepare($attendance_query);
-    $attendance_stmt->bind_param("ss", $selected_employee, $attendance_month);
+    if ($payroll_period && $period_start && $period_end) {
+        // Bind period dates
+        $attendance_stmt->bind_param("sss", $selected_employee, $period_start, $period_end);
+    } else {
+        // Bind month
+        $attendance_stmt->bind_param("ss", $selected_employee, $attendance_month);
+    }
     $attendance_stmt->execute();
     $attendance_result = $attendance_stmt->get_result();
     
@@ -296,11 +360,12 @@ if ($selected_employee) {
     }
 }
 
-// Calculate attendance-based payroll adjustments for current month
+// Calculate attendance-based payroll adjustments for selected period
 $attendance_payroll_adjustments = null;
 if ($selected_employee) {
-    $current_month_start = date('Y-m-01');
-    $current_month_end = date('Y-m-t');
+    // Use period dates if available, otherwise use current month
+    $calc_period_start = $period_start ? $period_start : date('Y-m-01');
+    $calc_period_end = $period_end ? $period_end : date('Y-m-t');
     
     // Get base salary components
     $base_components = [];
@@ -313,14 +378,26 @@ if ($selected_employee) {
         $earnings_result->data_seek(0);
     }
     
-    // Calculate payroll based on attendance
+    // Calculate payroll based on attendance for the selected period
+    // For bi-monthly periods, we need to prorate the monthly salary
     $attendance_payroll_adjustments = calculatePayrollFromAttendance(
         $conn, 
         $selected_employee, 
-        $current_month_start, 
-        $current_month_end,
+        $calc_period_start, 
+        $calc_period_end,
         $base_components
     );
+    
+    // If it's a bi-monthly period, adjust the base salary calculation
+    if ($payroll_period && ($payroll_period === 'first' || $payroll_period === 'second')) {
+        // For bi-monthly periods, the base salary should be half of monthly salary
+        // The calculation function already handles this based on attendance days
+        // But we need to ensure the base salary is prorated correctly
+        if (isset($attendance_payroll_adjustments['salary_adjustments'])) {
+            // The calculation already accounts for actual days worked
+            // We just need to ensure the base is correct for the period
+        }
+    }
     
     // Use attendance summary from API calculation as single source of truth
     if ($attendance_payroll_adjustments && isset($attendance_payroll_adjustments['attendance_summary'])) {
@@ -491,7 +568,7 @@ if ($selected_employee) {
                 </div>
                 <div class="header-actions mt-3">
                     <div class="row align-items-end">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <div class="employee-selector-header">
                                 <label for="employee-select" class="form-label mb-1">Select Employee:</label>
                                 <select class="form-select" id="employee-select" onchange="changeEmployee()">
@@ -508,12 +585,45 @@ if ($selected_employee) {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                        <div class="col-md-4">
+                            <div class="payroll-period-selector">
+                                <label for="payroll-period-select" class="form-label mb-1">Payroll Period:</label>
+                                <div class="d-flex gap-2">
+                                    <select class="form-select form-select-sm" id="payroll-month-select" onchange="changePayrollPeriod()">
+                                        <?php
+                                        // Generate month options (current month and previous 5 months)
+                                        for ($i = 0; $i < 6; $i++) {
+                                            $month_date = date('Y-m', strtotime("-$i months"));
+                                            $month_label = date('F Y', strtotime("-$i months"));
+                                            $selected = ($payroll_month == $month_date) ? 'selected' : '';
+                                            echo "<option value=\"$month_date\" $selected>$month_label</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                    <select class="form-select form-select-sm" id="payroll-period-select" onchange="changePayrollPeriod()">
+                                        <option value="">Full Month</option>
+                                        <option value="first" <?php echo ($payroll_period === 'first') ? 'selected' : ''; ?>>1-15</option>
+                                        <option value="second" <?php echo ($payroll_period === 'second') ? 'selected' : ''; ?>>16-<?php echo date('t', strtotime($payroll_month . '-01')); ?></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-md-end mt-2 mt-md-0">
                             <a href="../core/dashboard.php" class="btn-back-dashboard">
                                 <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
                             </a>
                         </div>
                     </div>
+                    <?php if ($payroll_period && $period_label): ?>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0 py-2">
+                                <i class="fas fa-calendar-check me-2"></i>
+                                <strong>Selected Period:</strong> <?php echo htmlspecialchars($period_label); ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -771,7 +881,7 @@ if ($selected_employee) {
                                     </div>
                                     
                                     <!-- Payroll Impact Card -->
-                                    <?php if ($attendance_payroll_adjustments && $attendance_month == date('Y-m')): 
+                                    <?php if ($attendance_payroll_adjustments): 
                                         $adj = $attendance_payroll_adjustments['salary_adjustments'];
                                         $has_impact = $adj['absent_deduction'] > 0 || $adj['half_day_deduction'] > 0 || $adj['late_penalty'] > 0 || $adj['overtime_pay'] > 0;
                                     ?>
@@ -821,7 +931,7 @@ if ($selected_employee) {
                         
                         <!-- Attendance Summary Cards -->
                         <div class="attendance-summary-section">
-                            <h5 class="section-subtitle">Attendance Summary - <?php echo date('F Y', strtotime($attendance_month . '-01')); ?></h5>
+                            <h5 class="section-subtitle">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y', strtotime($attendance_month . '-01')); ?></h5>
                             
                             <div class="row g-3 mb-4">
                                 <div class="col-md-3">
@@ -1064,7 +1174,7 @@ if ($selected_employee) {
                     <!-- Attendance Summary for Payroll Tab -->
                     <?php if ($selected_employee && $attendance_summary): ?>
                     <div class="mb-4">
-                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo date('F Y'); ?></h5>
+                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y'); ?></h5>
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <div class="attendance-summary-card present">
@@ -1346,7 +1456,7 @@ if ($selected_employee) {
                     <!-- Attendance Summary for Tax Tab -->
                     <?php if ($selected_employee && $attendance_summary): ?>
                     <div class="mb-4">
-                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo date('F Y'); ?></h5>
+                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y'); ?></h5>
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <div class="attendance-summary-card present">
@@ -1559,7 +1669,7 @@ if ($selected_employee) {
                             <!-- Attendance Summary for Overall Tab - Hidden in print -->
                             <?php if ($selected_employee && $attendance_summary): ?>
                             <div class="mt-4 no-print">
-                                <div class="overall-section-title mb-3">Attendance Summary - <?php echo date('F Y'); ?></div>
+                                <div class="overall-section-title mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y'); ?></div>
                                 <div class="row g-3">
                                     <div class="col-md-3">
                                         <div class="attendance-summary-card present">

@@ -118,7 +118,26 @@ function calculatePayrollFromAttendance($conn, $employee_external_no, $period_st
     $working_days_per_month = 22; // Standard Philippine working days
     $hours_per_day = 8;
     
-    if ($base_salary > 0) {
+    // Calculate period duration to determine if it's a bi-monthly period
+    $start_date = new DateTime($period_start);
+    $end_date = new DateTime($period_end);
+    $period_days = $start_date->diff($end_date)->days + 1; // +1 to include both start and end dates
+    
+    // For bi-monthly periods (approximately 15 days), prorate the base salary
+    $prorated_base_salary = $base_salary;
+    if ($period_days <= 16) {
+        // This is likely a bi-monthly period (first or second half)
+        // Prorate based on actual period days vs full month
+        $days_in_month = (int)$end_date->format('t'); // Last day of the month
+        $prorated_base_salary = ($base_salary / $days_in_month) * $period_days;
+    }
+    
+    if ($prorated_base_salary > 0) {
+        // Calculate daily rate based on prorated salary and period days
+        $daily_rate = $prorated_base_salary / $period_days;
+        $hourly_rate = $daily_rate / $hours_per_day;
+    } else if ($base_salary > 0) {
+        // Fallback to monthly calculation
         $daily_rate = $base_salary / $working_days_per_month;
         $hourly_rate = $daily_rate / $hours_per_day;
     }
@@ -229,14 +248,14 @@ function calculatePayrollFromAttendance($conn, $employee_external_no, $period_st
     $calculation['salary_adjustments']['overtime_pay'] = round($calculation['salary_adjustments']['overtime_pay'], 2);
     
     // Adjusted salary = Base salary - absent deductions - half day deductions - late penalties + overtime
-    // If using pro-rated salary based on attendance days
-    $base_monthly_salary = $base_salary;
+    // Use prorated base salary for bi-monthly periods
+    $base_salary_for_calculation = isset($prorated_base_salary) ? $prorated_base_salary : $base_salary;
     $expected_days = $calculation['attendance_summary']['total_days'];
     
     if ($expected_days > 0) {
         // Pro-rated based on attendance
         $attendance_rate = $calculation['attendance_summary']['present_days'] / $expected_days;
-        $adjusted_base = $base_monthly_salary * $attendance_rate;
+        $adjusted_base = $base_salary_for_calculation * $attendance_rate;
         
         // Apply adjustments
         $calculation['salary_adjustments']['adjusted_salary'] = round(
@@ -247,8 +266,12 @@ function calculatePayrollFromAttendance($conn, $employee_external_no, $period_st
             + $calculation['salary_adjustments']['overtime_pay']
         , 2);
     } else {
-        $calculation['salary_adjustments']['adjusted_salary'] = 0;
+        // If no attendance days, use prorated base salary as starting point
+        $calculation['salary_adjustments']['adjusted_salary'] = round($base_salary_for_calculation, 2);
     }
+    
+    // Store the prorated base salary for reference
+    $calculation['salary_adjustments']['prorated_base_salary'] = round($base_salary_for_calculation, 2);
     
     return $calculation;
 }

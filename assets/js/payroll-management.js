@@ -137,17 +137,60 @@ function changeEmployee() {
     const employeeSelect = document.getElementById('employee-select');
     const selectedEmployee = employeeSelect.value;
     
+    // Get current payroll period parameters
+    const payrollMonth = document.getElementById('payroll-month-select')?.value || '';
+    const payrollPeriod = document.getElementById('payroll-period-select')?.value || '';
+    
+    // Redirect to same page with employee and payroll period parameters
+    const currentUrl = new URL(window.location);
+    
     if (selectedEmployee) {
-        // Redirect to same page with employee parameter
-        const currentUrl = new URL(window.location);
         currentUrl.searchParams.set('employee', selectedEmployee);
-        window.location.href = currentUrl.toString();
     } else {
-        // Redirect without employee parameter
-        const currentUrl = new URL(window.location);
         currentUrl.searchParams.delete('employee');
-        window.location.href = currentUrl.toString();
     }
+    
+    // Preserve payroll period parameters
+    if (payrollMonth) {
+        currentUrl.searchParams.set('payroll_month', payrollMonth);
+    }
+    if (payrollPeriod) {
+        currentUrl.searchParams.set('payroll_period', payrollPeriod);
+    }
+    
+    window.location.href = currentUrl.toString();
+}
+
+/**
+ * Change payroll period selection
+ */
+function changePayrollPeriod() {
+    const payrollMonth = document.getElementById('payroll-month-select')?.value || '';
+    const payrollPeriod = document.getElementById('payroll-period-select')?.value || '';
+    const selectedEmployee = document.getElementById('employee-select')?.value || '';
+    
+    // Redirect to same page with payroll period parameters
+    const currentUrl = new URL(window.location);
+    
+    // Preserve employee selection
+    if (selectedEmployee) {
+        currentUrl.searchParams.set('employee', selectedEmployee);
+    }
+    
+    // Set payroll period parameters
+    if (payrollMonth) {
+        currentUrl.searchParams.set('payroll_month', payrollMonth);
+    } else {
+        currentUrl.searchParams.delete('payroll_month');
+    }
+    
+    if (payrollPeriod) {
+        currentUrl.searchParams.set('payroll_period', payrollPeriod);
+    } else {
+        currentUrl.searchParams.delete('payroll_period');
+    }
+    
+    window.location.href = currentUrl.toString();
 }
 
 /**
@@ -543,6 +586,7 @@ window.exportTransactions = exportTransactions;
 window.exportLoans = exportLoans;
 window.printPayslip = printPayslip;
 window.changeEmployee = changeEmployee;
+window.changePayrollPeriod = changePayrollPeriod;
 window.toggleFilters = toggleFilters;
 window.filterAttendanceByMonth = filterAttendanceByMonth;
 window.viewExpense = viewExpense;
