@@ -760,24 +760,29 @@
             </div>
         `;
         
-        // Add payment schedule if available
-        if (loan.payment_schedule && loan.payment_schedule.length > 0) {
+        // Add payment history section - ALWAYS show, even for paid loans
+        html += `
+            <div class="loan-detail-section mt-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-history me-2"></i>Payment History</h6>
+        `;
+        
+        // Check if payment_schedule exists and has data
+        if (loan.payment_schedule && Array.isArray(loan.payment_schedule) && loan.payment_schedule.length > 0) {
             html += `
-                <div class="loan-detail-section mt-4">
-                    <h6 class="text-primary mb-3"><i class="fas fa-calendar-check me-2"></i>Payment Schedule</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-striped table-hover payment-schedule-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Due Date</th>
-                                    <th class="text-end">Principal</th>
-                                    <th class="text-end">Interest</th>
-                                    <th class="text-end">Total Payment</th>
-                                    <th class="text-end">Balance</th>
-                                    <th class="text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped table-hover payment-schedule-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Payment Date</th>
+                                <th class="text-end">Principal</th>
+                                <th class="text-end">Interest</th>
+                                <th class="text-end">Total Payment</th>
+                                <th class="text-end">Remaining Balance</th>
+                                <th class="text-center">Status</th>
+                                ${loan.payment_schedule.some(p => p.payment_reference) ? '<th>Reference</th>' : ''}
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
             
             let totalPrincipal = 0;
@@ -796,40 +801,44 @@
                 
                 html += `
                     <tr>
-                        <td>${payment.due_date ? formatDate(payment.due_date) : 'N/A'}</td>
+                        <td>${payment.payment_date || payment.due_date ? formatDate(payment.payment_date || payment.due_date) : 'N/A'}</td>
                         <td class="text-end">₱${principal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                         <td class="text-end">₱${interest.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                         <td class="text-end"><strong>₱${total.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
                         <td class="text-end">₱${balance.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                        <td class="text-center"><span class="badge bg-${(payment.status || '').toLowerCase() === 'paid' ? 'success' : (payment.status || '').toLowerCase() === 'overdue' ? 'danger' : 'warning'}">${(payment.status || 'Pending').toUpperCase()}</span></td>
+                        <td class="text-center"><span class="badge bg-success">PAID</span></td>
+                        ${payment.payment_reference ? `<td><small class="text-muted">${payment.payment_reference}</small></td>` : ''}
                     </tr>
                 `;
             });
             
             html += `
-                            </tbody>
-                            <tfoot class="table-light">
-                                <tr>
-                                    <th>Total</th>
-                                    <th class="text-end">₱${totalPrincipal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
-                                    <th class="text-end">₱${totalInterest.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
-                                    <th class="text-end">₱${totalPayment.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
-                                    <th class="text-end">-</th>
-                                    <th></th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th>Total</th>
+                                <th class="text-end">₱${totalPrincipal.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
+                                <th class="text-end">₱${totalInterest.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
+                                <th class="text-end">₱${totalPayment.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</th>
+                                <th class="text-end">-</th>
+                                <th></th>
+                                ${loan.payment_schedule.some(p => p.payment_reference) ? '<th></th>' : ''}
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             `;
         } else {
             html += `
-                <div class="loan-detail-section mt-4">
-                    <h6 class="text-primary mb-3"><i class="fas fa-calendar-check me-2"></i>Payment Schedule</h6>
-                    <p class="text-muted">No payment schedule available for this loan.</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>No Payment History Found</strong>
+                    <p class="mb-0 mt-2">This loan has no recorded payments in the system yet.</p>
                 </div>
             `;
         }
+        
+        html += `</div>`;
         
         // Add transaction history if available
         if (loan.transactions && loan.transactions.length > 0) {
