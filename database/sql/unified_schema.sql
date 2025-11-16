@@ -880,6 +880,17 @@ CREATE TABLE integration_logs (
     INDEX idx_created_at (created_at)
 );
 
+ALTER TABLE bank_customers 
+ADD COLUMN referral_code VARCHAR(20) UNIQUE NULL,
+ADD COLUMN total_points DECIMAL(10,2) DEFAULT 0.00,
+ADD COLUMN referred_by_customer_id INT NULL,
+ADD INDEX idx_referral_code (referral_code),
+ADD INDEX idx_referred_by (referred_by_customer_id);
+
+ALTER TABLE bank_customers 
+ADD CONSTRAINT fk_referred_by 
+FOREIGN KEY (referred_by_customer_id) REFERENCES bank_customers(customer_id) ON DELETE SET NULL;
+
 -- ========================================
 -- VIEWS
 -- ========================================
