@@ -487,62 +487,6 @@ $current_user = getCurrentUser();
                 </div>
             </div>
 
-            <!-- Recent Transactions -->
-            <div class="gl-section gl-section--minimal">
-                <div class="section-header">
-                    <h2>Recent Transactions</h2>
-                </div>
-                <div class="table-container">
-                    <table class="gl-table" id="recent-transactions-table">
-                        <thead>
-                            <tr>
-                                <th>Transaction ID</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                                <th>Date</th>
-                                <th>Type</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>TXN-2024-001</td>
-                                <td>Office Supplies Purchase</td>
-                                <td>$2,450.00</td>
-                                <td>Jan 15, 2024</td>
-                                <td>Debit</td>
-                            </tr>
-                            <tr>
-                                <td>TXN-2024-002</td>
-                                <td>Client Payment Received</td>
-                                <td>$15,750.00</td>
-                                <td>Jan 14, 2024</td>
-                                <td>Credit</td>
-                            </tr>
-                            <tr>
-                                <td>TXN-2024-003</td>
-                                <td>Utility Bill Payment</td>
-                                <td>$1,250.00</td>
-                                <td>Jan 13, 2024</td>
-                                <td>Debit</td>
-                            </tr>
-                            <tr>
-                                <td>TXN-2024-004</td>
-                                <td>Equipment Lease Payment</td>
-                                <td>$3,200.00</td>
-                                <td>Jan 12, 2024</td>
-                                <td>Debit</td>
-                            </tr>
-                            <tr>
-                                <td>TXN-2024-005</td>
-                                <td>Service Revenue</td>
-                                <td>$8,900.00</td>
-                                <td>Jan 11, 2024</td>
-                                <td>Credit</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
     </main>
 
     <!-- Journal Entry Detail Modal -->

@@ -80,15 +80,27 @@ function getStatistics() {
     global $conn;
     
     try {
-        // Get total accounts
-        $result = $conn->query("SELECT COUNT(*) as total FROM accounts WHERE is_active = 1");
-        $row = $result->fetch_assoc();
-        $total_accounts = $row['total'] ?? 0;
+        // Get total accounts (GL accounts + Bank customer accounts)
+        $gl_accounts = $conn->query("SELECT COUNT(*) as total FROM accounts WHERE is_active = 1");
+        $gl_row = $gl_accounts->fetch_assoc();
+        $gl_count = $gl_row['total'] ?? 0;
         
-        // Get total posted transactions
-        $result = $conn->query("SELECT COUNT(*) as total FROM journal_entries WHERE status = 'posted'");
-        $row = $result->fetch_assoc();
-        $total_transactions = $row['total'] ?? 0;
+        $bank_accounts = $conn->query("SELECT COUNT(*) as total FROM customer_accounts WHERE is_locked = 0");
+        $bank_row = $bank_accounts->fetch_assoc();
+        $bank_count = $bank_row['total'] ?? 0;
+        
+        $total_accounts = $gl_count + $bank_count;
+        
+        // Get total posted transactions (journal entries + bank transactions)
+        $je_result = $conn->query("SELECT COUNT(*) as total FROM journal_entries WHERE status = 'posted'");
+        $je_row = $je_result->fetch_assoc();
+        $je_count = $je_row['total'] ?? 0;
+        
+        $bt_result = $conn->query("SELECT COUNT(*) as total FROM bank_transactions");
+        $bt_row = $bt_result->fetch_assoc();
+        $bt_count = $bt_row['total'] ?? 0;
+        
+        $total_transactions = $je_count + $bt_count;
         
         // Get total audit entries from audit_logs table
         $result = $conn->query("SELECT COUNT(*) as total FROM audit_logs");
@@ -187,33 +199,57 @@ function getAccounts() {
     try {
         $search = $_GET['search'] ?? '';
         
-        $sql = "
+        // Combined query to show both GL accounts AND bank customer accounts
+        $sql = "SELECT * FROM (
+            -- GL Accounts from Accounting System
             SELECT 
-                a.id,
+                CONCAT('GL-', a.id) as id,
                 a.code,
                 a.name,
                 at.category,
                 COALESCE(ab.closing_balance, 0) as balance,
-                a.is_active
+                a.is_active,
+                'gl' as source
             FROM accounts a
             INNER JOIN account_types at ON a.type_id = at.id
             LEFT JOIN account_balances ab ON a.id = ab.account_id 
                 AND ab.fiscal_period_id = (SELECT id FROM fiscal_periods WHERE status = 'open' ORDER BY start_date DESC LIMIT 1)
             WHERE a.is_active = 1
-        ";
+            
+            UNION ALL
+            
+            -- Bank Customer Accounts
+            SELECT 
+                CONCAT('BA-', ca.account_id) as id,
+                ca.account_number as code,
+                CONCAT(bc.first_name, ' ', bc.last_name, ' - ', bat.account_type_name) as name,
+                'asset' as category,
+                COALESCE(
+                    (SELECT SUM(CASE WHEN bt.amount > 0 THEN bt.amount ELSE 0 END) - SUM(CASE WHEN bt.amount < 0 THEN ABS(bt.amount) ELSE 0 END)
+                     FROM bank_transactions bt WHERE bt.account_id = ca.account_id), 
+                    0
+                ) as balance,
+                1 as is_active,
+                'bank' as source
+            FROM customer_accounts ca
+            INNER JOIN bank_customers bc ON ca.customer_id = bc.customer_id
+            INNER JOIN bank_account_types bat ON ca.account_type_id = bat.account_type_id
+            WHERE ca.is_locked = 0
+        ) combined_accounts
+        WHERE 1=1";
         
         $params = [];
         $types = '';
         
         if ($search) {
-            $sql .= " AND (a.name LIKE ? OR a.code LIKE ?)";
+            $sql .= " AND (name LIKE ? OR code LIKE ?)";
             $searchParam = "%$search%";
             $params[] = $searchParam;
             $params[] = $searchParam;
             $types .= 'ss';
         }
         
-        $sql .= " ORDER BY a.code LIMIT 50";
+        $sql .= " ORDER BY source, code LIMIT 100";
         
         $stmt = $conn->prepare($sql);
         if (!empty($params)) {
@@ -230,7 +266,8 @@ function getAccounts() {
                 'name' => $row['name'],
                 'category' => $row['category'],
                 'balance' => (float)$row['balance'],
-                'is_active' => (bool)$row['is_active']
+                'is_active' => (bool)$row['is_active'],
+                'source' => $row['source']
             ];
         }
         
@@ -244,12 +281,12 @@ function getAccounts() {
         return [
             'success' => true,
             'data' => [
-                ['code' => '1001', 'name' => 'Cash on Hand', 'category' => 'asset', 'balance' => 15000.00, 'is_active' => true],
-                ['code' => '1002', 'name' => 'Bank Account', 'category' => 'asset', 'balance' => 125000.00, 'is_active' => true],
-                ['code' => '2001', 'name' => 'Accounts Payable', 'category' => 'liability', 'balance' => 25000.00, 'is_active' => true],
-                ['code' => '3001', 'name' => 'Owner Equity', 'category' => 'equity', 'balance' => 100000.00, 'is_active' => true],
-                ['code' => '4001', 'name' => 'Sales Revenue', 'category' => 'revenue', 'balance' => 75000.00, 'is_active' => true],
-                ['code' => '5001', 'name' => 'Office Supplies', 'category' => 'expense', 'balance' => 5000.00, 'is_active' => true]
+                ['code' => '1001', 'name' => 'Cash on Hand', 'category' => 'asset', 'balance' => 15000.00, 'is_active' => true, 'source' => 'gl'],
+                ['code' => '1002', 'name' => 'Bank Account', 'category' => 'asset', 'balance' => 125000.00, 'is_active' => true, 'source' => 'gl'],
+                ['code' => '2001', 'name' => 'Accounts Payable', 'category' => 'liability', 'balance' => 25000.00, 'is_active' => true, 'source' => 'gl'],
+                ['code' => '3001', 'name' => 'Owner Equity', 'category' => 'equity', 'balance' => 100000.00, 'is_active' => true, 'source' => 'gl'],
+                ['code' => '4001', 'name' => 'Sales Revenue', 'category' => 'revenue', 'balance' => 75000.00, 'is_active' => true, 'source' => 'gl'],
+                ['code' => '5001', 'name' => 'Office Supplies', 'category' => 'expense', 'balance' => 5000.00, 'is_active' => true, 'source' => 'gl']
             ]
         ];
     }
@@ -264,9 +301,11 @@ function getRecentTransactions() {
         $dateTo = $_GET['date_to'] ?? '';
         $type = $_GET['type'] ?? '';
         
-        $sql = "
+        // Combined query to show BOTH journal entries AND bank transactions (same as transaction-reading.php)
+        $sql = "SELECT * FROM (
+            -- Journal Entries from Accounting System
             SELECT 
-                je.id,
+                CONCAT('JE-', je.id) as id,
                 je.journal_no,
                 je.entry_date,
                 je.description,
@@ -274,34 +313,55 @@ function getRecentTransactions() {
                 COALESCE(je.total_credit, 0) as total_credit,
                 je.status,
                 jt.code as type_code,
-                jt.name as type_name
+                jt.name as type_name,
+                'journal' as source
             FROM journal_entries je
             INNER JOIN journal_types jt ON je.journal_type_id = jt.id
             WHERE je.status = 'posted'
-        ";
+            
+            UNION ALL
+            
+            -- Bank Transactions from Bank System
+            SELECT 
+                CONCAT('BT-', bt.transaction_id) as id,
+                bt.transaction_ref as journal_no,
+                DATE(bt.created_at) as entry_date,
+                COALESCE(bt.description, 'Bank Transaction') as description,
+                CASE WHEN bt.amount > 0 THEN bt.amount ELSE 0 END as total_debit,
+                CASE WHEN bt.amount < 0 THEN ABS(bt.amount) ELSE 0 END as total_credit,
+                'posted' as status,
+                tt.type_name as type_code,
+                tt.type_name as type_name,
+                'bank' as source
+            FROM bank_transactions bt
+            INNER JOIN transaction_types tt ON bt.transaction_type_id = tt.transaction_type_id
+            LEFT JOIN bank_employees be ON bt.employee_id = be.employee_id
+            INNER JOIN customer_accounts ca ON bt.account_id = ca.account_id
+        ) combined_transactions
+        WHERE 1=1";
         
         $params = [];
         $types = '';
         
         if ($dateFrom) {
-            $sql .= " AND je.entry_date >= ?";
+            $sql .= " AND entry_date >= ?";
             $params[] = $dateFrom;
             $types .= 's';
         }
         
         if ($dateTo) {
-            $sql .= " AND je.entry_date <= ?";
+            $sql .= " AND entry_date <= ?";
             $params[] = $dateTo;
             $types .= 's';
         }
         
         if ($type) {
-            $sql .= " AND jt.code = ?";
+            $sql .= " AND type_code = ?";
             $params[] = $type;
             $types .= 's';
         }
         
-        $sql .= " ORDER BY je.entry_date DESC, je.journal_no DESC LIMIT 50";
+        $sql .= " ORDER BY entry_date DESC, id DESC LIMIT 50";
         
         $stmt = $conn->prepare($sql);
         if (!empty($params)) {
@@ -321,7 +381,8 @@ function getRecentTransactions() {
                 'total_credit' => (float)$row['total_credit'],
                 'status' => $row['status'],
                 'type_code' => $row['type_code'],
-                'type_name' => $row['type_name']
+                'type_name' => $row['type_name'],
+                'source' => $row['source']
             ];
         }
         
@@ -335,11 +396,11 @@ function getRecentTransactions() {
         return [
             'success' => true,
             'data' => [
-                ['journal_no' => 'TXN-2024-001', 'entry_date' => 'Jan 15, 2024', 'description' => 'Office Supplies Purchase', 'total_debit' => 2450.00, 'total_credit' => 0, 'status' => 'posted'],
-                ['journal_no' => 'TXN-2024-002', 'entry_date' => 'Jan 14, 2024', 'description' => 'Client Payment Received', 'total_debit' => 0, 'total_credit' => 15750.00, 'status' => 'posted'],
-                ['journal_no' => 'TXN-2024-003', 'entry_date' => 'Jan 13, 2024', 'description' => 'Utility Bill Payment', 'total_debit' => 1250.00, 'total_credit' => 0, 'status' => 'posted'],
-                ['journal_no' => 'TXN-2024-004', 'entry_date' => 'Jan 12, 2024', 'description' => 'Equipment Lease Payment', 'total_debit' => 3200.00, 'total_credit' => 0, 'status' => 'posted'],
-                ['journal_no' => 'TXN-2024-005', 'entry_date' => 'Jan 11, 2024', 'description' => 'Service Revenue', 'total_debit' => 0, 'total_credit' => 8900.00, 'status' => 'posted']
+                ['journal_no' => 'TXN-2024-001', 'entry_date' => 'Jan 15, 2024', 'description' => 'Office Supplies Purchase', 'total_debit' => 2450.00, 'total_credit' => 0, 'status' => 'posted', 'source' => 'journal'],
+                ['journal_no' => 'TXN-2024-002', 'entry_date' => 'Jan 14, 2024', 'description' => 'Client Payment Received', 'total_debit' => 0, 'total_credit' => 15750.00, 'status' => 'posted', 'source' => 'journal'],
+                ['journal_no' => 'TXN-2024-003', 'entry_date' => 'Jan 13, 2024', 'description' => 'Utility Bill Payment', 'total_debit' => 1250.00, 'total_credit' => 0, 'status' => 'posted', 'source' => 'journal'],
+                ['journal_no' => 'TXN-2024-004', 'entry_date' => 'Jan 12, 2024', 'description' => 'Equipment Lease Payment', 'total_debit' => 3200.00, 'total_credit' => 0, 'status' => 'posted', 'source' => 'journal'],
+                ['journal_no' => 'TXN-2024-005', 'entry_date' => 'Jan 11, 2024', 'description' => 'Service Revenue', 'total_debit' => 0, 'total_credit' => 8900.00, 'status' => 'posted', 'source' => 'journal']
             ]
         ];
     }
