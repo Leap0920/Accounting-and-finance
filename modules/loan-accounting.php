@@ -49,7 +49,51 @@ $applyFilters = isset($_GET['apply_filters']);
 
 // Build query to combine both loans and loan_applications
 // This ensures loan applications from the loan subsystem are visible in loan-accounting
-$sql = "SELECT 
+// First, let's try just showing loan_applications for debugging
+$showOnlyApplications = true; // Set to false once working
+
+if ($showOnlyApplications) {
+    $sql = "SELECT 
+            la.id,
+            CONCAT('APP-', la.id) as loan_number,
+            la.full_name as borrower_name,
+            la.loan_amount as loan_amount,
+            0 as interest_rate,
+            0 as loan_term,
+            la.created_at as start_date,
+            la.due_date as maturity_date,
+            0.00 as outstanding_balance,
+            la.status,
+            'application' as record_type,
+            la.loan_type as loan_type_name,
+            la.account_number,
+            la.created_at,
+            la.approved_by as created_by_name,
+            la.contact_number,
+            la.email,
+            la.job,
+            la.monthly_salary,
+            la.user_email,
+            la.purpose,
+            la.monthly_payment,
+            la.due_date,
+            la.next_payment_due,
+            la.approved_by,
+            la.approved_at,
+            la.rejected_by,
+            la.rejected_at,
+            la.rejection_remarks,
+            la.remarks,
+            la.file_name,
+            la.proof_of_income,
+            la.coe_document,
+            la.pdf_path,
+            la.id as application_id
+        FROM loan_applications la
+        WHERE 1=1
+        ORDER BY la.id DESC";
+} else {
+    $sql = "SELECT 
             l.id,
             l.loan_no as loan_number,
             l.borrower_external_no as borrower_name,
@@ -126,7 +170,8 @@ $sql = "SELECT
         FROM loan_applications la
         LEFT JOIN loan_types lt_app ON la.loan_type_id = lt_app.id
         LEFT JOIN users u_app ON la.approved_by_user_id = u_app.id
-        WHERE la.loan_id IS NULL"; // Only show applications not yet converted to loans
+        WHERE 1=1"; // Show all loan applications (matching adminindex.php)
+}
 
 $params = [];
 $types = '';
@@ -176,18 +221,35 @@ if (!empty($loanConditions)) {
                        "WHERE (l.deleted_at IS NULL OR l.deleted_at = '') AND " . implode(" AND ", $loanConditions), $sql);
 }
 
-// Add conditions to applications query
-if (!empty($appConditions)) {
-    $sql = str_replace("WHERE la.loan_id IS NULL", "WHERE la.loan_id IS NULL AND " . implode(" AND ", $appConditions), $sql);
+// Add conditions to applications query (need to find the second WHERE clause in UNION)
+if (!$showOnlyApplications && !empty($appConditions)) {
+    // Find the position after UNION ALL and before the second SELECT
+    $unionPos = strpos($sql, "UNION ALL");
+    if ($unionPos !== false) {
+        // Find WHERE 1=1 in the applications part (after UNION ALL)
+        $appPart = substr($sql, $unionPos);
+        $wherePos = strpos($appPart, "WHERE 1=1");
+        if ($wherePos !== false) {
+            // Replace WHERE 1=1 with WHERE 1=1 AND conditions
+            $beforeWhere = substr($sql, 0, $unionPos + $wherePos);
+            $afterWhere = substr($sql, $unionPos + $wherePos + 8); // 8 = length of "WHERE 1=1"
+            $sql = $beforeWhere . "WHERE 1=1 AND " . implode(" AND ", $appConditions) . $afterWhere;
+        }
+    }
 }
 
-// Wrap in subquery for proper ordering
-$sql = "SELECT * FROM ($sql) AS combined_results ORDER BY start_date DESC, loan_number DESC";
+// Wrap in subquery for proper ordering (only if using UNION)
+if (!$showOnlyApplications) {
+    $sql = "SELECT * FROM ($sql) AS combined_results ORDER BY start_date DESC, loan_number DESC";
+}
 
 // Execute query with fallback
 $loans = [];
 $hasResults = false;
 $queryError = null;
+
+// Debug: Log the query
+error_log("Loan Accounting Query: " . $sql);
 
 if ($conn) {
     // Try the UNION query first
@@ -196,48 +258,58 @@ if ($conn) {
     if ($stmt === false) {
         // Query preparation failed - try simple loans query as fallback
         $queryError = $conn->error;
+        error_log("Query preparation failed: " . $queryError);
+        // Try a simple loan_applications query as fallback
         $fallbackSql = "SELECT 
-            l.id,
-            l.loan_no as loan_number,
-            l.borrower_external_no as borrower_name,
-            l.principal_amount as loan_amount,
-            l.interest_rate,
-            l.term_months as loan_term,
-            l.start_date,
-            DATE_ADD(l.start_date, INTERVAL l.term_months MONTH) as maturity_date,
-            l.current_balance as outstanding_balance,
-            l.status,
-            'loan' as record_type,
-            lt.name as loan_type_name,
-            l.created_at,
-            u.full_name as created_by_name
-        FROM loans l
-        LEFT JOIN loan_types lt ON l.loan_type_id = lt.id
-        LEFT JOIN users u ON l.created_by = u.id
-        WHERE (l.deleted_at IS NULL OR l.deleted_at = '') 
-          AND l.status != 'cancelled'
-        ORDER BY l.start_date DESC, l.loan_no DESC";
+            la.id,
+            CONCAT('APP-', la.id) as loan_number,
+            la.full_name as borrower_name,
+            la.loan_amount,
+            0 as interest_rate,
+            0 as loan_term,
+            la.created_at as start_date,
+            la.due_date as maturity_date,
+            0.00 as outstanding_balance,
+            la.status,
+            'application' as record_type,
+            la.loan_type as loan_type_name,
+            la.account_number,
+            la.created_at,
+            la.approved_by as created_by_name,
+            la.contact_number,
+            la.email,
+            la.job,
+            la.monthly_salary,
+            la.user_email,
+            la.purpose,
+            la.monthly_payment,
+            la.due_date,
+            la.next_payment_due,
+            la.approved_by,
+            la.approved_at,
+            la.rejected_by,
+            la.rejected_at,
+            la.rejection_remarks,
+            la.remarks,
+            la.file_name,
+            la.proof_of_income,
+            la.coe_document,
+            la.pdf_path,
+            la.id as application_id
+        FROM loan_applications la
+        ORDER BY la.id DESC";
         
         $stmt = $conn->prepare($fallbackSql);
         if ($stmt && $stmt->execute()) {
             $result = $stmt->get_result();
             while ($row = $result->fetch_assoc()) {
-                $row['contact_number'] = null;
-                $row['email'] = null;
-                $row['job'] = null;
-                $row['monthly_salary'] = null;
-                $row['user_email'] = null;
-                $row['purpose'] = null;
-                $row['application_id'] = null;
-                $row['account_number'] = null;
-                $row['monthly_payment'] = null;
-                $row['due_date'] = null;
-                $row['next_payment_due'] = null;
-                $row['record_type'] = 'loan';
                 $loans[] = $row;
             }
             $hasResults = count($loans) > 0;
             $queryError = null; // Clear error if fallback worked
+            error_log("Fallback query found " . count($loans) . " loan applications");
+        } else {
+            error_log("Fallback query also failed: " . ($stmt ? $stmt->error : $conn->error));
         }
         if ($stmt) $stmt->close();
     } else {
@@ -253,9 +325,11 @@ if ($conn) {
             }
             
             $hasResults = count($loans) > 0;
+            error_log("Loan Accounting: Found " . count($loans) . " loans/applications");
         } else {
             // Execution failed
             $queryError = $stmt->error;
+            error_log("Query execution failed: " . $queryError);
         }
         
         $stmt->close();
@@ -610,12 +684,22 @@ foreach ($loans as $loan) {
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <strong>Database Query Error:</strong> <?php echo htmlspecialchars($queryError); ?>
                     <br><small>Please check that the loans and loan_applications tables exist and have the correct structure.</small>
+                    <details class="mt-2">
+                        <summary>Debug Info</summary>
+                        <pre style="font-size: 10px; max-height: 300px; overflow: auto;"><?php echo htmlspecialchars($sql); ?></pre>
+                    </details>
                 </div>
                 <?php elseif (!$hasResults): ?>
                 <div class="empty-state">
                     <i class="fas fa-search"></i>
                     <h4><?php echo $applyFilters ? 'No Existing Information Found' : 'No Loan Data Available'; ?></h4>
                     <p><?php echo $applyFilters ? 'No loans match your filter criteria. Try adjusting your filters.' : 'Start by creating loan records or applying filters to view existing loans.'; ?></p>
+                    <details class="mt-2">
+                        <summary>Debug Info</summary>
+                        <p>Total results found: <?php echo count($loans); ?></p>
+                        <p>Filters applied: <?php echo $applyFilters ? 'Yes' : 'No'; ?></p>
+                        <p>Query error: <?php echo $queryError ? htmlspecialchars($queryError) : 'None'; ?></p>
+                    </details>
                     <?php if ($applyFilters): ?>
                     <button class="btn btn-primary mt-3" onclick="clearFilters()">
                         <i class="fas fa-times me-1"></i>Clear Filters
