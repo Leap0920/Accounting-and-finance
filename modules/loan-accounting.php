@@ -5,6 +5,40 @@ require_once '../includes/session.php';
 requireLogin();
 $current_user = getCurrentUser();
 
+// Ensure soft delete columns exist in loans table
+function ensureSoftDeleteColumnsExist($conn) {
+    try {
+        // Check if deleted_at column exists
+        $checkSql = "SHOW COLUMNS FROM loans LIKE 'deleted_at'";
+        $result = $conn->query($checkSql);
+        
+        if (!$result || $result->num_rows === 0) {
+            // Add deleted_at column
+            $alterSql = "ALTER TABLE loans ADD COLUMN deleted_at DATETIME NULL DEFAULT NULL";
+            if (!$conn->query($alterSql)) {
+                error_log("Failed to add deleted_at column: " . $conn->error);
+            }
+        }
+        
+        // Check if deleted_by column exists
+        $checkSql = "SHOW COLUMNS FROM loans LIKE 'deleted_by'";
+        $result = $conn->query($checkSql);
+        
+        if (!$result || $result->num_rows === 0) {
+            // Add deleted_by column
+            $alterSql = "ALTER TABLE loans ADD COLUMN deleted_by INT NULL DEFAULT NULL";
+            if (!$conn->query($alterSql)) {
+                error_log("Failed to add deleted_by column: " . $conn->error);
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Error ensuring soft delete columns exist: " . $e->getMessage());
+    }
+}
+
+// Ensure columns exist before querying
+ensureSoftDeleteColumnsExist($conn);
+
 // Get filter parameters
 $dateFrom = $_GET['date_from'] ?? '';
 $dateTo = $_GET['date_to'] ?? '';
@@ -41,7 +75,8 @@ $sql = "SELECT
         FROM loans l
         LEFT JOIN loan_types lt ON l.loan_type_id = lt.id
         LEFT JOIN users u ON l.created_by = u.id
-        WHERE 1=1
+        WHERE (l.deleted_at IS NULL OR l.deleted_at = '') 
+          AND l.status != 'cancelled'
         
         UNION ALL
         
@@ -137,7 +172,8 @@ if ($applyFilters) {
 
 // Add conditions to loans query
 if (!empty($loanConditions)) {
-    $sql = str_replace("WHERE 1=1", "WHERE 1=1 AND " . implode(" AND ", $loanConditions), $sql);
+    $sql = str_replace("WHERE (l.deleted_at IS NULL OR l.deleted_at = '')", 
+                       "WHERE (l.deleted_at IS NULL OR l.deleted_at = '') AND " . implode(" AND ", $loanConditions), $sql);
 }
 
 // Add conditions to applications query
@@ -178,6 +214,8 @@ if ($conn) {
         FROM loans l
         LEFT JOIN loan_types lt ON l.loan_type_id = lt.id
         LEFT JOIN users u ON l.created_by = u.id
+        WHERE (l.deleted_at IS NULL OR l.deleted_at = '') 
+          AND l.status != 'cancelled'
         ORDER BY l.start_date DESC, l.loan_no DESC";
         
         $stmt = $conn->prepare($fallbackSql);

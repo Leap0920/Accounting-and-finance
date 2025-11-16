@@ -78,12 +78,12 @@ try {
             softDeleteLoan();
             break;
         
-        case 'restore_loan':
-            restoreLoan();
-            break;
-        
         case 'get_bin_items':
             getBinItems();
+            break;
+        
+        case 'restore_loan':
+            restoreLoan();
             break;
         
         case 'permanent_delete_loan':
@@ -152,7 +152,7 @@ function getLoans() {
             FROM loans l
             LEFT JOIN loan_types lt ON l.loan_type_id = lt.id
             LEFT JOIN users u ON l.created_by = u.id
-            WHERE 1=1";
+            WHERE (l.deleted_at IS NULL OR l.deleted_at = '')";
     
     $params = [];
     $types = '';
@@ -241,7 +241,7 @@ function getLoanDetails() {
             FROM loans l
             LEFT JOIN loan_types lt ON l.loan_type_id = lt.id
             LEFT JOIN users u ON l.created_by = u.id
-            WHERE l.id = ?";
+            WHERE l.id = ? AND (l.deleted_at IS NULL OR l.deleted_at = '')";
     
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $loanId);
@@ -440,7 +440,8 @@ function getStatistics() {
                 SUM(CASE WHEN status = 'defaulted' THEN 1 ELSE 0 END) as defaulted_loans,
                 SUM(principal_amount) as total_amount,
                 SUM(current_balance) as total_outstanding
-            FROM loans";
+            FROM loans
+            WHERE (deleted_at IS NULL OR deleted_at = '')";
     
     $result = $conn->query($sql);
     $stats = $result->fetch_assoc();
@@ -468,21 +469,58 @@ function softDeleteLoan() {
         throw new Exception('Loan ID is required');
     }
     
+    // Ensure soft delete columns exist
+    ensureSoftDeleteColumnsExist($conn);
+    
     // Start transaction
     $conn->begin_transaction();
     
     try {
-        // Since schema doesn't have deleted_at column, we'll change status to 'cancelled'
+        // First check if loan exists and is not already deleted
+        $checkSql = "SELECT id, status FROM loans WHERE id = ? AND (deleted_at IS NULL OR deleted_at = '')";
+        $checkStmt = $conn->prepare($checkSql);
+        $checkStmt->bind_param('i', $loanId);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        $loan = $checkResult->fetch_assoc();
+        $checkStmt->close();
+        
+        if (!$loan) {
+            throw new Exception('Loan not found or already deleted');
+        }
+        
+        // Soft delete by setting deleted_at timestamp (preserve original status)
+        // Use COALESCE to handle cases where column might not exist yet
         $sql = "UPDATE loans 
-                SET status = 'cancelled'
-                WHERE id = ? AND status != 'cancelled'";
+                SET deleted_at = NOW(), deleted_by = ?
+                WHERE id = ?";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('i', $loanId);
-        $stmt->execute();
+        if (!$stmt) {
+            throw new Exception('Failed to prepare delete statement: ' . $conn->error);
+        }
+        
+        $stmt->bind_param('ii', $currentUser['id'], $loanId);
+        if (!$stmt->execute()) {
+            throw new Exception('Failed to execute delete: ' . $stmt->error);
+        }
         
         if ($stmt->affected_rows === 0) {
-            throw new Exception('Loan not found or already deleted');
+            throw new Exception('Loan not found or already deleted (affected_rows: 0)');
+        }
+        $stmt->close();
+        
+        // Verify the deletion worked
+        $verifySql = "SELECT id, deleted_at FROM loans WHERE id = ?";
+        $verifyStmt = $conn->prepare($verifySql);
+        $verifyStmt->bind_param('i', $loanId);
+        $verifyStmt->execute();
+        $verifyResult = $verifyStmt->get_result();
+        $verifyLoan = $verifyResult->fetch_assoc();
+        $verifyStmt->close();
+        
+        if (!$verifyLoan || empty($verifyLoan['deleted_at'])) {
+            throw new Exception('Verification failed: Loan was not properly soft deleted');
         }
         
         // Log the deletion in audit trail
@@ -528,14 +566,17 @@ function restoreLoan() {
         throw new Exception('Loan ID is required');
     }
     
+    // Ensure soft delete columns exist
+    ensureSoftDeleteColumnsExist($conn);
+    
     // Start transaction
     $conn->begin_transaction();
     
     try {
-        // Restore loan by changing status back to active
+        // Restore loan by clearing deleted_at (preserve original status)
         $sql = "UPDATE loans 
-                SET status = 'active'
-                WHERE id = ? AND status = 'cancelled'";
+                SET deleted_at = NULL, deleted_by = NULL
+                WHERE id = ? AND deleted_at IS NOT NULL AND deleted_at != ''";
         
         $stmt = $conn->prepare($sql);
         $stmt->bind_param('i', $loanId);
@@ -544,6 +585,7 @@ function restoreLoan() {
         if ($stmt->affected_rows === 0) {
             throw new Exception('Loan not found or not in bin');
         }
+        $stmt->close();
         
         // Log the restoration in audit trail
         if (tableExists('audit_logs')) {
@@ -581,6 +623,9 @@ function restoreLoan() {
 function getBinItems() {
     global $conn;
     
+    // Ensure soft delete columns exist
+    ensureSoftDeleteColumnsExist($conn);
+    
     $sql = "SELECT 
                 l.id,
                 l.loan_no as loan_number,
@@ -589,15 +634,17 @@ function getBinItems() {
                 l.current_balance as outstanding_balance,
                 l.start_date,
                 DATE_ADD(l.start_date, INTERVAL l.term_months MONTH) as maturity_date,
-                l.updated_at as deleted_at,
+                l.deleted_at,
+                l.status,
                 lt.name as loan_type_name,
-                '' as deleted_by_username,
-                '' as deleted_by_name,
+                COALESCE(u.username, '') as deleted_by_username,
+                COALESCE(u.full_name, '') as deleted_by_name,
                 'loan' as item_type
             FROM loans l
             LEFT JOIN loan_types lt ON l.loan_type_id = lt.id
-            WHERE l.status = 'cancelled'
-            ORDER BY l.updated_at DESC";
+            LEFT JOIN users u ON l.deleted_by = u.id
+            WHERE l.deleted_at IS NOT NULL AND l.deleted_at != ''
+            ORDER BY l.deleted_at DESC";
     
     $result = $conn->query($sql);
     
@@ -660,8 +707,8 @@ function permanentDeleteLoan() {
             $deleteTransStmt->execute();
         }
         
-        // Delete the loan (only if cancelled)
-        $deleteLoanSql = "DELETE FROM loans WHERE id = ? AND status = 'cancelled'";
+        // Delete the loan (only if soft deleted)
+        $deleteLoanSql = "DELETE FROM loans WHERE id = ? AND deleted_at IS NOT NULL AND deleted_at != ''";
         $deleteLoanStmt = $conn->prepare($deleteLoanSql);
         $deleteLoanStmt->bind_param('i', $loanId);
         $deleteLoanStmt->execute();
@@ -669,6 +716,7 @@ function permanentDeleteLoan() {
         if ($deleteLoanStmt->affected_rows === 0) {
             throw new Exception('Loan not found or not in bin');
         }
+        $deleteLoanStmt->close();
         
         // Log activity
         logActivity('permanent_delete', 'loan_accounting', "Permanently deleted loan #$loanId from bin", $conn);
@@ -835,6 +883,18 @@ function processPayment() {
             $auditStmt->execute();
         }
         
+        // Automatically create journal entry for loan payment
+        $journalEntryId = createLoanPaymentJournalEntry($conn, $loanId, $totalPayment, $principalAmount, $interestAmount, $paymentDate, $paymentReference, $currentUser, $paymentStmt->insert_id);
+        
+        // Update loan_payments with journal_entry_id
+        if ($journalEntryId) {
+            $updatePaymentSql = "UPDATE loan_payments SET journal_entry_id = ? WHERE id = ?";
+            $updatePaymentStmt = $conn->prepare($updatePaymentSql);
+            $paymentId = $paymentStmt->insert_id;
+            $updatePaymentStmt->bind_param('ii', $journalEntryId, $paymentId);
+            $updatePaymentStmt->execute();
+        }
+        
         // Log activity
         logActivity('payment', 'loan_accounting', "Recorded payment of ₱" . number_format($totalPayment, 2) . " for loan #$loanId", $conn);
         
@@ -856,6 +916,173 @@ function processPayment() {
     } catch (Exception $e) {
         $conn->rollback();
         throw $e;
+    }
+}
+
+/**
+ * Automatically create journal entry for loan payment
+ */
+function createLoanPaymentJournalEntry($conn, $loanId, $totalPayment, $principalAmount, $interestAmount, $paymentDate, $paymentReference, $currentUser, $paymentId) {
+    try {
+        // Get current fiscal period
+        $fiscalPeriodSql = "SELECT id FROM fiscal_periods WHERE status = 'open' ORDER BY start_date DESC LIMIT 1";
+        $fiscalResult = $conn->query($fiscalPeriodSql);
+        if (!$fiscalResult || $fiscalResult->num_rows === 0) {
+            return null;
+        }
+        $fiscalPeriod = $fiscalResult->fetch_assoc();
+        $fiscalPeriodId = $fiscalPeriod['id'];
+        
+        // Get or create journal type
+        $journalTypeSql = "SELECT id FROM journal_types WHERE code = 'LP' LIMIT 1";
+        $journalTypeResult = $conn->query($journalTypeSql);
+        if (!$journalTypeResult || $journalTypeResult->num_rows === 0) {
+            $insertTypeSql = "INSERT INTO journal_types (code, name, description) VALUES ('LP', 'Loan Payment', 'Automatic journal entry from loan payments')";
+            $conn->query($insertTypeSql);
+            $journalTypeId = $conn->insert_id;
+        } else {
+            $journalType = $journalTypeResult->fetch_assoc();
+            $journalTypeId = $journalType['id'];
+        }
+        
+        // Get loan details
+        $loanSql = "SELECT loan_no FROM loans WHERE id = ?";
+        $loanStmt = $conn->prepare($loanSql);
+        $loanStmt->bind_param('i', $loanId);
+        $loanStmt->execute();
+        $loanResult = $loanStmt->get_result();
+        $loan = $loanResult->fetch_assoc();
+        $loanNo = $loan['loan_no'] ?? "LOAN-{$loanId}";
+        
+        // Get accounts
+        $cashAccountSql = "SELECT id FROM accounts WHERE code = '1001' LIMIT 1";
+        $loanAccountSql = "SELECT id FROM accounts WHERE code = '1103' LIMIT 1";
+        $interestAccountSql = "SELECT id FROM accounts WHERE code = '5101' LIMIT 1";
+        
+        $cashResult = $conn->query($cashAccountSql);
+        $loanResult = $conn->query($loanAccountSql);
+        $interestResult = $conn->query($interestAccountSql);
+        
+        if (!$cashResult || $cashResult->num_rows === 0) return null;
+        if (!$loanResult || $loanResult->num_rows === 0) return null;
+        if (!$interestResult || $interestResult->num_rows === 0) return null;
+        
+        $cashAccount = $cashResult->fetch_assoc();
+        $loanAccount = $loanResult->fetch_assoc();
+        $interestAccount = $interestResult->fetch_assoc();
+        
+        $cashAccountId = $cashAccount['id'];
+        $loanAccountId = $loanAccount['id'];
+        $interestAccountId = $interestAccount['id'];
+        
+        // Generate journal number
+        $journalNo = 'LP-' . date('Ymd') . '-' . str_pad($paymentId, 6, '0', STR_PAD_LEFT);
+        $description = "Loan payment for {$loanNo} - Principal: ₱" . number_format($principalAmount, 2) . ", Interest: ₱" . number_format($interestAmount, 2);
+        $referenceNo = 'LP-' . $paymentId;
+        
+        // Create journal entry
+        $journalSql = "INSERT INTO journal_entries 
+            (journal_no, journal_type_id, entry_date, description, fiscal_period_id, 
+             reference_no, total_debit, total_credit, status, created_by, posted_by, posted_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'posted', ?, ?, NOW())";
+        
+        $stmt = $conn->prepare($journalSql);
+        $stmt->bind_param('siissiddii', 
+            $journalNo, 
+            $journalTypeId, 
+            $paymentDate,
+            $description,
+            $fiscalPeriodId,
+            $referenceNo,
+            $totalPayment,
+            $totalPayment,
+            $currentUser['id'],
+            $currentUser['id']
+        );
+        
+        if (!$stmt->execute()) {
+            return null;
+        }
+        
+        $journalEntryId = $conn->insert_id;
+        
+        // Create journal lines
+        // Debit Cash
+        $lineSql = "INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo)
+                   VALUES (?, ?, ?, 0, ?)";
+        $stmt = $conn->prepare($lineSql);
+        $memo = "Loan payment received - {$loanNo}";
+        $stmt->bind_param('iids', $journalEntryId, $cashAccountId, $totalPayment, $memo);
+        $stmt->execute();
+        
+        // Credit Loan Receivable (principal)
+        $lineSql = "INSERT INTO journal_lines (journal_entry_id, account_id, debit, credit, memo)
+                   VALUES (?, ?, 0, ?, ?)";
+        $stmt = $conn->prepare($lineSql);
+        $memo = "Principal payment - {$loanNo}";
+        $stmt->bind_param('iids', $journalEntryId, $loanAccountId, $principalAmount, $memo);
+        $stmt->execute();
+        
+        // Credit Interest Income (interest)
+        if ($interestAmount > 0) {
+            $stmt = $conn->prepare($lineSql);
+            $memo = "Interest income - {$loanNo}";
+            $stmt->bind_param('iids', $journalEntryId, $interestAccountId, $interestAmount, $memo);
+            $stmt->execute();
+        }
+        
+        return $journalEntryId;
+    } catch (Exception $e) {
+        error_log("Error creating loan payment journal entry: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Ensure soft delete columns exist in loans table
+ */
+function ensureSoftDeleteColumnsExist($conn) {
+    try {
+        // Check if deleted_at column exists
+        $checkSql = "SHOW COLUMNS FROM loans LIKE 'deleted_at'";
+        $result = $conn->query($checkSql);
+        
+        if (!$result || $result->num_rows === 0) {
+            // Add deleted_at column
+            $alterSql = "ALTER TABLE loans ADD COLUMN deleted_at DATETIME NULL DEFAULT NULL";
+            if (!$conn->query($alterSql)) {
+                error_log("Failed to add deleted_at column: " . $conn->error);
+            } else {
+                error_log("Successfully added deleted_at column to loans table");
+            }
+        }
+        
+        // Check if deleted_by column exists
+        $checkSql = "SHOW COLUMNS FROM loans LIKE 'deleted_by'";
+        $result = $conn->query($checkSql);
+        
+        if (!$result || $result->num_rows === 0) {
+            // Add deleted_by column
+            $alterSql = "ALTER TABLE loans ADD COLUMN deleted_by INT NULL DEFAULT NULL";
+            if (!$conn->query($alterSql)) {
+                error_log("Failed to add deleted_by column: " . $conn->error);
+            } else {
+                error_log("Successfully added deleted_by column to loans table");
+            }
+        }
+        
+        // Add index if it doesn't exist
+        $indexCheck = "SHOW INDEX FROM loans WHERE Key_name = 'idx_deleted_at'";
+        $indexResult = $conn->query($indexCheck);
+        if (!$indexResult || $indexResult->num_rows === 0) {
+            $indexSql = "ALTER TABLE loans ADD INDEX idx_deleted_at (deleted_at)";
+            if (!$conn->query($indexSql)) {
+                error_log("Failed to add idx_deleted_at index: " . $conn->error);
+            }
+        }
+    } catch (Exception $e) {
+        // Log error but don't fail - columns might already exist
+        error_log("Error ensuring soft delete columns exist: " . $e->getMessage());
     }
 }
 
