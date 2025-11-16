@@ -41,12 +41,7 @@ VALUES (
 
 -- Insert default roles
 INSERT INTO roles (name, description) VALUES
-('Administrator', 'Full system access with all privileges'),
-('Accountant', 'Access to accounting and financial modules'),
-('Payroll Officer', 'Access to payroll management'),
-('Auditor', 'Read-only access to financial records'),
-('Manager', 'Management level access to reports'),
-('Clerk', 'Basic data entry access')
+('Administrator', 'Full system access with all privileges')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- Assign admin role to the admin user
@@ -2530,50 +2525,3 @@ ORDER BY total_employees DESC;
 SELECT '=== ALL DATA SUCCESSFULLY INSERTED ===' AS final_status;
 SELECT '=== ACCOUNTING & FINANCE SYSTEM IS READY FOR TESTING ===' AS ready_status;
 
--- ========================================
--- 🎉 COMPREHENSIVE DATA LOAD COMPLETE! 🎉
--- ========================================
--- 
--- This file contains ALL sample data for the accounting system:
--- ✅ Admin user and roles
--- ✅ Complete chart of accounts (80+ accounts)
--- ✅ HRIS Module: 7 departments, 24 positions, 25 employees (fully connected)
--- ✅ HRIS Additional: 10 leave types, 7 leave requests, 8 contracts, 5 onboarding records
--- ✅ HRIS Recruitment: 5 job postings, 5 applicants, 5 interviews
--- ✅ HRIS-Payroll Integration: employee_refs linking to payroll system
--- ✅ Attendance: employee_attendance (550+ records) and attendance (5 records)
--- ✅ System Logs: 5 system log entries for tracking
--- ✅ Login Attempts: 5 login attempt records
--- ✅ Banking Module: 5 missions, 3 bank users, 10 user missions
--- ✅ Banking Customers: 5 customers with profiles, addresses, emails, phones
--- ✅ Banking Accounts: 5 customer accounts with transaction types
--- ✅ Banking Transactions: 8 bank transaction records
--- ✅ Banking Support: 4 genders, 10 provinces, 5 bank account types, 4 bank employees
--- ✅ 8 bank accounts (company accounts)
--- ✅ 20+ journal entries with balanced transactions
--- ✅ 35+ loans across different types (merged from Sampled_data.sql and sample_loan_data.sql)
--- ✅ 18 loan applications (from loan subsystem with full workflow data)
--- ✅ 130+ loan payments (includes payments from both data files)
--- ✅ 43+ expense claims (includes expense tracking module data)
--- ✅ 40+ payment records
--- ✅ 13 payroll periods with comprehensive payslips
--- ✅ 5 payroll_payslips records (alternative payslip table)
--- ✅ 2 HRIS reports
--- ✅ Integration logs and audit trails
--- ✅ Compliance reports (GAAP, SOX, BIR, IFRS)
--- ✅ Account balances calculated from transactions
--- ✅ Verification queries to ensure data integrity
---
--- The system now has comprehensive test data for:
--- - HRIS Module (departments, positions, employees, attendance)
--- - Financial Reporting Module
--- - Transaction Recording Module  
--- - Payroll Management Module (linked to HRIS via employee_refs)
--- - Loan Accounting Module
--- - Expense Tracking Module
--- - Compliance Reporting Module
---
--- Login credentials:
--- Username: admin
--- Password: admin123
--- ========================================
