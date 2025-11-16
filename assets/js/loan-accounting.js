@@ -525,7 +525,7 @@
                         <div class="loan-detail-row">
                             <span class="loan-detail-label">Valid ID:</span>
                             <span class="loan-detail-value">
-                                <a href="../${app.file_name}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <a href="../../LoanSubsystem/${app.file_name}" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-file me-1"></i>View File
                                 </a>
                             </span>
@@ -537,7 +537,7 @@
                         <div class="loan-detail-row">
                             <span class="loan-detail-label">Proof of Income:</span>
                             <span class="loan-detail-value">
-                                <a href="../${app.proof_of_income}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <a href="../../LoanSubsystem/${app.proof_of_income}" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-file me-1"></i>View File
                                 </a>
                             </span>
@@ -549,7 +549,7 @@
                         <div class="loan-detail-row">
                             <span class="loan-detail-label">Certificate of Employment:</span>
                             <span class="loan-detail-value">
-                                <a href="../${app.coe_document}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <a href="../../LoanSubsystem/${app.coe_document}" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-file me-1"></i>View File
                                 </a>
                             </span>
@@ -561,7 +561,7 @@
                         <div class="loan-detail-row">
                             <span class="loan-detail-label">Application PDF:</span>
                             <span class="loan-detail-value">
-                                <a href="../${app.pdf_path}" target="_blank" class="btn btn-sm btn-outline-success">
+                                <a href="../../LoanSubsystem/${app.pdf_path}" target="_blank" class="btn btn-sm btn-outline-success">
                                     <i class="fas fa-file-pdf me-1"></i>View PDF
                                 </a>
                             </span>
@@ -1131,6 +1131,67 @@
         URL.revokeObjectURL(url);
         
         showNotification('Audit trail exported successfully!', 'success');
+    };
+
+    /**
+     * Delete application (for applications)
+     */
+    window.deleteApplication = function(applicationId) {
+        console.log('Delete application called with ID:', applicationId);
+        
+        if (!applicationId || applicationId === 'undefined' || applicationId === 'null') {
+            showNotification('Error: Invalid application ID', 'error');
+            return;
+        }
+        
+        if (!confirm('Are you sure you want to delete this loan application? This action cannot be undone.')) {
+            return;
+        }
+
+        showLoading('Deleting application...');
+
+        fetch('api/loan-data.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `action=delete_application&application_id=${applicationId}`
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    let errorMessage = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errorData = JSON.parse(text);
+                        if (errorData.error) {
+                            errorMessage += ` - ${errorData.error}`;
+                        }
+                    } catch (e) {
+                        if (text.length > 0) {
+                            errorMessage += ` - ${text.substring(0, 200)}`;
+                        }
+                    }
+                    throw new Error(errorMessage);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showNotification(data.message || 'Application deleted successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification('Delete failed: ' + (data.error || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            hideLoading();
+            showNotification('Delete failed: ' + error.message, 'error');
+        });
     };
 
     /**

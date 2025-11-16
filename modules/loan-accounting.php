@@ -49,8 +49,9 @@ $applyFilters = isset($_GET['apply_filters']);
 
 // Build query to combine both loans and loan_applications
 // This ensures loan applications from the loan subsystem are visible in loan-accounting
-// First, let's try just showing loan_applications for debugging
-$showOnlyApplications = true; // Set to false once working
+// Show only applications for now (since loans table might be empty)
+// Set to false to include both loans and applications
+$showOnlyApplications = true;
 
 if ($showOnlyApplications) {
     $sql = "SELECT 
@@ -93,7 +94,7 @@ if ($showOnlyApplications) {
         WHERE 1=1
         ORDER BY la.id DESC";
 } else {
-    $sql = "SELECT 
+$sql = "SELECT 
             l.id,
             l.loan_no as loan_number,
             l.borrower_external_no as borrower_name,
@@ -181,37 +182,47 @@ $appConditions = [];
 // Apply filters - separate conditions for loans and applications
 if ($applyFilters) {
     if (!empty($dateFrom)) {
+        if (!$showOnlyApplications) {
         $loanConditions[] = "l.start_date >= ?";
-        $appConditions[] = "la.created_at >= ?";
         $params[] = $dateFrom;
-        $params[] = $dateFrom;
-        $types .= 'ss';
+            $types .= 's';
+        }
+        $sql = str_replace("WHERE 1=1", "WHERE la.created_at >= '$dateFrom'", $sql);
     }
     
     if (!empty($dateTo)) {
+        if (!$showOnlyApplications) {
         $loanConditions[] = "l.start_date <= ?";
-        $appConditions[] = "la.created_at <= ?";
         $params[] = $dateTo;
-        $params[] = $dateTo;
-        $types .= 'ss';
+            $types .= 's';
+        }
+        if (strpos($sql, "WHERE la.created_at >=") !== false) {
+            $sql = str_replace("WHERE la.created_at >=", "WHERE la.created_at >= '$dateFrom' AND la.created_at <=", $sql);
+            $sql = str_replace("WHERE 1=1", "WHERE 1=1 AND la.created_at <= '$dateTo'", $sql);
+        } else {
+            $sql = str_replace("WHERE 1=1", "WHERE la.created_at <= '$dateTo'", $sql);
+        }
     }
     
     if (!empty($status)) {
+        if (!$showOnlyApplications) {
         $loanConditions[] = "l.status = ?";
-        $appConditions[] = "la.status = ?";
         $params[] = $status;
-        $params[] = $status;
-        $types .= 'ss';
+            $types .= 's';
+        }
+        $sql = str_replace("WHERE 1=1", "WHERE la.status = '$status'", $sql);
+        $sql = str_replace("ORDER BY", "AND la.status = '$status' ORDER BY", $sql);
     }
     
     if (!empty($accountNumber)) {
+        if (!$showOnlyApplications) {
         $loanConditions[] = "l.loan_no LIKE ?";
-        $appConditions[] = "(CONCAT('APP-', la.id) LIKE ? OR la.account_number LIKE ?)";
+            $searchTerm = "%{$accountNumber}%";
+            $params[] = $searchTerm;
+            $types .= 's';
+        }
         $searchTerm = "%{$accountNumber}%";
-        $params[] = $searchTerm;
-        $params[] = $searchTerm;
-        $params[] = $searchTerm;
-        $types .= 'sss';
+        $sql = str_replace("WHERE 1=1", "WHERE (CONCAT('APP-', la.id) LIKE '$searchTerm' OR la.account_number LIKE '$searchTerm' OR la.full_name LIKE '$searchTerm')", $sql);
     }
 }
 
@@ -240,7 +251,7 @@ if (!$showOnlyApplications && !empty($appConditions)) {
 
 // Wrap in subquery for proper ordering (only if using UNION)
 if (!$showOnlyApplications) {
-    $sql = "SELECT * FROM ($sql) AS combined_results ORDER BY start_date DESC, loan_number DESC";
+$sql = "SELECT * FROM ($sql) AS combined_results ORDER BY start_date DESC, loan_number DESC";
 }
 
 // Execute query with fallback
@@ -337,25 +348,32 @@ if ($conn) {
 }
 
 // Calculate statistics
-$totalLoans = 0;
+$totalLoans = count($loans); // Total count of all records
 $totalApplications = 0;
 $totalAmount = 0;
 $totalOutstanding = 0;
 $activeLoans = 0;
 $pendingApplications = 0;
+$actualLoanCount = 0; // Actual loans (not applications)
 
 foreach ($loans as $loan) {
+    $totalAmount += floatval($loan['loan_amount']);
+    
     if ($loan['record_type'] === 'loan') {
-        $totalLoans++;
-        $totalAmount += $loan['loan_amount'];
-        $totalOutstanding += $loan['outstanding_balance'];
-        if ($loan['status'] === 'active') {
+        $actualLoanCount++;
+        $totalOutstanding += floatval($loan['outstanding_balance']);
+        if (strtolower($loan['status']) === 'active') {
             $activeLoans++;
         }
     } else {
+        // This is an application
         $totalApplications++;
-        if ($loan['status'] === 'Pending' || $loan['status'] === 'pending') {
+        if (strtolower($loan['status']) === 'pending') {
             $pendingApplications++;
+        }
+        // Count approved/active applications as active loans
+        if (in_array(strtolower($loan['status']), ['approved', 'active'])) {
+            $activeLoans++;
         }
     }
 }
@@ -547,6 +565,9 @@ foreach ($loans as $loan) {
                     <div class="stat-content">
                         <h3><?php echo $totalLoans; ?></h3>
                         <p>Total Loans</p>
+                        <?php if ($totalLoans > 0): ?>
+                            <small class="text-muted">₱<?php echo number_format($totalAmount, 2); ?></small>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -772,16 +793,17 @@ foreach ($loans as $loan) {
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <?php if ($loan['record_type'] === 'application'): ?>
-                                            <button class="btn btn-info btn-action" onclick="viewApplicationDetails(<?php echo $loan['application_id']; ?>)" title="View Application Details">
-                                                <i class="fas fa-eye"></i>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-info btn-action" onclick="<?php echo $loan['record_type'] === 'application' ? 'viewApplicationDetails(' . $loan['application_id'] . ')' : 'viewLoanDetails(' . $loan['id'] . ')'; ?>" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <?php if ($loan['record_type'] === 'loan'): ?>
+                                            <button class="btn btn-danger btn-action" onclick="deleteLoan(<?php echo $loan['id']; ?>)" title="Move to Bin">
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         <?php else: ?>
-                                            <button class="btn btn-info btn-action" onclick="viewLoanDetails(<?php echo $loan['id']; ?>)" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-danger btn-action" onclick="deleteLoan(<?php echo $loan['id']; ?>)" title="Delete">
+                                            <!-- Applications can also be deleted if needed -->
+                                            <button class="btn btn-danger btn-action" onclick="deleteApplication(<?php echo $loan['application_id']; ?>)" title="Delete Application">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         <?php endif; ?>

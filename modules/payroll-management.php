@@ -22,33 +22,26 @@ $period_start = '';
 $period_end = '';
 $period_label = '';
 
-if ($payroll_period && $payroll_month) {
-    $year = date('Y', strtotime($payroll_month . '-01'));
-    $month = date('m', strtotime($payroll_month . '-01'));
-    $last_day = date('t', strtotime($payroll_month . '-01'));
-    
-    if ($payroll_period === 'first') {
-        // First half: 1-15
-        $period_start = sprintf('%04d-%02d-01', $year, $month);
-        $period_end = sprintf('%04d-%02d-15', $year, $month);
-        $period_label = date('M 1-15, Y', strtotime($period_start));
-    } elseif ($payroll_period === 'second') {
-        // Second half: 16-end of month
-        $period_start = sprintf('%04d-%02d-16', $year, $month);
-        $period_end = sprintf('%04d-%02d-%02d', $year, $month, $last_day);
-        $period_label = date('M 16', strtotime($period_start)) . '-' . date('t, Y', strtotime($period_start));
-    } else {
-        // Default to current month
-        $period_start = date('Y-m-01');
-        $period_end = date('Y-m-t');
-        $period_label = date('F Y');
-    }
+// Always use the selected payroll_month (don't reset to current month)
+$year = date('Y', strtotime($payroll_month . '-01'));
+$month = date('m', strtotime($payroll_month . '-01'));
+$last_day = date('t', strtotime($payroll_month . '-01'));
+
+if ($payroll_period === 'first') {
+    // First half: 1-15
+    $period_start = sprintf('%04d-%02d-01', $year, $month);
+    $period_end = sprintf('%04d-%02d-15', $year, $month);
+    $period_label = date('M 1-15, Y', strtotime($period_start));
+} elseif ($payroll_period === 'second') {
+    // Second half: 16-end of month
+    $period_start = sprintf('%04d-%02d-16', $year, $month);
+    $period_end = sprintf('%04d-%02d-%02d', $year, $month, $last_day);
+    $period_label = date('M 16', strtotime($period_start)) . '-' . date('t, Y', strtotime($period_start));
 } else {
-    // Default to current month
-    $period_start = date('Y-m-01');
-    $period_end = date('Y-m-t');
-    $period_label = date('F Y');
-    $payroll_month = date('Y-m');
+    // Full Month (empty payroll_period) - use selected month, not current month
+    $period_start = sprintf('%04d-%02d-01', $year, $month);
+    $period_end = sprintf('%04d-%02d-%02d', $year, $month, $last_day);
+    $period_label = date('F Y', strtotime($payroll_month . '-01'));
 }
 
 // Build dynamic query for employees with filters
@@ -217,117 +210,198 @@ $attendance_summary = [
 ];
 
 if ($selected_employee) {
-    // Use payroll period dates if available, otherwise use attendance month
-    $attendance_month = isset($_GET['attendance_month']) ? $_GET['attendance_month'] : $payroll_month;
+    // Use the payroll_month for attendance display - this ensures proper month filtering
+    $display_month = $payroll_month;
     
-    // Build attendance query based on period selection
-    if ($payroll_period && $period_start && $period_end) {
-        // Use period dates for filtering
-        $attendance_query = "SELECT 
-                                DATE(attendance_date) as date,
-                                time_in,
-                                time_out,
-                                status,
-                                hours_worked,
-                                overtime_hours,
-                                late_minutes,
-                                remarks
-                            FROM employee_attendance 
-                            WHERE employee_external_no = ? 
-                            AND attendance_date BETWEEN ? AND ?
-                            ORDER BY attendance_date DESC";
+    // Get employee_id from external_employee_no (format: EMP001 -> 1, EMP002 -> 2, etc.)
+    // Extract numeric part from external_employee_no
+    $employee_id_from_external = null;
+    if (preg_match('/EMP(\d+)/i', $selected_employee, $matches)) {
+        $employee_id_from_external = intval($matches[1]);
     } else {
-        // Fallback to month-based filtering
-        $attendance_query = "SELECT 
-                                DATE(attendance_date) as date,
-                                time_in,
-                                time_out,
-                                status,
-                                hours_worked,
-                                overtime_hours,
-                                late_minutes,
-                                remarks
-                            FROM employee_attendance 
-                            WHERE employee_external_no = ? 
-                            AND DATE_FORMAT(attendance_date, '%Y-%m') = ?
-                            ORDER BY attendance_date DESC";
+        // Try direct match if it's already a number
+        $employee_id_from_external = is_numeric($selected_employee) ? intval($selected_employee) : null;
     }
     
-    // Check if attendance table exists, if not create sample data
-    $table_check = $conn->query("SHOW TABLES LIKE 'employee_attendance'");
-    if ($table_check->num_rows == 0) {
-        // Create attendance table if it doesn't exist
-        $create_attendance_table = "CREATE TABLE IF NOT EXISTS employee_attendance (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            employee_external_no VARCHAR(100) NOT NULL,
-            attendance_date DATE NOT NULL,
-            time_in TIME,
-            time_out TIME,
-            status ENUM('present','absent','late','leave','half_day') DEFAULT 'present',
-            hours_worked DECIMAL(4,2) DEFAULT 0.00,
-            overtime_hours DECIMAL(4,2) DEFAULT 0.00,
-            late_minutes INT DEFAULT 0,
-            remarks TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_employee_date (employee_external_no, attendance_date)
-        )";
-        $conn->query($create_attendance_table);
+    // Build attendance query to read from BOTH HRIS attendance AND employee_attendance tables
+    // This combines data from both sources using UNION ALL
+    if ($payroll_period === 'first' || $payroll_period === 'second') {
+        // Use period dates for filtering - SPECIFIC PERIOD SELECTED (1-15 or 16-end)
+        $attendance_query = "SELECT * FROM (
+                                -- From HRIS attendance table (uses employee_id)
+                                SELECT 
+                                    DATE(a.date) as date,
+                                    TIME(a.time_in) as time_in,
+                                    TIME(a.time_out) as time_out,
+                                    CASE 
+                                        WHEN LOWER(a.status) = 'present' THEN 'present'
+                                        WHEN LOWER(a.status) = 'absent' THEN 'absent'
+                                        WHEN LOWER(a.status) = 'late' THEN 'late'
+                                        WHEN LOWER(a.status) = 'leave' THEN 'leave'
+                                        WHEN LOWER(a.status) LIKE '%half%' OR LOWER(a.status) LIKE '%half_day%' THEN 'half_day'
+                                        ELSE 'present'
+                                    END as status,
+                                    COALESCE(a.total_hours, 
+                                        CASE 
+                                            WHEN a.time_in IS NOT NULL AND a.time_out IS NOT NULL 
+                                            THEN TIMESTAMPDIFF(HOUR, a.time_in, a.time_out) + (TIMESTAMPDIFF(MINUTE, a.time_in, a.time_out) % 60) / 60.0
+                                            WHEN a.time_in IS NOT NULL AND DATE(a.date) < CURDATE()
+                                            THEN 8.00
+                                            WHEN a.time_in IS NOT NULL 
+                                            THEN TIMESTAMPDIFF(HOUR, a.time_in, NOW()) + (TIMESTAMPDIFF(MINUTE, a.time_in, NOW()) % 60) / 60.0
+                                            ELSE 0.00
+                                        END
+                                    ) as hours_worked,
+                                    0.00 as overtime_hours,
+                                    CASE 
+                                        WHEN TIME(a.time_in) > '08:00:00' AND TIME(a.time_in) <= '09:00:00'
+                                        THEN TIMESTAMPDIFF(MINUTE, '08:00:00', TIME(a.time_in))
+                                        ELSE 0
+                                    END as late_minutes,
+                                    COALESCE(a.remarks, '') as remarks,
+                                    'hris' as source
+                                FROM attendance a
+                                WHERE a.employee_id = ? 
+                                AND DATE(a.date) BETWEEN ? AND ?
+                                
+                                UNION ALL
+                                
+                                -- From employee_attendance table (uses employee_external_no)
+                                SELECT 
+                                    ea.attendance_date as date,
+                                    ea.time_in,
+                                    ea.time_out,
+                                    CASE 
+                                        WHEN LOWER(ea.status) = 'present' THEN 'present'
+                                        WHEN LOWER(ea.status) = 'absent' THEN 'absent'
+                                        WHEN LOWER(ea.status) = 'late' THEN 'late'
+                                        WHEN LOWER(ea.status) = 'leave' THEN 'leave'
+                                        WHEN LOWER(ea.status) LIKE '%half%' OR LOWER(ea.status) LIKE '%half_day%' THEN 'half_day'
+                                        ELSE 'present'
+                                    END as status,
+                                    COALESCE(ea.hours_worked, 0.00) as hours_worked,
+                                    COALESCE(ea.overtime_hours, 0.00) as overtime_hours,
+                                    COALESCE(ea.late_minutes, 0) as late_minutes,
+                                    COALESCE(ea.remarks, '') as remarks,
+                                    'accounting' as source
+                                FROM employee_attendance ea
+                                WHERE ea.employee_external_no = ?
+                                AND ea.attendance_date BETWEEN ? AND ?
+                            ) combined_attendance
+                            ORDER BY date DESC";
+    } else {
+        // Fallback to FULL MONTH filtering - shows all records for the month
+        $attendance_query = "SELECT * FROM (
+                                -- From HRIS attendance table (uses employee_id)
+                                SELECT 
+                                    DATE(a.date) as date,
+                                    TIME(a.time_in) as time_in,
+                                    TIME(a.time_out) as time_out,
+                                    CASE 
+                                        WHEN LOWER(a.status) = 'present' THEN 'present'
+                                        WHEN LOWER(a.status) = 'absent' THEN 'absent'
+                                        WHEN LOWER(a.status) = 'late' THEN 'late'
+                                        WHEN LOWER(a.status) = 'leave' THEN 'leave'
+                                        WHEN LOWER(a.status) LIKE '%half%' OR LOWER(a.status) LIKE '%half_day%' THEN 'half_day'
+                                        ELSE 'present'
+                                    END as status,
+                                    COALESCE(a.total_hours, 
+                                        CASE 
+                                            WHEN a.time_in IS NOT NULL AND a.time_out IS NOT NULL 
+                                            THEN TIMESTAMPDIFF(HOUR, a.time_in, a.time_out) + (TIMESTAMPDIFF(MINUTE, a.time_in, a.time_out) % 60) / 60.0
+                                            WHEN a.time_in IS NOT NULL AND DATE(a.date) < CURDATE()
+                                            THEN 8.00
+                                            WHEN a.time_in IS NOT NULL 
+                                            THEN TIMESTAMPDIFF(HOUR, a.time_in, NOW()) + (TIMESTAMPDIFF(MINUTE, a.time_in, NOW()) % 60) / 60.0
+                                            ELSE 0.00
+                                        END
+                                    ) as hours_worked,
+                                    0.00 as overtime_hours,
+                                    CASE 
+                                        WHEN TIME(a.time_in) > '08:00:00' AND TIME(a.time_in) <= '09:00:00'
+                                        THEN TIMESTAMPDIFF(MINUTE, '08:00:00', TIME(a.time_in))
+                                        ELSE 0
+                                    END as late_minutes,
+                                    COALESCE(a.remarks, '') as remarks,
+                                    'hris' as source
+                                FROM attendance a
+                                WHERE a.employee_id = ? 
+                                AND DATE_FORMAT(a.date, '%Y-%m') = ?
+                                
+                                UNION ALL
+                                
+                                -- From employee_attendance table (uses employee_external_no)
+                                SELECT 
+                                    ea.attendance_date as date,
+                                    ea.time_in,
+                                    ea.time_out,
+                                    CASE 
+                                        WHEN LOWER(ea.status) = 'present' THEN 'present'
+                                        WHEN LOWER(ea.status) = 'absent' THEN 'absent'
+                                        WHEN LOWER(ea.status) = 'late' THEN 'late'
+                                        WHEN LOWER(ea.status) = 'leave' THEN 'leave'
+                                        WHEN LOWER(ea.status) LIKE '%half%' OR LOWER(ea.status) LIKE '%half_day%' THEN 'half_day'
+                                        ELSE 'present'
+                                    END as status,
+                                    COALESCE(ea.hours_worked, 0.00) as hours_worked,
+                                    COALESCE(ea.overtime_hours, 0.00) as overtime_hours,
+                                    COALESCE(ea.late_minutes, 0) as late_minutes,
+                                    COALESCE(ea.remarks, '') as remarks,
+                                    'accounting' as source
+                                FROM employee_attendance ea
+                                WHERE ea.employee_external_no = ?
+                                AND DATE_FORMAT(ea.attendance_date, '%Y-%m') = ?
+                            ) combined_attendance
+                            ORDER BY date DESC";
+    }
+    
+    if ($employee_id_from_external) {
+        $attendance_stmt = $conn->prepare($attendance_query);
         
-        // Insert sample attendance data for current month
-        $sample_attendance_data = [
-            ['EMP001', '2024-12-01', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-02', '08:15:00', '17:30:00', 'late', 8.25, 0.25, 15, 'Late arrival'],
-            ['EMP001', '2024-12-03', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-04', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-05', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-06', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-07', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-08', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-09', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-10', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-11', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-12', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-13', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-14', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-15', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-16', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-17', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-18', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-19', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-20', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-21', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-22', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-23', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-24', '08:00:00', '12:00:00', 'half_day', 4.00, 0.00, 0, 'Half day - Christmas Eve'],
-            ['EMP001', '2024-12-25', NULL, NULL, 'leave', 0.00, 0.00, 0, 'Christmas Day - Holiday'],
-            ['EMP001', '2024-12-26', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-27', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-28', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-29', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-30', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day'],
-            ['EMP001', '2024-12-31', '08:00:00', '17:00:00', 'present', 8.00, 0.00, 0, 'Regular work day']
-        ];
-        
-        $insert_stmt = $conn->prepare("INSERT INTO employee_attendance (employee_external_no, attendance_date, time_in, time_out, status, hours_worked, overtime_hours, late_minutes, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        foreach ($sample_attendance_data as $data) {
-            $insert_stmt->bind_param("ssssssdis", $data[0], $data[1], $data[2], $data[3], $data[4], $data[5], $data[6], $data[7], $data[8]);
-            $insert_stmt->execute();
+        if (!$attendance_stmt) {
+            error_log("PREPARE FAILED: " . $conn->error);
+            error_log("Query: " . substr($attendance_query, 0, 500));
+        } else {
+            if ($payroll_period === 'first' || $payroll_period === 'second') {
+                // Bind parameters: employee_id (for HRIS), period dates, employee_external_no (for accounting), period dates
+                $attendance_stmt->bind_param("issss", 
+                    $employee_id_from_external, $period_start, $period_end,  // For HRIS attendance table
+                    $selected_employee, $period_start, $period_end           // For employee_attendance table
+                );
+                error_log("Fetching attendance for employee_id=$employee_id_from_external / external_no=$selected_employee, period=$period_start to $period_end");
+            } else {
+                // Bind parameters: employee_id (for HRIS), month, employee_external_no (for accounting), month
+                $attendance_stmt->bind_param("isss", 
+                    $employee_id_from_external, $display_month,  // For HRIS attendance table
+                    $selected_employee, $display_month          // For employee_attendance table
+                );
+                error_log("Fetching attendance for employee_id=$employee_id_from_external / external_no=$selected_employee, month=$display_month");
+            }
+            
+            if (!$attendance_stmt->execute()) {
+                error_log("EXECUTE FAILED: " . $attendance_stmt->error);
+            }
+            
+            $attendance_result = $attendance_stmt->get_result();
+            
+            if (!$attendance_result) {
+                error_log("GET_RESULT FAILED: " . $attendance_stmt->error);
+            } else {
+                $record_count = 0;
+                while ($row = $attendance_result->fetch_assoc()) {
+                    // Overtime is already calculated in employee_attendance, but recalculate for HRIS records
+                    if ($row['source'] === 'hris' && $row['hours_worked'] > 8.0) {
+                        $row['overtime_hours'] = $row['hours_worked'] - 8.0;
+                        $row['hours_worked'] = 8.0; // Regular hours capped at 8
+                    }
+                    $attendance_data[] = $row;
+                    $record_count++;
+                }
+                error_log("Found $record_count attendance records from both sources (HRIS + Accounting)");
+            }
         }
-    }
-    
-    $attendance_stmt = $conn->prepare($attendance_query);
-    if ($payroll_period && $period_start && $period_end) {
-        // Bind period dates
-        $attendance_stmt->bind_param("sss", $selected_employee, $period_start, $period_end);
     } else {
-        // Bind month
-        $attendance_stmt->bind_param("ss", $selected_employee, $attendance_month);
-    }
-    $attendance_stmt->execute();
-    $attendance_result = $attendance_stmt->get_result();
-    
-    while ($row = $attendance_result->fetch_assoc()) {
-        $attendance_data[] = $row;
+        error_log("Could not extract employee_id from: $selected_employee");
     }
     
     // Calculate summary from attendance data for display (will be overridden by API if available)
@@ -914,7 +988,7 @@ if ($selected_employee) {
                         
                         <!-- Attendance Summary Cards -->
                         <div class="attendance-summary-section">
-                            <h5 class="section-subtitle">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y', strtotime($attendance_month . '-01')); ?></h5>
+                            <h5 class="section-subtitle">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y', strtotime($display_month . '-01')); ?></h5>
                             
                             <div class="row g-3 mb-4">
                                 <div class="col-md-3">
@@ -1007,9 +1081,9 @@ if ($selected_employee) {
                                 <h5 class="section-subtitle">Daily Attendance Records</h5>
                                 <div class="attendance-filters">
                                     <select class="form-select form-select-sm" id="attendance-month-filter">
-                                        <option value="<?php echo date('Y-m'); ?>" <?php echo ($attendance_month == date('Y-m')) ? 'selected' : ''; ?>><?php echo date('F Y'); ?></option>
-                                        <option value="<?php echo date('Y-m', strtotime('-1 month')); ?>" <?php echo ($attendance_month == date('Y-m', strtotime('-1 month'))) ? 'selected' : ''; ?>><?php echo date('F Y', strtotime('-1 month')); ?></option>
-                                        <option value="<?php echo date('Y-m', strtotime('-2 months')); ?>" <?php echo ($attendance_month == date('Y-m', strtotime('-2 months'))) ? 'selected' : ''; ?>><?php echo date('F Y', strtotime('-2 months')); ?></option>
+                                        <option value="<?php echo date('Y-m'); ?>" <?php echo ($display_month == date('Y-m')) ? 'selected' : ''; ?>><?php echo date('F Y'); ?></option>
+                                        <option value="<?php echo date('Y-m', strtotime('-1 month')); ?>" <?php echo ($display_month == date('Y-m', strtotime('-1 month'))) ? 'selected' : ''; ?>><?php echo date('F Y', strtotime('-1 month')); ?></option>
+                                        <option value="<?php echo date('Y-m', strtotime('-2 months')); ?>" <?php echo ($display_month == date('Y-m', strtotime('-2 months'))) ? 'selected' : ''; ?>><?php echo date('F Y', strtotime('-2 months')); ?></option>
                                     </select>
                                 </div>
                             </div>
@@ -1157,7 +1231,7 @@ if ($selected_employee) {
                     <!-- Attendance Summary for Payroll Tab -->
                     <?php if ($selected_employee && $attendance_summary): ?>
                     <div class="mb-4">
-                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y'); ?></h5>
+                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y', strtotime($display_month . '-01')); ?></h5>
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <div class="attendance-summary-card present">
@@ -1439,7 +1513,7 @@ if ($selected_employee) {
                     <!-- Attendance Summary for Tax Tab -->
                     <?php if ($selected_employee && $attendance_summary): ?>
                     <div class="mb-4">
-                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y'); ?></h5>
+                        <h5 class="section-subtitle mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y', strtotime($display_month . '-01')); ?></h5>
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <div class="attendance-summary-card present">
@@ -1652,7 +1726,7 @@ if ($selected_employee) {
                             <!-- Attendance Summary for Overall Tab - Hidden in print -->
                             <?php if ($selected_employee && $attendance_summary): ?>
                             <div class="mt-4 no-print">
-                                <div class="overall-section-title mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y'); ?></div>
+                                <div class="overall-section-title mb-3">Attendance Summary - <?php echo $period_label ? htmlspecialchars($period_label) : date('F Y', strtotime($display_month . '-01')); ?></div>
                                 <div class="row g-3">
                                     <div class="col-md-3">
                                         <div class="attendance-summary-card present">

@@ -101,6 +101,9 @@ try {
         case 'get_application_details':
             getApplicationDetails();
             break;
+        case 'delete_application':
+            deleteApplication();
+            break;
         
         default:
             throw new Exception('Invalid action');
@@ -1152,6 +1155,77 @@ function getApplicationDetails() {
     
     ob_end_flush();
     exit();
+}
+
+/**
+ * Delete loan application (hard delete)
+ */
+function deleteApplication() {
+    global $conn;
+    
+    $applicationId = $_POST['application_id'] ?? '';
+    $currentUser = getCurrentUser();
+    
+    if (empty($applicationId)) {
+        throw new Exception('Application ID is required');
+    }
+    
+    // Start transaction
+    $conn->begin_transaction();
+    
+    try {
+        // Check if application exists
+        $checkSql = "SELECT id, status FROM loan_applications WHERE id = ?";
+        $checkStmt = $conn->prepare($checkSql);
+        $checkStmt->bind_param('i', $applicationId);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        $application = $checkResult->fetch_assoc();
+        $checkStmt->close();
+        
+        if (!$application) {
+            throw new Exception('Application not found');
+        }
+        
+        // Delete the application
+        $deleteSql = "DELETE FROM loan_applications WHERE id = ?";
+        $deleteStmt = $conn->prepare($deleteSql);
+        $deleteStmt->bind_param('i', $applicationId);
+        $deleteStmt->execute();
+        
+        if ($deleteStmt->affected_rows === 0) {
+            throw new Exception('Failed to delete application');
+        }
+        $deleteStmt->close();
+        
+        // Log the deletion in audit trail
+        if (tableExists('audit_logs')) {
+            $auditSql = "INSERT INTO audit_logs (user_id, action, object_type, object_id, additional_info, ip_address, created_at) 
+                         VALUES (?, 'DELETE', 'loan_application', ?, 'Loan application permanently deleted', ?, NOW())";
+            
+            $auditStmt = $conn->prepare($auditSql);
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $auditStmt->bind_param('iis', $currentUser['id'], $applicationId, $ipAddress);
+            $auditStmt->execute();
+        }
+        
+        // Log activity
+        logActivity('delete', 'loan_accounting', "Deleted loan application #$applicationId", $conn);
+        
+        $conn->commit();
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Application deleted successfully'
+        ]);
+        
+        ob_end_flush();
+        exit();
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        throw $e;
+    }
 }
 
 /**

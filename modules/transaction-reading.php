@@ -22,68 +22,95 @@ if ($apply_filters) {
                   !empty($filter_type) || !empty($filter_status) || !empty($filter_account);
 }
 
-// Build query to fetch transactions
-$sql = "SELECT 
-            je.id,
-            je.journal_no,
-            je.entry_date,
-            jt.code as type_code,
-            jt.name as type_name,
-            je.description,
-            je.reference_no,
-            je.total_debit,
-            je.total_credit,
-            je.status,
-            u.username as created_by,
-            u.full_name as created_by_name,
-            je.created_at,
-            je.posted_at,
-            fp.period_name as fiscal_period
-        FROM journal_entries je
-        INNER JOIN journal_types jt ON je.journal_type_id = jt.id
-        INNER JOIN users u ON je.created_by = u.id
-        LEFT JOIN fiscal_periods fp ON je.fiscal_period_id = fp.id
-        WHERE je.status NOT IN ('deleted', 'voided')";
+// Build query to fetch transactions from BOTH journal entries AND bank transactions
+$sql = "SELECT * FROM (
+            -- Journal Entries from Accounting System
+            SELECT 
+                CONCAT('JE-', je.id) as id,
+                je.journal_no as journal_no,
+                je.entry_date as entry_date,
+                jt.code as type_code,
+                jt.name as type_name,
+                je.description,
+                je.reference_no,
+                je.total_debit,
+                je.total_credit,
+                je.status,
+                u.username as created_by,
+                u.full_name as created_by_name,
+                je.created_at,
+                je.posted_at,
+                fp.period_name as fiscal_period,
+                'journal' as source
+            FROM journal_entries je
+            INNER JOIN journal_types jt ON je.journal_type_id = jt.id
+            INNER JOIN users u ON je.created_by = u.id
+            LEFT JOIN fiscal_periods fp ON je.fiscal_period_id = fp.id
+            WHERE je.status NOT IN ('deleted', 'voided')
+            
+            UNION ALL
+            
+            -- Bank Transactions from Bank System
+            SELECT 
+                CONCAT('BT-', bt.transaction_id) as id,
+                bt.transaction_ref as journal_no,
+                DATE(bt.created_at) as entry_date,
+                tt.type_name as type_code,
+                tt.type_name as type_name,
+                COALESCE(bt.description, 'Bank Transaction') as description,
+                bt.transaction_ref as reference_no,
+                CASE WHEN bt.amount > 0 THEN bt.amount ELSE 0 END as total_debit,
+                CASE WHEN bt.amount < 0 THEN ABS(bt.amount) ELSE 0 END as total_credit,
+                'posted' as status,
+                COALESCE(be.employee_name, 'System') as created_by,
+                COALESCE(be.employee_name, 'System') as created_by_name,
+                bt.created_at,
+                bt.created_at as posted_at,
+                DATE_FORMAT(bt.created_at, '%Y-%m') as fiscal_period,
+                'bank' as source
+            FROM bank_transactions bt
+            INNER JOIN transaction_types tt ON bt.transaction_type_id = tt.transaction_type_id
+            LEFT JOIN bank_employees be ON bt.employee_id = be.employee_id
+            INNER JOIN customer_accounts ca ON bt.account_id = ca.account_id
+        ) combined_transactions
+        WHERE 1=1";
 
 $params = [];
 $types = '';
 
 // Apply filters
 if (!empty($filter_date_from)) {
-    $sql .= " AND je.entry_date >= ?";
+    $sql .= " AND entry_date >= ?";
     $params[] = $filter_date_from;
     $types .= 's';
 }
 
 if (!empty($filter_date_to)) {
-    $sql .= " AND je.entry_date <= ?";
+    $sql .= " AND entry_date <= ?";
     $params[] = $filter_date_to;
     $types .= 's';
 }
 
 if (!empty($filter_type)) {
-    $sql .= " AND jt.code = ?";
+    $sql .= " AND type_code = ?";
     $params[] = $filter_type;
     $types .= 's';
 }
 
 if (!empty($filter_status)) {
-    $sql .= " AND je.status = ?";
+    $sql .= " AND status = ?";
     $params[] = $filter_status;
     $types .= 's';
 }
 
 if (!empty($filter_account)) {
-    $sql .= " AND EXISTS (
-        SELECT 1 FROM journal_lines jl
-        INNER JOIN accounts a ON jl.account_id = a.id
-        WHERE jl.journal_entry_id = je.id AND a.code LIKE ?
-    )";
+    $sql .= " AND (reference_no LIKE ? OR description LIKE ?)";
     $params[] = "%{$filter_account}%";
-    $types .= 's';
+    $params[] = "%{$filter_account}%";
+    $types .= 'ss';
 }
 
-$sql .= " ORDER BY je.entry_date DESC, je.journal_no DESC";
+$sql .= " ORDER BY entry_date DESC, created_at DESC";
 
 // Execute query
 try {
