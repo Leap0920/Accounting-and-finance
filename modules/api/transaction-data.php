@@ -106,6 +106,10 @@ try {
             testDeleteSimple();
             break;
         
+        case 'sync_bank_transactions':
+            syncBankTransactionsToJournal();
+            break;
+        
         default:
             throw new Exception('Invalid action');
     }

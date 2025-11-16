@@ -807,5 +807,63 @@
         showNotification('Sample data loading is disabled. Connect to database to load actual transactions.', 'info');
     };
 
+    /**
+     * Sync bank transactions to journal entries
+     */
+    window.syncBankTransactions = function() {
+        const btn = document.getElementById('btnSyncBankTransactions');
+        const originalText = btn.innerHTML;
+        
+        // Disable button and show loading
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Syncing...';
+        
+        showLoading('Syncing bank transactions to journal entries...');
+        
+        fetch('../modules/api/transaction-data.php?action=sync_bank_transactions', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            
+            if (data.success) {
+                const message = data.synced_count > 0 
+                    ? `Successfully synced ${data.synced_count} bank transaction(s) to journal entries.`
+                    : 'No new bank transactions to sync.';
+                
+                showNotification(message, 'success');
+                
+                if (data.has_errors && data.errors.length > 0) {
+                    console.warn('Sync errors:', data.errors);
+                    setTimeout(() => {
+                        showNotification('Some transactions had errors. Check console for details.', 'warning');
+                    }, 2000);
+                }
+                
+                // Reload page after 2 seconds to show new transactions
+                if (data.synced_count > 0) {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                }
+            } else {
+                showNotification('Error: ' + (data.error || 'Failed to sync bank transactions'), 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            console.error('Sync error:', error);
+            showNotification('Error syncing bank transactions: ' + error.message, 'error');
+        });
+    };
+
 })();
 
