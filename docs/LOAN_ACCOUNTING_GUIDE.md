@@ -9,16 +9,14 @@ The Loan Accounting Module provides comprehensive loan management features inclu
 The loan tables are already included in your main `schema.sql`. If you haven't run it yet:
 
 ```bash
-# In MySQL/phpMyAdmin, run:
-source database/schema.sql
+
 ```
 
 ### 2. Add Sample Data (Optional)
 To test the module with sample data:
 
 ```bash
-# In MySQL/phpMyAdmin, run:
-source database/sample_loan_data.sql
+
 ```
 
 This will create:
